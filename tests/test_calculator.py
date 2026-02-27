@@ -55,3 +55,9 @@ def test_clear_history(calc):
     calc.clear_history()
     assert calc.history == []
     assert calc.last_result() is None
+
+
+def test_power(calc):
+    assert calc.power(2, 10) == 1024
+    assert calc.power(5, 0) == 1
+    assert calc.power(9, 0.5) == pytest.approx(3.0)
