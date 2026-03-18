@@ -1,0 +1,507 @@
+// ExpertSpork — Prisma Schema
+// Database: PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────
+
+enum UserRole {
+  EXPERT
+  CLIENT
+  ADMIN
+}
+
+enum Availability {
+  FULL_TIME
+  PART_TIME
+  UNAVAILABLE
+}
+
+enum ProjectStatus {
+  DRAFT
+  OPEN
+  IN_REVIEW
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum BudgetType {
+  FIXED
+  HOURLY
+}
+
+enum ProjectVisibility {
+  PUBLIC
+  INVITE_ONLY
+}
+
+enum ContractStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  PENDING
+  FUNDED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  PAID
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  ESCROWED
+  RELEASED
+  REFUNDED
+  FAILED
+}
+
+enum NotificationType {
+  PROJECT_MATCH
+  MESSAGE
+  PAYMENT
+  REVIEW
+  MILESTONE
+  SYSTEM
+  APPLICATION
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+// ─── MODELS ──────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  passwordHash      String?
+  name              String?
+  image             String?
+  role              UserRole  @default(CLIENT)
+  stripeCustomerId  String?   @unique
+  stripeAccountId   String?   @unique // for experts (Connect)
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  expertProfile     ExpertProfile?
+  clientProfile     ClientProfile?
+  projectsPosted    Project[]       @relation("ClientProjects")
+  contractsAsExpert Contract[]      @relation("ExpertContracts")
+  contractsAsClient Contract[]      @relation("ClientContracts")
+  paymentsSent      Payment[]       @relation("PaymentFrom")
+  paymentsReceived  Payment[]       @relation("PaymentTo")
+  reviewsGiven      Review[]        @relation("ReviewAuthor")
+  reviewsReceived   Review[]        @relation("ReviewTarget")
+  messagesThreads   MessageThreadParticipant[]
+  messagesSent      Message[]
+  notifications     Notification[]
+  applications      Application[]
+  accounts          Account[]
+  sessions          Session[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model ExpertProfile {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  slug            String       @unique
+  displayName     String
+  headline        String       @db.VarChar(120)
+  bio             String       @db.Text
+  hourlyRate      Decimal      @db.Decimal(10, 2)
+  currency        String       @default("USD")
+  availability    Availability @default(FULL_TIME)
+  aiScore         Int          @default(0)
+  totalEarnings   Decimal      @default(0) @db.Decimal(12, 2)
+  completionRate  Decimal      @default(0) @db.Decimal(5, 2)
+  responseTime    Int          @default(0) // avg minutes
+  location        String?
+  timezone        String?
+  languages       String[]
+  isPublic        Boolean      @default(false)
+  isVerified      Boolean      @default(false)
+  isFeatured      Boolean      @default(false)
+  profileViews    Int          @default(0)
+  coverColor      String       @default("#2563EB") // generated gradient base
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills          ExpertSkill[]
+  portfolio       PortfolioItem[]
+  services        ExpertService[]
+
+  @@index([slug])
+  @@index([isPublic, isVerified])
+  @@index([aiScore(sort: Desc)])
+}
+
+model ClientProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  companyName String?
+  companySize String?  // "1-10", "11-50", "51-200", "201-500", "500+"
+  industry    String?
+  website     String?
+  description String?  @db.Text
+  totalSpent  Decimal  @default(0) @db.Decimal(12, 2)
+  hireCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  slug     String  @unique
+  category String  // "Design" | "Engineering" | "Strategy" | "Marketing" | "Data" | "Content"
+  icon     String? // emoji or icon name
+
+  experts   ExpertSkill[]
+  projects  ProjectSkill[]
+
+  @@index([category])
+  @@index([slug])
+}
+
+model ExpertSkill {
+  expertProfileId String
+  skillId         String
+  yearsExp        Int?     // optional years of experience
+  isPrimary       Boolean  @default(false)
+
+  expert ExpertProfile @relation(fields: [expertProfileId], references: [id], onDelete: Cascade)
+  skill  Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([expertProfileId, skillId])
+}
+
+model PortfolioItem {
+  id              String   @id @default(cuid())
+  expertProfileId String
+  title           String
+  description     String?  @db.Text
+  imageUrls       String[]
+  projectUrl      String?
+  tags            String[]
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  expert ExpertProfile @relation(fields: [expertProfileId], references: [id], onDelete: Cascade)
+
+  @@index([expertProfileId])
+}
+
+model ExpertService {
+  id              String   @id @default(cuid())
+  expertProfileId String
+  title           String
+  description     String   @db.Text
+  price           Decimal  @db.Decimal(10, 2)
+  priceType       String   @default("FIXED") // "FIXED" | "STARTING_FROM" | "MONTHLY"
+  deliveryDays    Int?
+  revisions       Int?
+  includes        String[]
+  sortOrder       Int      @default(0)
+
+  expert ExpertProfile @relation(fields: [expertProfileId], references: [id], onDelete: Cascade)
+
+  @@index([expertProfileId])
+}
+
+model Project {
+  id               String            @id @default(cuid())
+  clientId         String
+  title            String
+  description      String            @db.Text
+  budget           Decimal           @db.Decimal(12, 2)
+  budgetType       BudgetType        @default(FIXED)
+  timeline         Int?              // days
+  status           ProjectStatus     @default(DRAFT)
+  visibility       ProjectVisibility @default(PUBLIC)
+  aiMatchScore     Decimal?          @db.Decimal(5, 2)
+  aiBrief          String?           @db.Text // AI-generated brief summary
+  applicantCount   Int               @default(0)
+  viewCount        Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  closedAt         DateTime?
+
+  // Relations
+  client       User           @relation("ClientProjects", fields: [clientId], references: [id])
+  skills       ProjectSkill[]
+  applications Application[]
+  contract     Contract?
+
+  @@index([status, visibility])
+  @@index([clientId])
+  @@index([createdAt(sort: Desc)])
+}
+
+model ProjectSkill {
+  projectId String
+  skillId   String
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, skillId])
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  projectId   String
+  expertId    String
+  coverLetter String            @db.Text
+  proposedRate Decimal?         @db.Decimal(10, 2)
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expert  User    @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, expertId])
+  @@index([projectId])
+  @@index([expertId])
+}
+
+model Contract {
+  id         String         @id @default(cuid())
+  projectId  String         @unique
+  expertId   String
+  clientId   String
+  title      String
+  terms      String         @db.Text
+  totalValue Decimal        @db.Decimal(12, 2)
+  currency   String         @default("USD")
+  status     ContractStatus @default(PENDING)
+  startDate  DateTime?
+  endDate    DateTime?
+  signedByExpertAt DateTime?
+  signedByClientAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  // Relations
+  project    Project     @relation(fields: [projectId], references: [id])
+  expert     User        @relation("ExpertContracts", fields: [expertId], references: [id])
+  client     User        @relation("ClientContracts", fields: [clientId], references: [id])
+  milestones Milestone[]
+  reviews    Review[]
+  thread     MessageThread?
+
+  @@index([expertId])
+  @@index([clientId])
+  @@index([status])
+}
+
+model Milestone {
+  id           String          @id @default(cuid())
+  contractId   String
+  title        String
+  description  String          @db.Text
+  amount       Decimal         @db.Decimal(10, 2)
+  dueDate      DateTime?
+  status       MilestoneStatus @default(PENDING)
+  sortOrder    Int             @default(0)
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  contract     Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  deliverables Deliverable[]
+  payment      Payment?
+
+  @@index([contractId])
+  @@index([status])
+}
+
+model Deliverable {
+  id          String   @id @default(cuid())
+  milestoneId String
+  name        String
+  fileUrl     String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  milestoneId           String        @unique
+  fromUserId            String
+  toUserId              String
+  amount                Decimal       @db.Decimal(10, 2)
+  fee                   Decimal       @db.Decimal(10, 2) // platform fee
+  currency              String        @default("USD")
+  status                PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?       @unique
+  stripeTransferId      String?       @unique
+  createdAt             DateTime      @default(now())
+  escrowledAt           DateTime?
+  releasedAt            DateTime?
+
+  // Relations
+  milestone Milestone @relation(fields: [milestoneId], references: [id])
+  from      User      @relation("PaymentFrom", fields: [fromUserId], references: [id])
+  to        User      @relation("PaymentTo", fields: [toUserId], references: [id])
+
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([status])
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  contractId    String
+  authorId      String
+  targetId      String
+  rating        Int      // 1-5
+  communication Int      // 1-5
+  quality       Int      // 1-5
+  timeliness    Int      // 1-5
+  body          String   @db.Text
+  isPublic      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  contract Contract @relation(fields: [contractId], references: [id])
+  author   User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  target   User     @relation("ReviewTarget", fields: [targetId], references: [id])
+
+  @@unique([contractId, authorId]) // one review per author per contract
+  @@index([targetId])
+  @@index([contractId])
+}
+
+model MessageThread {
+  id            String   @id @default(cuid())
+  contractId    String?  @unique
+  title         String?
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  // Relations
+  contract     Contract?                    @relation(fields: [contractId], references: [id])
+  participants MessageThreadParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt(sort: Desc)])
+}
+
+model MessageThreadParticipant {
+  threadId String
+  userId   String
+  joinedAt DateTime @default(now())
+  lastReadAt DateTime?
+
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, userId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  threadId    String
+  senderId    String
+  body        String   @db.Text
+  attachments String[]
+  isEdited    Boolean  @default(false)
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  thread Message? @relation("MessageThread", fields: [threadId], references: [id])
+  Messages Message[] @relation("MessageThread")
+  sender User @relation(fields: [senderId], references: [id])
+
+  @@index([threadId, createdAt])
+  @@index([senderId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt(sort: Desc)])
+}
