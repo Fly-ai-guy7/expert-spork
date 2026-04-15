@@ -1,8 +1,8 @@
-# Research Update Bot Configuration
+# Research Update Bot Configuration — Egyptian Studies
 
 bot:
-  # How often to run each update cycle (in minutes)
-  update_interval_minutes: 60
+  # How often to run each update cycle (in minutes) — every 4 hours
+  update_interval_minutes: 240
   # Number of articles/results to fetch per topic per source
   results_per_source: 5
   # Output directory for research files
@@ -12,59 +12,103 @@ bot:
   # Log level: DEBUG, INFO, WARNING, ERROR
   log_level: INFO
 
-# Research topics to track
-# Each topic will get its own markdown file in the output_dir
+# Research topics — Egyptian history, archaeology, culture, and civilization
 topics:
-  - name: Artificial Intelligence
+  - name: Ancient Egypt Overview
     keywords:
-      - artificial intelligence
-      - machine learning
-      - deep learning
-    arxiv_category: cs.AI
-    wikipedia_page: Artificial_intelligence
+      - ancient Egypt
+      - Egyptian civilization
+      - Pharaoh
+      - Nile River
+    arxiv_category: cs.CV   # computer vision applied to artifact analysis
+    wikipedia_page: Ancient_Egypt
 
-  - name: Quantum Computing
+  - name: Egyptian Archaeology
     keywords:
-      - quantum computing
-      - quantum algorithms
-      - qubit
-    arxiv_category: quant-ph
-    wikipedia_page: Quantum_computing
+      - Egyptian archaeology
+      - excavation Egypt
+      - tomb discovery Egypt
+      - Luxor dig
+    arxiv_category: eess.IV  # image/signal processing of ancient artifacts
+    wikipedia_page: Egyptian_archaeology
 
-  - name: Climate Change
+  - name: Egyptian Mythology and Religion
     keywords:
-      - climate change
-      - global warming
-      - renewable energy
-    arxiv_category: physics.ao-ph
-    wikipedia_page: Climate_change
+      - Egyptian mythology
+      - Egyptian gods
+      - Ra Osiris Isis Horus
+      - Egyptian afterlife
+    arxiv_category: cs.CV
+    wikipedia_page: Ancient_Egyptian_religion
 
-  - name: Biotechnology
+  - name: Pyramids and Monuments
     keywords:
-      - biotechnology
-      - CRISPR
-      - gene editing
-    arxiv_category: q-bio.GN
-    wikipedia_page: Biotechnology
+      - Egyptian pyramids
+      - Great Pyramid Giza
+      - Sphinx
+      - Egyptian temples
+      - Abu Simbel
+    arxiv_category: eess.IV
+    wikipedia_page: Egyptian_pyramids
 
-  - name: Space Exploration
+  - name: Egyptian Mummies and Burial Practices
     keywords:
-      - space exploration
-      - NASA
-      - Mars mission
-    arxiv_category: astro-ph.EP
-    wikipedia_page: Space_exploration
+      - Egyptian mummies
+      - mummification
+      - Egyptian burial
+      - Valley of the Kings
+      - sarcophagus
+    arxiv_category: cs.CV
+    wikipedia_page: Mummy
 
-# RSS news feeds to pull from (no API key required)
+  - name: Egyptian Hieroglyphics and Writing
+    keywords:
+      - hieroglyphics
+      - Egyptian writing
+      - Rosetta Stone
+      - demotic script
+      - papyrus
+    arxiv_category: cs.CV
+    wikipedia_page: Egyptian_hieroglyphs
+
+  - name: Egyptian Art and Architecture
+    keywords:
+      - Egyptian art
+      - Egyptian architecture
+      - obelisk
+      - Karnak
+      - Egyptian sculpture
+    arxiv_category: eess.IV
+    wikipedia_page: Art_of_ancient_Egypt
+
+  - name: Egyptology Research
+    keywords:
+      - Egyptology
+      - Egyptologist
+      - Howard Carter
+      - Tutankhamun
+      - Egyptian museum
+    arxiv_category: cs.CV
+    wikipedia_page: Egyptology
+
+# RSS feeds — Egyptology, archaeology, and ancient history sources
 rss_feeds:
-  - name: Science Daily
-    url: https://www.sciencedaily.com/rss/all.xml
-  - name: Nature News
-    url: https://www.nature.com/nature.rss
-  - name: MIT Technology Review
-    url: https://www.technologyreview.com/feed/
-  - name: Phys.org
-    url: https://phys.org/rss-feed/
+  - name: Ancient History Encyclopedia (World History)
+    url: https://www.worldhistory.org/feed/
+  - name: Archaeology Magazine
+    url: https://www.archaeology.org/feed
+  - name: Live Science Archaeology
+    url: https://www.livescience.com/feeds/all
+  - name: Smithsonian Magazine
+    url: https://www.smithsonianmag.com/rss/latest_articles/
+  - name: The Guardian Science
+    url: https://www.theguardian.com/science/rss
+  - name: Ancient Origins
+    url: https://www.ancient-origins.net/rss.xml
+  - name: Science Daily Archaeology
+    url: https://www.sciencedaily.com/rss/fossils_ruins/archaeology.xml
+  - name: Phys.org Archaeology
+    url: https://phys.org/rss-feed/archaeology-news/
 
 # Source toggles — set to false to disable a source
 sources:
