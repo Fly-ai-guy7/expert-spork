@@ -30,4 +30,4 @@ echo "[setup] Installing dependencies from requirements.txt ..."
 # 3. Launch the bot
 # ------------------------------------------------------------
 echo "[bot] Starting Research Update Bot ..."
-exec "$PYTHON" research_bot.py
+exec "$PYTHON" research_bot.py "$@"
