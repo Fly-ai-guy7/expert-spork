@@ -1,0 +1,73 @@
+# Research Update Bot Configuration
+
+bot:
+  # How often to run each update cycle (in minutes)
+  update_interval_minutes: 60
+  # Number of articles/results to fetch per topic per source
+  results_per_source: 5
+  # Output directory for research files
+  output_dir: research
+  # Log directory
+  log_dir: logs
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  log_level: INFO
+
+# Research topics to track
+# Each topic will get its own markdown file in the output_dir
+topics:
+  - name: Artificial Intelligence
+    keywords:
+      - artificial intelligence
+      - machine learning
+      - deep learning
+    arxiv_category: cs.AI
+    wikipedia_page: Artificial_intelligence
+
+  - name: Quantum Computing
+    keywords:
+      - quantum computing
+      - quantum algorithms
+      - qubit
+    arxiv_category: quant-ph
+    wikipedia_page: Quantum_computing
+
+  - name: Climate Change
+    keywords:
+      - climate change
+      - global warming
+      - renewable energy
+    arxiv_category: physics.ao-ph
+    wikipedia_page: Climate_change
+
+  - name: Biotechnology
+    keywords:
+      - biotechnology
+      - CRISPR
+      - gene editing
+    arxiv_category: q-bio.GN
+    wikipedia_page: Biotechnology
+
+  - name: Space Exploration
+    keywords:
+      - space exploration
+      - NASA
+      - Mars mission
+    arxiv_category: astro-ph.EP
+    wikipedia_page: Space_exploration
+
+# RSS news feeds to pull from (no API key required)
+rss_feeds:
+  - name: Science Daily
+    url: https://www.sciencedaily.com/rss/all.xml
+  - name: Nature News
+    url: https://www.nature.com/nature.rss
+  - name: MIT Technology Review
+    url: https://www.technologyreview.com/feed/
+  - name: Phys.org
+    url: https://phys.org/rss-feed/
+
+# Source toggles — set to false to disable a source
+sources:
+  wikipedia: true
+  arxiv: true
+  rss_feeds: true

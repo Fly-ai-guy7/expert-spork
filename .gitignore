@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+logs/*.log
+logs/stdout.log
+bot.pid
