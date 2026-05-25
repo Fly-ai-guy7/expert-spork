@@ -11,6 +11,11 @@ from pathlib import Path
 STORE_ENV = "SPORK_FILE"
 DEFAULT_STORE = Path.home() / ".spork.json"
 
+PRIORITIES = ("low", "medium", "high")
+DEFAULT_PRIORITY = "medium"
+_PRIORITY_RANK = {"high": 0, "medium": 1, "low": 2}
+_PRIORITY_GLYPH = {"high": "!!", "medium": " ·", "low": "  "}
+
 
 def store_path() -> Path:
     return Path(os.environ.get(STORE_ENV, DEFAULT_STORE))
@@ -27,40 +32,62 @@ def save(tasks: list[dict]) -> None:
     store_path().write_text(json.dumps(tasks, indent=2))
 
 
-def add(text: str) -> int:
-    # TODO: assign next id, append {id, text, done=False}, persist, return id
-    raise NotImplementedError
+def add(text: str, priority: str = DEFAULT_PRIORITY) -> int:
+    if priority not in PRIORITIES:
+        raise ValueError(f"priority must be one of {PRIORITIES}, got {priority!r}")
+    tasks = load()
+    next_id = max((t["id"] for t in tasks), default=0) + 1
+    tasks.append({"id": next_id, "text": text, "done": False, "priority": priority})
+    save(tasks)
+    return next_id
 
 
 def list_tasks() -> list[dict]:
-    # TODO: return all tasks (stable order by id)
-    raise NotImplementedError
+    tasks = load()
+    return sorted(
+        tasks,
+        key=lambda t: (_PRIORITY_RANK.get(t.get("priority", DEFAULT_PRIORITY), 1), t["id"]),
+    )
 
 
 def mark_done(task_id: int) -> bool:
-    # TODO: flip done=True on matching task; return True if found, else False
-    raise NotImplementedError
+    tasks = load()
+    for t in tasks:
+        if t["id"] == task_id:
+            t["done"] = True
+            save(tasks)
+            return True
+    return False
 
 
 def remove(task_id: int) -> bool:
-    # TODO: drop matching task; return True if found, else False
-    raise NotImplementedError
+    tasks = load()
+    kept = [t for t in tasks if t["id"] != task_id]
+    if len(kept) == len(tasks):
+        return False
+    save(kept)
+    return True
 
 
 def clear_done() -> int:
-    # TODO: remove all completed tasks; return count removed
-    raise NotImplementedError
+    tasks = load()
+    kept = [t for t in tasks if not t["done"]]
+    removed = len(tasks) - len(kept)
+    if removed:
+        save(kept)
+    return removed
 
 
 def format_task(task: dict) -> str:
     mark = "[x]" if task["done"] else "[ ]"
-    return f"{task['id']:>3} {mark} {task['text']}"
+    glyph = _PRIORITY_GLYPH.get(task.get("priority", DEFAULT_PRIORITY), " ·")
+    return f"{task['id']:>3} {mark} {glyph} {task['text']}"
 
 
 def cli_add(args):
     text = " ".join(args.text)
-    task_id = add(text)
-    print(f"added #{task_id}: {text}")
+    task_id = add(text, priority=args.priority)
+    print(f"added #{task_id} ({args.priority}): {text}")
 
 
 def cli_list(args):
@@ -99,6 +126,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_add = sub.add_parser("add", help="add a new task")
     p_add.add_argument("text", nargs="+", help="task description")
+    p_add.add_argument(
+        "-p", "--priority",
+        choices=PRIORITIES,
+        default=DEFAULT_PRIORITY,
+        help=f"task priority (default: {DEFAULT_PRIORITY})",
+    )
     p_add.set_defaults(func=cli_add)
 
     p_list = sub.add_parser("list", help="list all tasks")
