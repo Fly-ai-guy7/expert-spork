@@ -1,0 +1,73 @@
+{
+  "app": {
+    "name": "EQUALISE Egypt",
+    "tagline": "AI Legal Simulation for Trainee Lawyers"
+  },
+  "disclaimer": "AI Simulation Only — Not Legal Advice — All outputs require review by a qualified Egyptian lawyer.",
+  "nav": {
+    "training": "Training",
+    "cases": "Cases",
+    "new_case": "New Case",
+    "statutes": "Statutes"
+  },
+  "training": {
+    "dashboard_title": "Training Dashboard",
+    "start_case": "Start practice case",
+    "difficulty": "Difficulty",
+    "area": "Area of law",
+    "your_role": "Your role",
+    "prosecution": "Prosecution",
+    "defense": "Defense",
+    "recent_sessions": "Recent sessions",
+    "grade": "Grade",
+    "no_sessions": "No training sessions yet."
+  },
+  "new_case": {
+    "title": "New Case",
+    "manual": "Author manually",
+    "generate": "Generate practice case",
+    "title_label": "Title (English)",
+    "title_ar_label": "Title (Arabic)",
+    "language": "Primary language",
+    "area": "Area of law",
+    "submit": "Create draft",
+    "submit_generate": "Generate"
+  },
+  "case": {
+    "pipeline": "Pipeline",
+    "evidence_migration": "Evidence Migration",
+    "prosecution": "Prosecution",
+    "defense": "Defense",
+    "scoring": "Scoring",
+    "judicial": "Judicial Reasoning",
+    "ruling": "Ruling",
+    "outcome": "Outcome",
+    "run": "Run Simulation",
+    "run_training": "Run as Training",
+    "your_turn": "Your turn — Trainee",
+    "submit_argument": "Submit argument",
+    "argument_placeholder": "Write your argument here, citing statutes by short_code (e.g. 82/2002:113)…",
+    "download_pdf": "Download Ruling PDF",
+    "view_coaching": "View Coaching Report"
+  },
+  "statutes": {
+    "title": "Egyptian Statute Corpus",
+    "search": "Search articles",
+    "no_results": "No results."
+  },
+  "coaching": {
+    "title": "Coaching Report",
+    "grade": "Grade",
+    "total": "Total score",
+    "per_round": "Per-round breakdown",
+    "missed_citations": "Missed statute citations",
+    "evidence_gaps": "Evidence gaps to address",
+    "weak_patterns": "Weak patterns to work on",
+    "try_similar": "Try a similar case"
+  },
+  "actions": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "loading": "Loading…"
+  }
+}

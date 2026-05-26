@@ -1,0 +1,70 @@
+{
+  "law_number": 82,
+  "year": 2002,
+  "short_code": "82/2002",
+  "title_en": "Law on the Protection of Intellectual Property Rights",
+  "title_ar": "قانون حماية حقوق الملكية الفكرية",
+  "domain_tags": ["ip", "patents", "trademarks", "copyright", "first_use_case"],
+  "articles": [
+    {
+      "number": "1",
+      "text_en": "This law shall protect intellectual property rights in the Arab Republic of Egypt, including patents, utility models, layout-designs of integrated circuits, undisclosed information, trademarks, trade names, geographical indications, industrial designs, copyright and related rights, and plant varieties.",
+      "text_ar": "يحمي هذا القانون حقوق الملكية الفكرية في جمهورية مصر العربية، شاملةً براءات الاختراع ونماذج المنفعة وتصميمات الدوائر المتكاملة والمعلومات غير المُفصح عنها والعلامات التجارية والأسماء التجارية والمؤشرات الجغرافية والتصميمات الصناعية وحق المؤلف والحقوق المجاورة والأصناف النباتية.",
+      "tags": ["definitions", "scope"]
+    },
+    {
+      "number": "63",
+      "text_en": "The proprietor of a trademark shall have the exclusive right to use the mark, prevent third parties from using identical or confusingly similar signs for identical or similar goods, and to license or assign the mark.",
+      "text_ar": "يحق لمالك العلامة التجارية الاستخدام الحصري للعلامة، ومنع الغير من استخدام علامات مماثلة أو مشابهة بشكل يثير اللبس على سلع متطابقة أو مشابهة، وحق الترخيص أو التنازل.",
+      "tags": ["trademarks", "exclusive_rights"]
+    },
+    {
+      "number": "67",
+      "text_en": "A trademark shall be registered upon application to the Trademark Office, after substantive examination for distinctiveness, non-conflict with prior registrations, and compliance with public order.",
+      "text_ar": "تُسجَّل العلامة التجارية بناءً على طلب يُقدَّم إلى مكتب العلامات التجارية، بعد فحص موضوعي للتميز وعدم التعارض مع التسجيلات السابقة والامتثال للنظام العام.",
+      "tags": ["trademarks", "registration"]
+    },
+    {
+      "number": "84",
+      "text_en": "The registration of a trademark shall be valid for ten years from the date of filing and may be renewed for successive periods of ten years.",
+      "text_ar": "يكون تسجيل العلامة التجارية ساري المفعول لمدة عشر سنوات من تاريخ الإيداع، ويجوز تجديده لفترات متعاقبة كل منها عشر سنوات.",
+      "tags": ["trademarks", "duration"]
+    },
+    {
+      "number": "113",
+      "text_en": "Any person who infringes a registered trademark shall be liable to compensate the proprietor for material and moral damages. The court may order the seizure and destruction of infringing goods and the publication of the judgment at the expense of the infringer.",
+      "text_ar": "يُلزَم كل من ينتهك علامة تجارية مسجلة بتعويض مالكها عن الأضرار المادية والمعنوية. وللمحكمة أن تأمر بضبط البضائع المخالفة وإتلافها، وبنشر الحكم على نفقة المعتدي.",
+      "tags": ["trademarks", "infringement", "remedies"]
+    },
+    {
+      "number": "114",
+      "text_en": "Bad-faith adoption of a confusingly similar trademark by a competitor, especially with knowledge of the prior registration, shall constitute aggravating circumstances permitting enhanced damages.",
+      "text_ar": "يُشكّل التبنّي بسوء النية لعلامة تجارية مشابهة بشكل يثير اللبس من قِبل المنافس، خاصة مع العلم بالتسجيل السابق، ظرفاً مُشدِّداً يجيز تعويضات مُعزَّزة.",
+      "tags": ["trademarks", "bad_faith"]
+    },
+    {
+      "number": "115",
+      "text_en": "The use of a mark in the course of trade prior to its registration by another shall not constitute infringement, provided such prior use is established by evidence and limited to its existing geographical scope.",
+      "text_ar": "لا يُعدّ استخدام علامة في المعاملات التجارية قبل تسجيلها من قِبل آخر اعتداءً، شريطة إثبات الاستخدام السابق بالبيّنة وأن يكون مقصوراً على نطاقه الجغرافي القائم.",
+      "tags": ["trademarks", "prior_use", "defense"]
+    },
+    {
+      "number": "131",
+      "text_en": "Patent rights confer on the proprietor the right to prevent third parties from making, using, offering for sale, or importing the patented product without consent. The patent term is twenty years from the filing date.",
+      "text_ar": "تمنح براءة الاختراع لصاحبها حق منع الغير من صنع المنتج المحمي أو استخدامه أو عرضه للبيع أو استيراده دون موافقته. ومدة البراءة عشرون سنة من تاريخ الإيداع.",
+      "tags": ["patents", "exclusive_rights", "duration"]
+    },
+    {
+      "number": "138",
+      "text_en": "Copyright in original literary, artistic, and scientific works arises automatically upon creation and includes economic rights and moral rights. Economic rights subsist for the life of the author and fifty years after death.",
+      "text_ar": "ينشأ حق المؤلف على المصنفات الأدبية والفنية والعلمية الأصلية تلقائياً عند الإنشاء، ويشمل الحقوق المالية والحقوق الأدبية. تستمر الحقوق المالية مدى حياة المؤلف وخمسين عاماً بعد وفاته.",
+      "tags": ["copyright", "duration"]
+    },
+    {
+      "number": "200",
+      "text_en": "Civil actions for IP infringement are subject to a limitation period of three years from the date the proprietor became aware of the infringement, and in any case within fifteen years of the infringing act.",
+      "text_ar": "تخضع الدعاوى المدنية لاعتداءات الملكية الفكرية لتقادم مدته ثلاث سنوات من تاريخ علم المالك بالاعتداء، وفي جميع الأحوال خلال خمس عشرة سنة من فعل الاعتداء.",
+      "tags": ["procedure", "limitation"]
+    }
+  ]
+}

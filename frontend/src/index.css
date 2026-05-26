@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html[dir="rtl"] body {
+  font-family: "Noto Naskh Arabic", "Amiri", system-ui, sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}

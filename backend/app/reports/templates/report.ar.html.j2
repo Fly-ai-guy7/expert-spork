@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<title>إيكواليز مصر — تقرير القضية</title>
+</head>
+<body class="rtl">
+
+<div class="cover">
+  <h1>إيكواليز مصر</h1>
+  <div class="meta">تقرير محاكاة قانونية بالذكاء الاصطناعي</div>
+  <h2 style="border:none;">{{ case.title_ar or case.title_en or "قضية بدون عنوان" }}</h2>
+  <div class="meta">مجال القانون: {{ case.area_of_law or "—" }}</div>
+  <div class="meta">معرف القضية: {{ case.id }}</div>
+</div>
+
+<div class="disclaimer">{{ disclaimer_ar }}</div>
+
+<h2>ملخص القضية</h2>
+<p>{{ case.summary_ar or case.summary_en or "لا يوجد ملخص." }}</p>
+
+<h3>الأطراف</h3>
+<ul>
+  {% for p in case.parties %}
+  <li><span class="k">{{ p.role }}:</span> {{ p.name_ar or p.name_en or "—" }}</li>
+  {% endfor %}
+</ul>
+
+<h2>دفوع الادعاء</h2>
+{% for a in prosecution_arguments %}
+<div class="argument-block">
+  <div class="meta">الجولة {{ a.round_no }} · {{ a.llm_used or "—" }}
+    {% if a.score_overall is not none %}<span class="score-pill">{{ "%.0f"|format(a.score_overall) }}/100</span>{% endif %}
+  </div>
+  <p>{{ a.content_ar or a.content_en }}</p>
+</div>
+{% else %}
+<p><em>لا توجد دفوع للادعاء.</em></p>
+{% endfor %}
+
+<h2>دفوع الدفاع</h2>
+{% for a in defense_arguments %}
+<div class="argument-block">
+  <div class="meta">الجولة {{ a.round_no }} · {{ a.llm_used or "—" }}
+    {% if a.score_overall is not none %}<span class="score-pill">{{ "%.0f"|format(a.score_overall) }}/100</span>{% endif %}
+  </div>
+  <p>{{ a.content_ar or a.content_en }}</p>
+</div>
+{% else %}
+<p><em>لا توجد دفوع للدفاع.</em></p>
+{% endfor %}
+
+{% if trainee_arguments %}
+<h2>دفوع المتدرب</h2>
+{% for a in trainee_arguments %}
+<div class="argument-block">
+  <div class="meta">الجولة {{ a.round_no }} · متدرب
+    {% if a.score_overall is not none %}<span class="score-pill">{{ "%.0f"|format(a.score_overall) }}/100</span>{% endif %}
+  </div>
+  <p>{{ a.content_ar or a.content_en }}</p>
+</div>
+{% endfor %}
+{% endif %}
+
+<h2>التقييم القضائي والحكم</h2>
+{% if ruling %}
+<div class="kv"><span class="k">احتمالية نجاح المدعي:</span> {{ "%.0f"|format(ruling.plaintiff_success_prob or 0) }}%</div>
+<div class="kv"><span class="k">تم تطبيق التجاوز:</span> {{ "نعم" if ruling.override_applied else "لا" }}</div>
+<p>{{ ruling.text_ar or ruling.text_en or "" }}</p>
+
+<h3>الثغرات الجوهرية في الأدلة</h3>
+<ul class="gaps">
+  {% for gap in ruling.critical_evidence_gaps or [] %}
+  <li>{{ gap }}</li>
+  {% else %}
+  <li><em>لا توجد ثغرات محددة.</em></li>
+  {% endfor %}
+</ul>
+
+<h3>السوابق القضائية المرجعية</h3>
+<ul class="gaps">
+  {% for ref in ruling.precedent_refs or [] %}
+  <li>{{ ref }}</li>
+  {% else %}
+  <li><em>لم تُذكر سوابق.</em></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p><em>لم يصدر حكم.</em></p>
+{% endif %}
+
+<h2>النتيجة المتوقعة</h2>
+{% if outcome %}
+<div class="outcome-box">
+  <div class="kv"><span class="k">الاحتمالية المتوقعة:</span> {{ "%.0f"|format(outcome.projected_prob or 0) }}%</div>
+  <div class="kv"><span class="k">معامل المخاطرة:</span> {{ "%.0f"|format(outcome.risk_score or 0) }}/100</div>
+  <div class="kv"><span class="k">التسوية ما قبل المحاكمة:</span> {{ outcome.pretrial_resolution_ar or "—" }}</div>
+</div>
+{% else %}
+<p><em>لم يتم إنتاج نتيجة.</em></p>
+{% endif %}
+
+<div class="disclaimer">{{ disclaimer_ar }}</div>
+
+</body>
+</html>

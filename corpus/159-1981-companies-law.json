@@ -1,0 +1,46 @@
+{
+  "law_number": 159,
+  "year": 1981,
+  "short_code": "159/1981",
+  "title_en": "Companies Law",
+  "title_ar": "قانون الشركات",
+  "domain_tags": ["corporate", "companies"],
+  "articles": [
+    {
+      "number": "3",
+      "text_en": "Companies are formed in the legal forms permitted by this law, including joint stock companies, limited liability companies, and partnerships.",
+      "text_ar": "تُؤسَّس الشركات في الصور القانونية التي يُجيزها هذا القانون، وتشمل شركات المساهمة والشركات ذات المسؤولية المحدودة وشركات التضامن.",
+      "tags": ["forms"]
+    },
+    {
+      "number": "33",
+      "text_en": "The shareholders of a joint stock company are liable only to the extent of their share contributions and have no personal liability for the company's debts.",
+      "text_ar": "لا يُسأل مساهمو شركة المساهمة إلا في حدود حصصهم في رأس المال، ولا تترتب عليهم مسؤولية شخصية عن ديون الشركة.",
+      "tags": ["limited_liability"]
+    },
+    {
+      "number": "85",
+      "text_en": "The board of directors manages the company in accordance with the articles of association and the resolutions of the general assembly, and shall act in the company's best interest.",
+      "text_ar": "يُدير مجلس الإدارة الشركة وفقاً للنظام الأساسي وقرارات الجمعية العامة، ويلتزم بالعمل بما يحقق مصلحة الشركة.",
+      "tags": ["governance", "directors"]
+    },
+    {
+      "number": "92",
+      "text_en": "A director who breaches the duty of care or loyalty, or commits gross negligence, shall be jointly liable with other directors for damages caused to the company, shareholders, and third parties.",
+      "text_ar": "يكون عضو مجلس الإدارة الذي يُخِل بواجب الحرص أو الولاء، أو يرتكب إهمالاً جسيماً، مسؤولاً بالتضامن مع باقي الأعضاء عن الأضرار التي تلحق بالشركة أو المساهمين أو الغير.",
+      "tags": ["director_liability"]
+    },
+    {
+      "number": "138",
+      "text_en": "The general assembly may dismiss any director at any time without cause, subject to compensation for material damage where the dismissal is without legitimate ground.",
+      "text_ar": "للجمعية العامة عزل أي عضو من مجلس الإدارة في أي وقت ودون إبداء أسباب، مع الحق في التعويض عن الضرر المادي إذا تم العزل دون مبرر مشروع.",
+      "tags": ["dismissal"]
+    },
+    {
+      "number": "163",
+      "text_en": "Minority shareholders holding at least 5% of capital may petition the court to investigate suspected mismanagement or breach of fiduciary duty by the board.",
+      "text_ar": "يحق لمساهمي الأقلية الذين يمتلكون ما لا يقل عن 5% من رأس المال طلب التحقيق القضائي في حالات سوء الإدارة أو الإخلال بالواجبات الائتمانية لمجلس الإدارة.",
+      "tags": ["minority_rights"]
+    }
+  ]
+}
