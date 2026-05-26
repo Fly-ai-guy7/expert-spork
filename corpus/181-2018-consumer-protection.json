@@ -1,0 +1,46 @@
+{
+  "law_number": 181,
+  "year": 2018,
+  "short_code": "181/2018",
+  "title_en": "Consumer Protection Law",
+  "title_ar": "قانون حماية المستهلك",
+  "domain_tags": ["consumer", "b2c"],
+  "articles": [
+    {
+      "number": "3",
+      "text_en": "The consumer shall have the right to safe goods and services, accurate information, fair contractual terms, and an effective means of redress.",
+      "text_ar": "للمستهلك الحق في الحصول على سلع وخدمات آمنة، ومعلومات صحيحة، وشروط تعاقدية عادلة، ووسيلة فعّالة للتظلم.",
+      "tags": ["consumer_rights"]
+    },
+    {
+      "number": "6",
+      "text_en": "It is prohibited to advertise goods or services in a manner that is false, misleading, or omits material information likely to affect the consumer's decision.",
+      "text_ar": "يُحظر الإعلان عن السلع أو الخدمات بطريقة كاذبة أو مُضلِّلة، أو إغفال معلومات جوهرية قد تؤثر على قرار المستهلك.",
+      "tags": ["misleading_advertising"]
+    },
+    {
+      "number": "15",
+      "text_en": "The consumer has the right to return a product within fourteen days from receipt for any reason, provided the product is in its original condition. The seller shall refund the price within seven days.",
+      "text_ar": "للمستهلك الحق في إعادة المنتج خلال أربعة عشر يوماً من تاريخ الاستلام لأي سبب، شريطة أن يكون المنتج في حالته الأصلية. ويلتزم البائع برد الثمن خلال سبعة أيام.",
+      "tags": ["right_to_return"]
+    },
+    {
+      "number": "22",
+      "text_en": "Any contractual clause that excludes or unreasonably limits the consumer's statutory rights, including the right to redress, shall be deemed null and void.",
+      "text_ar": "يُعدّ باطلاً كل شرط تعاقدي يستبعد أو يُقيّد بشكل غير مبرر حقوق المستهلك القانونية، بما في ذلك الحق في التظلم.",
+      "tags": ["unfair_terms"]
+    },
+    {
+      "number": "30",
+      "text_en": "The Consumer Protection Agency may receive complaints, mediate disputes, and impose administrative sanctions on violators including warnings, fines, and product recalls.",
+      "text_ar": "لجهاز حماية المستهلك تلقّي الشكاوى والوساطة في المنازعات وفرض جزاءات إدارية على المخالفين، تشمل الإنذار والغرامات وسحب المنتجات.",
+      "tags": ["enforcement"]
+    },
+    {
+      "number": "45",
+      "text_en": "Civil compensation for consumer harm shall include direct damages, expenses incurred, and where applicable, moral damages assessed by the court.",
+      "text_ar": "يشمل التعويض المدني عن ضرر المستهلك الأضرار المباشرة والمصروفات المتكبدة، وعند الاقتضاء الأضرار الأدبية التي تُقدّرها المحكمة.",
+      "tags": ["damages"]
+    }
+  ]
+}

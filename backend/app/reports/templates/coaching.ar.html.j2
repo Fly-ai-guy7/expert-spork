@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"/><title>تقرير التدريب</title></head>
+<body class="rtl">
+
+<div class="cover">
+  <h1>تقرير التدريب</h1>
+  <div class="meta">إيكواليز مصر — جلسة تدريب</div>
+  <h2 style="border:none;">التقدير: {{ grade or "—" }} · {{ "%.0f"|format(total_score or 0) }}/100</h2>
+</div>
+
+<div class="disclaimer">{{ disclaimer_ar }}</div>
+
+<h2>الأداء لكل جولة</h2>
+{% for r in per_round %}
+<div class="argument-block">
+  <div class="meta">الجولة {{ r.round_no }}</div>
+  <div class="kv"><span class="k">الدقة الواقعية:</span> {{ "%.0f"|format(r.factual) }}</div>
+  <div class="kv"><span class="k">القابلية للإثبات:</span> {{ "%.0f"|format(r.provable) }}</div>
+  <div class="kv"><span class="k">الموضوعية:</span> {{ "%.0f"|format(r.unbiased) }}</div>
+  <div class="kv"><span class="k">السند القانوني:</span> {{ "%.0f"|format(r.legal_law_based) }}</div>
+  <div class="kv"><span class="k">الإجمالي:</span> {{ "%.0f"|format(r.overall) }}</div>
+  {% if r.rationale_ar %}<p><em>{{ r.rationale_ar }}</em></p>{% endif %}
+</div>
+{% endfor %}
+
+<h2>الاستشهادات القانونية المفقودة</h2>
+<ul class="gaps">
+  {% for c in missed_citations %}<li>{{ c }}</li>{% else %}<li><em>لا توجد — تغطية جيدة للاستشهادات.</em></li>{% endfor %}
+</ul>
+
+<h2>ثغرات الأدلة المطلوب معالجتها</h2>
+<ul class="gaps">
+  {% for g in evidence_gaps_to_address %}<li>{{ g }}</li>{% else %}<li><em>لا توجد ثغرات.</em></li>{% endfor %}
+</ul>
+
+<h2>أنماط الضعف للعمل عليها</h2>
+<ul class="gaps">
+  {% for w in weak_patterns %}<li>{{ w }}</li>{% else %}<li><em>لا توجد — أداء متسق عبر الأبعاد.</em></li>{% endfor %}
+</ul>
+
+<div class="disclaimer">{{ disclaimer_ar }}</div>
+
+</body>
+</html>

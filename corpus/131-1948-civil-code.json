@@ -1,0 +1,46 @@
+{
+  "law_number": 131,
+  "year": 1948,
+  "short_code": "131/1948",
+  "title_en": "Egyptian Civil Code",
+  "title_ar": "القانون المدني المصري",
+  "domain_tags": ["civil", "contracts", "obligations", "property"],
+  "articles": [
+    {
+      "number": "1",
+      "text_en": "Legislative provisions shall apply to all matters covered by these provisions in their letter and purpose.",
+      "text_ar": "تسري النصوص التشريعية على جميع المسائل التي تتناولها هذه النصوص في لفظها وفي فحواها.",
+      "tags": ["general", "interpretation"]
+    },
+    {
+      "number": "89",
+      "text_en": "A contract is concluded as soon as the parties exchange two corresponding declarations of will, provided that the conditions required by law are observed.",
+      "text_ar": "يتم العقد بمجرد تبادل طرفيه التعبير عن إرادتين متطابقتين، مع مراعاة ما يقرره القانون من الشروط.",
+      "tags": ["contracts", "formation"]
+    },
+    {
+      "number": "147",
+      "text_en": "The contract makes the law of the parties. It may not be revoked or modified except by their mutual consent or for reasons stipulated by law.",
+      "text_ar": "العقد شريعة المتعاقدين، فلا يجوز نقضه ولا تعديله إلا باتفاق الطرفين أو للأسباب التي يقررها القانون.",
+      "tags": ["contracts", "binding_force"]
+    },
+    {
+      "number": "163",
+      "text_en": "Every fault that causes damage to another obligates the one who committed it to compensate.",
+      "text_ar": "كل خطأ سبب ضرراً للغير يلزم من ارتكبه بالتعويض.",
+      "tags": ["tort", "fault_liability"]
+    },
+    {
+      "number": "170",
+      "text_en": "The judge shall assess the amount of compensation for damages suffered by the injured party in accordance with the provisions of articles 221 and 222, taking into account the surrounding circumstances.",
+      "text_ar": "يقدّر القاضي مدى التعويض عن الضرر الذي لحق المضرور طبقاً لأحكام المادتين 221 و 222 مع مراعاة الظروف الملابسة.",
+      "tags": ["tort", "damages"]
+    },
+    {
+      "number": "374",
+      "text_en": "The limitation period for personal rights shall be fifteen years, unless otherwise provided by law.",
+      "text_ar": "يتقادم الالتزام بانقضاء خمس عشرة سنة فيما عدا الحالات التي ورد فيها نص خاص في القانون.",
+      "tags": ["limitation"]
+    }
+  ]
+}

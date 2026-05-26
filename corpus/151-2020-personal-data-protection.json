@@ -1,0 +1,46 @@
+{
+  "law_number": 151,
+  "year": 2020,
+  "short_code": "151/2020",
+  "title_en": "Personal Data Protection Law",
+  "title_ar": "قانون حماية البيانات الشخصية",
+  "domain_tags": ["privacy", "data_protection"],
+  "articles": [
+    {
+      "number": "2",
+      "text_en": "Personal data means any data relating to an identified natural person or a natural person who is identifiable directly or indirectly by reference to any identifier.",
+      "text_ar": "البيانات الشخصية: أي بيانات تتعلق بشخص طبيعي مُحدَّد، أو شخص طبيعي يمكن تحديده بصورة مباشرة أو غير مباشرة بالرجوع إلى أي مُعرّف.",
+      "tags": ["definitions"]
+    },
+    {
+      "number": "6",
+      "text_en": "Personal data may not be collected, processed, disclosed, or disposed of without the explicit consent of the data subject, except where permitted by law.",
+      "text_ar": "لا يجوز جمع البيانات الشخصية أو معالجتها أو الإفصاح عنها أو التصرف فيها دون موافقة صريحة من صاحبها، إلا في الأحوال التي يُجيزها القانون.",
+      "tags": ["consent", "lawful_basis"]
+    },
+    {
+      "number": "12",
+      "text_en": "The data subject shall have the right to access, correct, delete, and restrict the processing of his personal data, and to withdraw consent at any time.",
+      "text_ar": "يحق لصاحب البيانات الاطلاع على بياناته الشخصية وتصحيحها ومحوها وتقييد معالجتها، وسحب موافقته في أي وقت.",
+      "tags": ["data_subject_rights"]
+    },
+    {
+      "number": "20",
+      "text_en": "The data controller shall implement appropriate technical and organizational measures to protect personal data from accidental or unlawful destruction, loss, alteration, or unauthorized access.",
+      "text_ar": "يلتزم المُتحكِّم باتخاذ التدابير التقنية والتنظيمية الملائمة لحماية البيانات الشخصية من التلف العَرَضي أو غير المشروع أو الفقدان أو التعديل أو الوصول غير المصرح به.",
+      "tags": ["security"]
+    },
+    {
+      "number": "35",
+      "text_en": "A controller who suffers a personal data breach must notify the Center within seventy-two hours of becoming aware of it, including the nature of the breach and remedial measures.",
+      "text_ar": "على المُتحكِّم الذي يتعرّض لاختراق للبيانات الشخصية إخطار المركز في غضون اثنتين وسبعين ساعة من علمه بذلك، مع بيان طبيعة الاختراق والإجراءات التصحيحية.",
+      "tags": ["breach_notification"]
+    },
+    {
+      "number": "42",
+      "text_en": "Violations of this law shall be punishable by fines ranging from 100,000 to 1,000,000 Egyptian pounds, in addition to civil compensation owed to the data subject.",
+      "text_ar": "يُعاقَب على مخالفة هذا القانون بغرامة تتراوح بين مائة ألف ومليون جنيه مصري، فضلاً عن التعويض المدني المستحَق لصاحب البيانات.",
+      "tags": ["sanctions"]
+    }
+  ]
+}
