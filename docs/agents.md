@@ -24,7 +24,7 @@ class AgentOutput(BaseModel):
     llm_used: str
 ```
 
-## The nine agents
+## The thirteen agents
 
 ### 1. EvidenceMigrationAgent — `claude-sonnet-4-6`
 
@@ -79,7 +79,37 @@ Runs once after the Ruling. Estimates likely damages in EGP — material range,
 moral damages, non-monetary remedies (seizure, recall, injunction). Output on
 `cases.damages_estimate`. Feeds the Outcome's projected value.
 
-### 9. HIL / Trainee — no LLM
+### 9. CourtClerkAgent — `claude-sonnet-4-6`
+
+Runs first, before any other agent. Generates the docket: case number, competent
+court designation, list of required filings per area of law, flags missing
+mandatory documents. Output on `cases.docket`.
+
+### 10. ExpertWitnessAgent — `claude-sonnet-4-6`
+
+Court-appointed expert per Code of Civil and Commercial Procedures art. 104.
+Runs after Evidence Migration **only when disputed facts exist**. Provides a
+neutral expert opinion on the disputed matters (trademark similarity, defective
+product, valuation, etc.). Output on `cases.expert_testimony`.
+
+### 11. MediatorAgent — `claude-sonnet-4-6`
+
+Runs after Damages Calculator. Proposes pretrial settlement terms — EGP value,
+non-monetary terms, recommendation (PROCEED / SETTLE / MIXED). Mandatory in
+labour disputes (12/2003 art. 82); valuable for trainees learning when to settle
+vs. proceed. Output on `cases.mediation_proposal`.
+
+### 12. CassationPanelAgent — three LLMs
+
+Three-judge Court of Cassation appellate review of the trial Judicial Reasoning
+agent's ruling. Each panel member is voiced by a different LLM
+(`claude-opus`, `deepseek`, `claude-sonnet`) for cross-LLM diversity. Each judge
+votes AFFIRM / REVERSE / REMAND independently; the panel decision is the
+majority vote. Calls run in parallel via `asyncio.gather`. Output on
+`cases.cassation_review` includes the panel decision, the vote tally, and each
+judge's individual opinion.
+
+### 13. HIL / Trainee — no LLM
 
 Pure DB-gated checkpoints (`models/hil.py`). When training mode is active and a debate round's
 side matches the trainee's role, the orchestrator creates a `TRAINEE_TURN` checkpoint and the
@@ -112,6 +142,18 @@ with which model voiced each side.
 
 `tests/scenarios.py` has 7 canonical case fixtures, one per area of law (IP,
 Labour, Commercial, Consumer, Privacy, Corporate, Civil). `test_scenarios.py`
-parametrizes over them, booting SQLite + corpus + mock LLM per test and
-running the full orchestrator pipeline. No API keys, no Docker, no Postgres
-required — `make test-backend` runs them all in ~2 seconds.
+parametrizes over them, booting SQLite + corpus + mock LLM per test and running
+the full orchestrator pipeline.
+
+`tests/severity.py` adds:
+- a **difficulty grid** that derives 21 fixtures from the base 7 (difficulty 1
+  = all undisputed, difficulty 3 = base, difficulty 5 = multi-issue with missing
+  evidence)
+- 5 named **edge cases**: `missing_evidence_dominant`, `counterclaim_driven`,
+  `single_disputed_fact`, `multi_defendant`, `limitation_borderline`
+
+Plus two training-mode pause-and-resume tests for trainee-as-Prosecution and
+trainee-as-Defense, and one orchestrator idempotency test.
+
+Total: **46 backend tests**, all running against in-memory SQLite + mocked LLM
+in ~7 seconds. No API keys, no Docker, no Postgres required.

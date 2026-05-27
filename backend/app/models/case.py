@@ -50,6 +50,11 @@ class Case(Base, TimestampMixin):
     procedural_analysis: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
     precedent_analysis: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
     damages_estimate: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
+    # Courtroom agent outputs
+    docket: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
+    expert_testimony: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
+    mediation_proposal: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
+    cassation_review: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
 
     parties: Mapped[list["Party"]] = relationship(back_populates="case", cascade="all, delete-orphan")  # noqa: F821
     facts: Mapped[list["Fact"]] = relationship(back_populates="case", cascade="all, delete-orphan")  # noqa: F821

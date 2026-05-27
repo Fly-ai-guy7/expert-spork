@@ -50,6 +50,52 @@ def _canned_response(prompt: str) -> dict:
     """
     p = prompt.lower()
 
+    # Court Clerk — unique token "docket_number"
+    if "docket_number" in p:
+        return {
+            "docket_number": "2025/00123",
+            "competent_court": "Cairo Court of First Instance — Civil Circuit",
+            "required_filings": ["statement of claim", "list of evidence", "power of attorney"],
+            "missing_filings": [],
+            "filing_date": "2025-01-15",
+            "summary_en": "Docket opened; all mandatory filings present.",
+            "summary_ar": "تم فتح القيد؛ جميع الملفات الإلزامية مكتملة.",
+        }
+
+    # Expert Witness — unique tokens "expertise_area" + "methodology"
+    if "expertise_area" in p and "methodology" in p:
+        return {
+            "expertise_area": "trademark similarity assessment",
+            "methodology": "Phonetic, visual, and conceptual comparison plus consumer survey heuristics.",
+            "findings": [
+                {"fact_under_review": "ALPHA-T vs ALPHATEK", "opinion_en": "High likelihood of confusion.", "opinion_ar": "احتمالية لبس عالية.", "confidence": "high"},
+            ],
+            "expert_opinion_en": "The marks are confusingly similar to the average Egyptian consumer.",
+            "expert_opinion_ar": "العلامتان متشابهتان بشكل مُلبِس للمستهلك المصري العادي.",
+        }
+
+    # Mediator — unique token "settlement_value_egp"
+    if "settlement_value_egp" in p:
+        return {
+            "recommended_settlement": "SETTLE",
+            "settlement_value_egp": 175000,
+            "settlement_terms": [
+                "Cease use of disputed mark within 60 days",
+                "Pay 175,000 EGP within 30 days",
+                "Mutual non-disparagement",
+            ],
+            "rationale_en": "Plaintiff has strong position but litigation risk and time costs favor settlement near the damages midpoint.",
+            "rationale_ar": "موقف المدعي قوي، إلا أن مخاطر التقاضي وتكاليف الوقت تدعم التسوية قرب منتصف نطاق التعويض.",
+        }
+
+    # Cassation Panel — single judge prompt has "Cassation judge #" or "vote": "AFFIRM"
+    if "cassation judge" in p or ("vote" in p and "affirm|reverse|remand" in p):
+        return {
+            "vote": "AFFIRM",
+            "opinion_en": "Trial court correctly applied IP law; no legal error.",
+            "opinion_ar": "طبقت محكمة الموضوع قانون الملكية الفكرية بشكل سليم، ولا يوجد خطأ قانوني.",
+        }
+
     # Damages — unique token "material_damages_egp_min"
     if "material_damages_egp_min" in p:
         return {
@@ -174,10 +220,14 @@ def _canned_response(prompt: str) -> dict:
 @pytest.fixture
 def mock_llm(monkeypatch):
     client = MockLLMClient()
-    # Patch every consumer of get_llm so cached instances don't escape
+    # Patch the factory and every module that imported `get_llm` directly into
+    # its namespace (those imports happened at module load and are NOT affected
+    # by patching factory.get_llm alone).
     monkeypatch.setattr(factory, "get_llm", lambda _name=None: client)
     from app.agents import base as agent_base
     monkeypatch.setattr(agent_base, "get_llm", lambda _name=None: client)
+    from app.agents import cassation_panel as cp_mod
+    monkeypatch.setattr(cp_mod, "get_llm", lambda _name=None: client)
     from app.services import case_generator as cg
     monkeypatch.setattr(cg, "get_llm", lambda _name=None: client)
     return client

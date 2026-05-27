@@ -7,10 +7,14 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.agents import (
     AgentContext,
+    CassationPanelAgent,
+    CourtClerkAgent,
     DamagesCalculatorAgent,
     DefenseAgent,
     EvidenceMigrationAgent,
+    ExpertWitnessAgent,
     JudicialAgent,
+    MediatorAgent,
     PrecedentResearcherAgent,
     ProceduralSpecialistAgent,
     ProsecutionAgent,
@@ -204,6 +208,14 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         statute_block=statute_block,
     )
 
+    # 0. Court Clerk — generates docket record, identifies missing filings. Runs first.
+    if case.docket is None:
+        ctx = ctx_base.model_copy(update={"extra": {"area_of_law": case.area_of_law or "GENERAL"}})
+        out = await CourtClerkAgent().run(ctx)
+        case.docket = out.raw
+        db.commit()
+        case = _load_case(db, case_id)
+
     # 1. Evidence Migration — idempotent: skip if facts exist
     if not case.facts:
         em_out = await EvidenceMigrationAgent().run(ctx_base)
@@ -239,6 +251,19 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.procedural_analysis = out.raw
         db.commit()
         case = _load_case(db, case_id)
+
+    # 1c. Expert Witness — only if there are disputed facts. Idempotent.
+    if case.expert_testimony is None:
+        disputed = [
+            {"text_en": f.text_en, "text_ar": f.text_ar}
+            for f in case.facts if f.disputed
+        ]
+        if disputed:
+            ctx = ctx_base.model_copy(update={"extra": {"disputed_facts": disputed}})
+            out = await ExpertWitnessAgent().run(ctx)
+            case.expert_testimony = out.raw
+            db.commit()
+            case = _load_case(db, case_id)
 
     scorer = ScoringAgent()
     training = _active_training(case)
@@ -325,6 +350,19 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         db.commit()
         case = _load_case(db, case_id)
 
+    # 3c. Mediator — settlement proposal, runs after Damages
+    if case.mediation_proposal is None and case.ruling is not None:
+        ctx = ctx_base.model_copy(update={
+            "extra": {
+                "plaintiff_prob": case.ruling.plaintiff_success_prob,
+                "damages_estimate": case.damages_estimate or {},
+            }
+        })
+        out = await MediatorAgent().run(ctx)
+        case.mediation_proposal = out.raw
+        db.commit()
+        case = _load_case(db, case_id)
+
     # 4. Outcome — idempotent
     if case.outcome is None and case.ruling is not None:
         prob = case.ruling.plaintiff_success_prob
@@ -342,6 +380,23 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         )
         db.add(outcome)
         db.commit()
+
+    # 4b. Cassation Panel — appellate review, runs after Outcome
+    if case.cassation_review is None and case.ruling is not None:
+        ctx = ctx_base.model_copy(update={
+            "extra": {
+                "ruling": {
+                    "text_en": case.ruling.text_en,
+                    "text_ar": case.ruling.text_ar,
+                    "plaintiff_success_prob": case.ruling.plaintiff_success_prob,
+                    "critical_evidence_gaps": case.ruling.critical_evidence_gaps or [],
+                },
+            }
+        })
+        out = await CassationPanelAgent().run(ctx)
+        case.cassation_review = out.raw
+        db.commit()
+        case = _load_case(db, case_id)
 
     # 5. Coaching (training only)
     if training and training.coaching_report is None:

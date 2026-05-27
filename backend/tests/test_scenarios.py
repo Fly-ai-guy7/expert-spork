@@ -139,6 +139,18 @@ def test_scenario_runs_end_to_end(sqlite_db, mock_llm, scenario_key):
     assert case.precedent_analysis is not None, f"{scenario_key}: precedent_analysis missing"
     assert case.damages_estimate is not None, f"{scenario_key}: damages_estimate missing"
 
+    # Courtroom agent outputs persisted
+    assert case.docket is not None, f"{scenario_key}: docket missing"
+    assert case.mediation_proposal is not None, f"{scenario_key}: mediation_proposal missing"
+    assert case.cassation_review is not None, f"{scenario_key}: cassation_review missing"
+    assert case.cassation_review.get("panel_decision") in ("AFFIRM", "REVERSE", "REMAND")
+    assert len(case.cassation_review.get("judges", [])) == 3, "panel should have 3 judges"
+
+    # Expert witness only when there are disputed facts
+    has_disputed = any(f.disputed for f in case.facts)
+    if has_disputed:
+        assert case.expert_testimony is not None, f"{scenario_key}: expert_testimony missing despite disputed facts"
+
     # Ruling + Outcome produced
     assert case.ruling is not None, f"{scenario_key}: no ruling"
     assert 0 <= case.ruling.plaintiff_success_prob <= 100
