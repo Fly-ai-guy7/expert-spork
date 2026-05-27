@@ -2,11 +2,10 @@ import enum
 import uuid
 
 from sqlalchemy import Enum, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import TimestampMixin
+from app.models.base import JsonCol, TimestampMixin, UuidCol
 
 
 class CaseStatus(str, enum.Enum):
@@ -29,7 +28,7 @@ class Case(Base, TimestampMixin):
         Index("ix_cases_source_difficulty", "source", "difficulty"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UuidCol(), primary_key=True, default=uuid.uuid4)
     title_ar: Mapped[str | None] = mapped_column(Text, nullable=True)
     title_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary_ar: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -45,6 +44,12 @@ class Case(Base, TimestampMixin):
     difficulty: Mapped[int | None] = mapped_column(Integer, nullable=True)
     area_of_law: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    max_rounds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Specialist agent outputs
+    procedural_analysis: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
+    precedent_analysis: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
+    damages_estimate: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
 
     parties: Mapped[list["Party"]] = relationship(back_populates="case", cascade="all, delete-orphan")  # noqa: F821
     facts: Mapped[list["Fact"]] = relationship(back_populates="case", cascade="all, delete-orphan")  # noqa: F821

@@ -24,7 +24,7 @@ class AgentOutput(BaseModel):
     llm_used: str
 ```
 
-## The six agents
+## The nine agents
 
 ### 1. EvidenceMigrationAgent — `claude-sonnet-4-6`
 
@@ -59,7 +59,27 @@ Evaluates one argument on four dimensions (0–100):
 
 Plus a weighted `overall`. Sonnet is intentionally chosen as the cheap evaluator.
 
-### 6. HIL / Trainee — no LLM
+### 6. ProceduralSpecialistAgent — `claude-sonnet-4-6`
+
+Runs once after Evidence Migration. Identifies jurisdiction issues, standing
+problems, limitation period concerns, mandatory pre-litigation steps (labour
+office mediation, consumer agency filings, etc.), and competent court. Output
+persisted on `cases.procedural_analysis` (JSONB).
+
+### 7. PrecedentResearcherAgent — `claude-sonnet-4-6`
+
+Runs once after the debate loop, before Judicial Reasoning. Surfaces Court of
+Cassation doctrine and analogous precedent themes. Names doctrinal principles
+rather than fabricating case numbers (we have no precedent DB). Output on
+`cases.precedent_analysis`.
+
+### 8. DamagesCalculatorAgent — `claude-sonnet-4-6`
+
+Runs once after the Ruling. Estimates likely damages in EGP — material range,
+moral damages, non-monetary remedies (seizure, recall, injunction). Output on
+`cases.damages_estimate`. Feeds the Outcome's projected value.
+
+### 9. HIL / Trainee — no LLM
 
 Pure DB-gated checkpoints (`models/hil.py`). When training mode is active and a debate round's
 side matches the trainee's role, the orchestrator creates a `TRAINEE_TURN` checkpoint and the
@@ -82,5 +102,16 @@ with which model voiced each side.
 1. Create `backend/app/agents/your_agent.py` extending `LegalAgent`.
 2. Export from `backend/app/agents/__init__.py`.
 3. Call it from `services/orchestrator.py` in the appropriate pipeline slot.
-4. Add a canned response branch in `tests/conftest.py:_canned_response` and a test in
-   `tests/test_agents/`.
+4. Add a canned response branch in `tests/conftest.py:_canned_response` keyed on a
+   **unique token** that appears only in your agent's user-prompt JSON schema
+   (e.g., a unique field name). Order matters — more specific patterns first.
+5. Add a test in `tests/test_agents/`. The 7 area-of-law scenario tests in
+   `tests/test_scenarios.py` will automatically exercise it end-to-end.
+
+## Scenario tests
+
+`tests/scenarios.py` has 7 canonical case fixtures, one per area of law (IP,
+Labour, Commercial, Consumer, Privacy, Corporate, Civil). `test_scenarios.py`
+parametrizes over them, booting SQLite + corpus + mock LLM per test and
+running the full orchestrator pipeline. No API keys, no Docker, no Postgres
+required — `make test-backend` runs them all in ~2 seconds.

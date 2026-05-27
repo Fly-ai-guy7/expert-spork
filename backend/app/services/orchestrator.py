@@ -7,9 +7,12 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.agents import (
     AgentContext,
+    DamagesCalculatorAgent,
     DefenseAgent,
     EvidenceMigrationAgent,
     JudicialAgent,
+    PrecedentResearcherAgent,
+    ProceduralSpecialistAgent,
     ProsecutionAgent,
     ScoringAgent,
 )
@@ -64,6 +67,13 @@ def _case_snapshot(case: Case) -> dict:
 
 
 def _load_case(db: Session, case_id: uuid.UUID) -> Case:
+    """Load a Case and refresh all related collections from the DB.
+
+    Calls db.expire_all() first so we don't get stale identity-map state
+    after intermediate commits (e.g. Ruling created earlier in the pipeline
+    must be visible via `case.ruling` on the next load).
+    """
+    db.expire_all()
     return db.execute(
         select(Case)
         .options(
@@ -73,6 +83,9 @@ def _load_case(db: Session, case_id: uuid.UUID) -> Case:
             selectinload(Case.arguments),
             selectinload(Case.debate_rounds),
             selectinload(Case.training_sessions),
+            selectinload(Case.ruling),
+            selectinload(Case.outcome),
+            selectinload(Case.checkpoints),
         )
         .where(Case.id == case_id)
     ).scalar_one()
@@ -176,7 +189,11 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
     db.commit()
 
     lang = Lang(case.language_primary)
-    max_rounds = max_rounds or settings.default_max_debate_rounds
+    # Persist max_rounds on the case so HIL/trainee resumes honor the original value
+    if max_rounds is not None:
+        case.max_rounds = max_rounds
+        db.commit()
+    max_rounds = max_rounds or case.max_rounds or settings.default_max_debate_rounds
     statute_block = build_statute_block(db, None, lang)
     snapshot = _case_snapshot(case)
 
@@ -215,6 +232,13 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case = _load_case(db, case_id)
         snapshot = _case_snapshot(case)
         ctx_base = ctx_base.model_copy(update={"case_snapshot": snapshot})
+
+    # 1b. Procedural Specialist — idempotent
+    if case.procedural_analysis is None:
+        out = await ProceduralSpecialistAgent().run(ctx_base)
+        case.procedural_analysis = out.raw
+        db.commit()
+        case = _load_case(db, case_id)
 
     scorer = ScoringAgent()
     training = _active_training(case)
@@ -261,8 +285,16 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         round_row.status = "COMPLETE"
         db.commit()
 
-    # 3. Judicial Reasoning — idempotent
+    # 2b. Precedent Researcher — idempotent, runs before Judicial
     case = _load_case(db, case_id)
+    if case.precedent_analysis is None:
+        ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case)})
+        out = await PrecedentResearcherAgent().run(ctx)
+        case.precedent_analysis = out.raw
+        db.commit()
+        case = _load_case(db, case_id)
+
+    # 3. Judicial Reasoning — idempotent
     if case.ruling is None:
         ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case)})
         j_out = await JudicialAgent().run(ctx)
@@ -277,6 +309,19 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
             override_applied=bool(j.get("override_applied", False)),
         )
         db.add(ruling)
+        db.commit()
+        case = _load_case(db, case_id)
+
+    # 3b. Damages Calculator — idempotent, runs after Ruling
+    if case.damages_estimate is None and case.ruling is not None:
+        ctx = ctx_base.model_copy(update={
+            "extra": {
+                "plaintiff_prob": case.ruling.plaintiff_success_prob,
+                "ruling_summary": case.ruling.text_en or case.ruling.text_ar or "",
+            }
+        })
+        out = await DamagesCalculatorAgent().run(ctx)
+        case.damages_estimate = out.raw
         db.commit()
         case = _load_case(db, case_id)
 
@@ -325,11 +370,13 @@ def _pause_for_trainee(db: Session, case: Case, round_no: int, side: str) -> Hil
 
 async def submit_trainee_argument(
     db: Session,
-    checkpoint_id: uuid.UUID,
+    checkpoint_id: uuid.UUID | str,
     content_en: str | None,
     content_ar: str | None,
     citations: list[str] | None,
 ) -> dict:
+    if isinstance(checkpoint_id, str):
+        checkpoint_id = uuid.UUID(checkpoint_id)
     cp = db.execute(select(HilCheckpoint).where(HilCheckpoint.id == checkpoint_id)).scalar_one()
     if cp.stage != HilStage.TRAINEE_TURN or cp.status != HilStatus.PENDING:
         raise ValueError("Checkpoint is not a pending TRAINEE_TURN")

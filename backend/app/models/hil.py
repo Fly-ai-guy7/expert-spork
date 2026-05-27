@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from app.models.base import JsonCol, UuidCol
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -30,16 +30,16 @@ class HilCheckpoint(Base, TimestampMixin):
     __tablename__ = "hil_checkpoints"
     __table_args__ = (Index("ix_hil_case_status", "case_id", "status"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UuidCol(), primary_key=True, default=uuid.uuid4)
     case_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False
+        UuidCol(), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False
     )
     stage: Mapped[HilStage] = mapped_column(Enum(HilStage, name="hil_stage"), nullable=False)
     status: Mapped[HilStatus] = mapped_column(
         Enum(HilStatus, name="hil_status"), default=HilStatus.PENDING, nullable=False
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    modified_payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    modified_payload: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)
     responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     case: Mapped["Case"] = relationship(back_populates="checkpoints")  # noqa: F821

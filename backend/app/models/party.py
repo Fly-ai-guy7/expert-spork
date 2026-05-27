@@ -2,7 +2,7 @@ import enum
 import uuid
 
 from sqlalchemy import Enum, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from app.models.base import UuidCol
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -23,9 +23,9 @@ class PartyKind(str, enum.Enum):
 class Party(Base, TimestampMixin):
     __tablename__ = "parties"
 
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UuidCol(), primary_key=True, default=uuid.uuid4)
     case_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False
+        UuidCol(), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False
     )
     role: Mapped[PartyRole] = mapped_column(Enum(PartyRole, name="party_role"), nullable=False)
     kind: Mapped[PartyKind] = mapped_column(
