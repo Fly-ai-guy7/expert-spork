@@ -20,7 +20,9 @@
     "defense": "الدفاع",
     "recent_sessions": "الجلسات الأخيرة",
     "grade": "التقدير",
-    "no_sessions": "لا توجد جلسات تدريب بعد."
+    "no_sessions": "لا توجد جلسات تدريب بعد.",
+    "case_label": "قضية",
+    "open": "فتح"
   },
   "new_case": {
     "title": "قضية جديدة",

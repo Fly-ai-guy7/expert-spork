@@ -20,7 +20,9 @@
     "defense": "Defense",
     "recent_sessions": "Recent sessions",
     "grade": "Grade",
-    "no_sessions": "No training sessions yet."
+    "no_sessions": "No training sessions yet.",
+    "case_label": "Case",
+    "open": "Open"
   },
   "new_case": {
     "title": "New Case",

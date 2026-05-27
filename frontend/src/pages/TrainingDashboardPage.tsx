@@ -33,53 +33,57 @@ export function TrainingDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-brand">{t("training.dashboard_title")}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
+        {t("training.dashboard_title")}
+      </h1>
 
-      <section className="bg-white rounded-lg border p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label className="text-sm font-medium">{t("training.area")}</label>
-          <select
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
-          >
-            {AREAS.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
+      <section className="bg-white rounded-lg border p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium">{t("training.area")}</label>
+            <select
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
+            >
+              {AREAS.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">{t("training.difficulty")}</label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(Number(e.target.value))}
+              className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
+            >
+              {[1, 2, 3, 4, 5].map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">{t("training.your_role")}</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as "DEFENSE" | "PROSECUTION")}
+              className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
+            >
+              <option value="DEFENSE">{t("training.defense")}</option>
+              <option value="PROSECUTION">{t("training.prosecution")}</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="text-sm font-medium">{t("training.difficulty")}</label>
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(Number(e.target.value))}
-            className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
-          >
-            {[1, 2, 3, 4, 5].map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-sm font-medium">{t("training.your_role")}</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as "DEFENSE" | "PROSECUTION")}
-            className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="DEFENSE">{t("training.defense")}</option>
-            <option value="PROSECUTION">{t("training.prosecution")}</option>
-          </select>
-        </div>
-        <div className="flex items-end">
+        <div className="mt-6 pt-6 border-t flex justify-end">
           <button
             onClick={start}
             disabled={generate.isPending || runTraining.isPending}
-            className="w-full rounded-md bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="w-full md:w-auto rounded-md bg-brand px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             {generate.isPending || runTraining.isPending
               ? t("actions.loading")
@@ -100,7 +104,8 @@ export function TrainingDashboardPage() {
                 <div>
                   <div className="font-medium">{s.trainee_role}</div>
                   <div className="text-xs text-slate-500">
-                    Difficulty {s.difficulty} · Case {s.case_id.slice(0, 8)}
+                    {t("training.difficulty")} {s.difficulty} · {t("training.case_label")}{" "}
+                    {s.case_id.slice(0, 8)}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -113,7 +118,7 @@ export function TrainingDashboardPage() {
                     href={`/cases/${s.case_id}`}
                     className="text-brand hover:underline text-xs font-medium"
                   >
-                    Open →
+                    {t("training.open")}
                   </a>
                 </div>
               </li>
