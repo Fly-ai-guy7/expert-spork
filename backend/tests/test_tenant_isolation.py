@@ -123,8 +123,8 @@ def test_case_list_is_tenant_scoped(client_and_session):
     client.post("/api/cases", json={"title_en": "B1", "language_primary": "en"},
                 headers=_auth(b_token)).raise_for_status()
 
-    a_list = client.get("/api/cases", headers=_auth(a_token)).json()
-    b_list = client.get("/api/cases", headers=_auth(b_token)).json()
+    a_list = client.get("/api/cases", headers=_auth(a_token)).json()["items"]
+    b_list = client.get("/api/cases", headers=_auth(b_token)).json()["items"]
 
     assert {c["title_en"] for c in a_list} == {"A1", "A2"}
     assert {c["title_en"] for c in b_list} == {"B1"}

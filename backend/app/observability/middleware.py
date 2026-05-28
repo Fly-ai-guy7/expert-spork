@@ -57,3 +57,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         for k, v in _SECURITY_HEADERS.items():
             response.headers.setdefault(k, v)
         return response
+
+
+class ApiVersionMiddleware(BaseHTTPMiddleware):
+    """Flag legacy /api/* (non-v1) responses as deprecated.
+
+    Both /api/v1/... and /api/... resolve to the same handlers; this nudges
+    clients still on the unversioned prefix to migrate (RFC 8594 Deprecation
+    + Link to the successor)."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/api/") and not path.startswith("/api/v1/"):
+            response.headers["Deprecation"] = "true"
+            successor = "/api/v1/" + path[len("/api/"):]
+            response.headers["Link"] = f'<{successor}>; rel="successor-version"'
+        return response

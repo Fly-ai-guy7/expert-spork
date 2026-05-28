@@ -89,6 +89,11 @@ class CaseListItem(BaseModel):
     created_at: datetime
 
 
+class CasePage(BaseModel):
+    items: list[CaseListItem]
+    next_cursor: str | None = None
+
+
 class GenerateCaseIn(BaseModel):
     area_of_law: str = "IP"
     difficulty: int = Field(default=2, ge=1, le=5)

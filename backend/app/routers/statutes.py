@@ -9,7 +9,7 @@ from app.db import get_db
 from app.models import Statute, StatuteArticle, User
 from app.schemas.statute import StatuteDetail, StatuteOut
 
-router = APIRouter(prefix="/api/statutes", tags=["statutes"])
+router = APIRouter(prefix="/statutes", tags=["statutes"])
 
 
 @router.get("", response_model=list[StatuteOut])

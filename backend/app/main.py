@@ -11,7 +11,11 @@ from app.auth.router import router as auth_router
 from app.config import settings
 from app.observability.logging import setup_logging
 from app.observability.metrics import render_latest
-from app.observability.middleware import ObservabilityMiddleware, SecurityHeadersMiddleware
+from app.observability.middleware import (
+    ApiVersionMiddleware,
+    ObservabilityMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.routers import admin, cases, health, hil, statutes, training
 
 logging.basicConfig(level=settings.log_level)
@@ -57,6 +61,7 @@ def create_app() -> FastAPI:
     # Middleware order (outermost first): security headers -> rate limit ->
     # observability -> CORS.
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(ApiVersionMiddleware)
     app.add_middleware(SlowAPIMiddleware)
     app.add_middleware(ObservabilityMiddleware)
     app.add_middleware(
@@ -67,13 +72,16 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Health/metrics live at the root, unversioned.
     app.include_router(health.router)
-    app.include_router(auth_router)
-    app.include_router(cases.router)
-    app.include_router(statutes.router)
-    app.include_router(hil.router)
-    app.include_router(training.router)
-    app.include_router(admin.router)
+
+    # API routers are mounted under the current version (/api/v1) and the
+    # legacy /api prefix (v0). v0 responses carry a Deprecation header set by
+    # ApiVersionMiddleware so clients get nudged to migrate.
+    api_routers = [auth_router, cases.router, statutes.router, hil.router, training.router, admin.router]
+    for r in api_routers:
+        app.include_router(r, prefix="/api/v1")
+        app.include_router(r, prefix="/api")
 
     if settings.metrics_enabled:
 

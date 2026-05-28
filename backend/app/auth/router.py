@@ -14,7 +14,7 @@ from app.auth.security import hash_password, issue_token, verify_password
 from app.db import get_db
 from app.models import Membership, Organization, Role, User
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class RegisterIn(BaseModel):

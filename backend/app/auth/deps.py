@@ -14,7 +14,7 @@ from app.auth.tenant import AuthContext, set_context
 from app.db import bind_tenant, get_db
 from app.models import Membership, Role, User
 
-oauth2 = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+oauth2 = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 def current_user(

@@ -12,7 +12,7 @@ from app.models import Case, CaseStatus, Role, TraineeRole, TrainingSession, Use
 from app.schemas.case import StartTrainingIn
 from app.services import job_service, pdf_service, training_analytics
 
-router = APIRouter(prefix="/api", tags=["training"])
+router = APIRouter(prefix="", tags=["training"])
 
 
 @router.post("/cases/{case_id}/run-training", status_code=202)

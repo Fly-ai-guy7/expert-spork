@@ -12,7 +12,7 @@ from app.schemas.simulation import HilActionIn, TraineeSubmissionIn
 from app.security.sanitize import sanitize_citations, sanitize_text
 from app.services import job_service
 
-router = APIRouter(prefix="/api/hil", tags=["hil"])
+router = APIRouter(prefix="/hil", tags=["hil"])
 
 
 @router.get("/pending")

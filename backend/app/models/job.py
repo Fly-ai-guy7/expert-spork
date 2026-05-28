@@ -23,7 +23,10 @@ class JobStatus(str, enum.Enum):
 
 class Job(Base, TimestampMixin):
     __tablename__ = "jobs"
-    __table_args__ = (Index("ix_jobs_case", "case_id"),)
+    __table_args__ = (
+        Index("ix_jobs_case", "case_id"),
+        Index("ix_jobs_case_idem", "case_id", "idempotency_key"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UuidCol(), primary_key=True, default=uuid.uuid4)
     case_id: Mapped[uuid.UUID] = mapped_column(
@@ -34,5 +37,6 @@ class Job(Base, TimestampMixin):
         Enum(JobStatus, name="job_status"), default=JobStatus.QUEUED, nullable=False
     )
     task_id: Mapped[str | None] = mapped_column(String(155), nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     result: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)

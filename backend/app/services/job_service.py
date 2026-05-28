@@ -7,13 +7,40 @@ from __future__ import annotations
 
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Job, JobKind, JobStatus
 
 
-def enqueue_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None) -> Job:
-    job = Job(case_id=case_id, kind=JobKind.SIMULATION, status=JobStatus.QUEUED)
+def find_job_by_key(db: Session, case_id: uuid.UUID, idempotency_key: str) -> Job | None:
+    return db.execute(
+        select(Job).where(
+            Job.case_id == case_id,
+            Job.idempotency_key == idempotency_key,
+        )
+    ).scalars().first()
+
+
+def enqueue_simulation(
+    db: Session,
+    case_id: uuid.UUID,
+    max_rounds: int | None,
+    idempotency_key: str | None = None,
+) -> Job:
+    # Idempotency: a repeated request with the same key for this case returns
+    # the original job instead of starting a duplicate run.
+    if idempotency_key:
+        existing = find_job_by_key(db, case_id, idempotency_key)
+        if existing:
+            return existing
+
+    job = Job(
+        case_id=case_id,
+        kind=JobKind.SIMULATION,
+        status=JobStatus.QUEUED,
+        idempotency_key=idempotency_key,
+    )
     db.add(job)
     db.commit()
     db.refresh(job)

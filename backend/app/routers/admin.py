@@ -16,7 +16,7 @@ from app.db import get_db
 from app.models import LlmUsage, Organization, Role, User
 from app.services import usage_recorder
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/usage")

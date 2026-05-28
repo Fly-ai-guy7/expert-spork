@@ -1,9 +1,10 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, selectinload
 
+from app import pagination
 from app.auth.deps import current_org_id_dep, current_user
 from app.db import get_db
 from app.disclaimer import disclaimer_block
@@ -21,10 +22,10 @@ from app.models import (
     Ruling,
     User,
 )
-from app.schemas.case import CaseIn, CaseListItem, CaseOut, GenerateCaseIn, RunIn
+from app.schemas.case import CaseIn, CaseListItem, CaseOut, CasePage, GenerateCaseIn, RunIn
 from app.services import case_generator, job_service, pdf_service
 
-router = APIRouter(prefix="/api/cases", tags=["cases"])
+router = APIRouter(prefix="/cases", tags=["cases"])
 
 
 @router.post("", response_model=CaseOut, status_code=201)
@@ -80,22 +81,52 @@ async def generate_case(
     return _load_case(db, case.id)
 
 
-@router.get("", response_model=list[CaseListItem])
+@router.get("", response_model=CasePage)
 def list_cases(
+    limit: int = pagination.DEFAULT_LIMIT,
+    cursor: str | None = None,
     db: Session = Depends(get_db),
     _user: User = Depends(current_user),
-) -> list[Case]:
+) -> CasePage:
     # tenant auto-filter applies here via the SQLAlchemy event hook
-    return db.execute(select(Case).order_by(Case.created_at.desc())).scalars().all()
+    limit = pagination.clamp_limit(limit)
+    stmt = select(Case).order_by(Case.created_at.desc(), Case.id.desc())
+    if cursor:
+        c_ts, c_id = pagination.decode_cursor(cursor)
+        stmt = stmt.where(
+            or_(
+                Case.created_at < c_ts,
+                and_(Case.created_at == c_ts, Case.id < c_id),
+            )
+        )
+    rows = db.execute(stmt.limit(limit + 1)).scalars().all()
+    has_more = len(rows) > limit
+    items = rows[:limit]
+    next_cursor = (
+        pagination.encode_cursor(items[-1].created_at, items[-1].id)
+        if has_more and items
+        else None
+    )
+    return CasePage(
+        items=[CaseListItem.model_validate(c) for c in items],
+        next_cursor=next_cursor,
+    )
 
 
 @router.get("/{case_id}", response_model=CaseOut)
 def get_case(
     case_id: uuid.UUID,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     _user: User = Depends(current_user),
-) -> Case:
-    return _load_case(db, case_id)
+):
+    case = _load_case(db, case_id)
+    etag = _case_etag(case)
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers={"ETag": etag})
+    response.headers["ETag"] = etag
+    return case
 
 
 @router.post("/{case_id}/run")
@@ -104,11 +135,23 @@ def run_case(
     payload: RunIn,
     db: Session = Depends(get_db),
     _user: User = Depends(current_user),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> dict:
     case = _load_case(db, case_id)
+    # An idempotent replay returns the original job regardless of the case's
+    # current status (it may already have completed the first run).
+    if idempotency_key:
+        existing = job_service.find_job_by_key(db, case_id, idempotency_key)
+        if existing:
+            return {
+                "case_id": str(case_id),
+                "job_id": str(existing.id),
+                "status": existing.status.value,
+                "disclaimer": disclaimer_block(),
+            }
     if case.status not in (CaseStatus.DRAFT, CaseStatus.PAUSED_HIL, CaseStatus.FAILED):
         raise HTTPException(409, f"Case in status {case.status}, cannot run")
-    job = job_service.enqueue_simulation(db, case_id, payload.max_rounds)
+    job = job_service.enqueue_simulation(db, case_id, payload.max_rounds, idempotency_key)
     return {
         "case_id": str(case_id),
         "job_id": str(job.id),
@@ -196,6 +239,11 @@ def case_report_pdf(
 
 
 # --- helpers ---
+
+def _case_etag(case: Case) -> str:
+    """Weak validator keyed on the case's last-modified timestamp."""
+    return f'W/"{case.updated_at.isoformat()}"'
+
 
 def _load_case(db: Session, case_id: uuid.UUID) -> Case:
     case = db.execute(

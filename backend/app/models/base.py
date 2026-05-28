@@ -1,9 +1,13 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 __all__ = ["TimestampMixin", "UuidCol", "JsonCol"]
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
 
 
 def _json_type():
@@ -26,9 +30,17 @@ def JsonCol():
 
 
 class TimestampMixin:
+    # Python-side defaults give microsecond precision that round-trips
+    # consistently (SQLite's CURRENT_TIMESTAMP drops sub-second precision,
+    # which breaks keyset-cursor comparisons). server_default stays as a
+    # fallback for raw SQL inserts that bypass the ORM.
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=_utcnow, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=_utcnow,
+        onupdate=_utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
