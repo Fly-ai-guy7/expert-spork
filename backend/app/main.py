@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.auth.router import router as auth_router
 from app.config import settings
 from app.routers import cases, health, hil, statutes, training
 
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router)
+    app.include_router(auth_router)
     app.include_router(cases.router)
     app.include_router(statutes.router)
     app.include_router(hil.router)

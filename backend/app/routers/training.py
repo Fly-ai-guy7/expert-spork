@@ -5,9 +5,10 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.deps import current_user, require_role
 from app.db import SessionLocal, get_db
 from app.i18n import Lang
-from app.models import Case, CaseStatus, TraineeRole, TrainingSession
+from app.models import Case, CaseStatus, Role, TraineeRole, TrainingSession, User
 from app.schemas.case import StartTrainingIn
 from app.services import orchestrator, pdf_service, training_analytics
 
@@ -20,6 +21,7 @@ def run_training(
     payload: StartTrainingIn,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
 ) -> dict:
     case = db.execute(select(Case).where(Case.id == case_id)).scalar_one_or_none()
     if not case:
@@ -30,7 +32,7 @@ def run_training(
         raise HTTPException(400, str(e)) from e
 
     ts = TrainingSession(
-        user_id=payload.user_id,
+        user_id=payload.user_id or user.email,
         case_id=case_id,
         trainee_role=role,
         difficulty=payload.difficulty,
@@ -46,7 +48,11 @@ def run_training(
 
 
 @router.get("/training/{session_id}/coaching")
-def get_coaching(session_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
+def get_coaching(
+    session_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     ts = db.execute(
         select(TrainingSession).where(TrainingSession.id == session_id)
     ).scalar_one_or_none()
@@ -65,7 +71,11 @@ def get_coaching(session_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/training/{session_id}/coaching.pdf")
-def get_coaching_pdf(session_id: uuid.UUID, db: Session = Depends(get_db)) -> Response:
+def get_coaching_pdf(
+    session_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> Response:
     ts = db.execute(
         select(TrainingSession).where(TrainingSession.id == session_id)
     ).scalar_one_or_none()
@@ -99,25 +109,40 @@ def get_coaching_pdf(session_id: uuid.UUID, db: Session = Depends(get_db)) -> Re
 
 
 @router.get("/training/progress")
-def get_progress(user_id: str, db: Session = Depends(get_db)) -> dict:
+def get_progress(
+    user_id: str,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     """Per-trainee learning signal: averages, weakest dimension, trend."""
     return training_analytics.progress(db, user_id)
 
 
 @router.get("/training/cohort")
-def get_cohort(db: Session = Depends(get_db)) -> dict:
+def get_cohort(
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_role(Role.INSTRUCTOR, Role.ADMIN)),
+) -> dict:
     """Instructor view: grade distribution, dimension averages, top missed statutes."""
     return training_analytics.cohort(db)
 
 
 @router.get("/training/recommendations")
-def get_recommendations(user_id: str, db: Session = Depends(get_db)) -> dict:
+def get_recommendations(
+    user_id: str,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     """What this trainee should practice next."""
     return training_analytics.recommendations(db, user_id)
 
 
 @router.get("/training/sessions")
-def list_training_sessions(user_id: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+def list_training_sessions(
+    user_id: str | None = None,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> list[dict]:
     stmt = select(TrainingSession).order_by(TrainingSession.created_at.desc())
     if user_id:
         stmt = stmt.where(TrainingSession.user_id == user_id)

@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.auth.deps import current_org_id_dep, current_user
 from app.db import SessionLocal, get_db
 from app.disclaimer import disclaimer_block
 from app.i18n import Lang
@@ -17,6 +18,7 @@ from app.models import (
     Outcome,
     Party,
     Ruling,
+    User,
 )
 from app.schemas.case import CaseIn, CaseListItem, CaseOut, GenerateCaseIn, RunIn
 from app.services import case_generator, orchestrator, pdf_service
@@ -25,8 +27,15 @@ router = APIRouter(prefix="/api/cases", tags=["cases"])
 
 
 @router.post("", response_model=CaseOut, status_code=201)
-def create_case(payload: CaseIn, db: Session = Depends(get_db)) -> Case:
+def create_case(
+    payload: CaseIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+    org_id: uuid.UUID = Depends(current_org_id_dep),
+) -> Case:
     case = Case(
+        org_id=org_id,
+        created_by_user_id=user.id,
         title_en=payload.title_en,
         title_ar=payload.title_ar,
         summary_en=payload.summary_en,
@@ -34,7 +43,7 @@ def create_case(payload: CaseIn, db: Session = Depends(get_db)) -> Case:
         language_primary=payload.language_primary,
         jurisdiction=payload.jurisdiction,
         area_of_law=payload.area_of_law,
-        created_by=payload.created_by,
+        created_by=payload.created_by or user.email,
     )
     db.add(case)
     db.flush()
@@ -50,24 +59,41 @@ def create_case(payload: CaseIn, db: Session = Depends(get_db)) -> Case:
 
 
 @router.post("/generate", response_model=CaseOut, status_code=201)
-async def generate_case(payload: GenerateCaseIn, db: Session = Depends(get_db)) -> Case:
+async def generate_case(
+    payload: GenerateCaseIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+    org_id: uuid.UUID = Depends(current_org_id_dep),
+) -> Case:
     case = await case_generator.generate_case(
         db,
         area_of_law=payload.area_of_law,
         difficulty=payload.difficulty,
         language=payload.language,
-        user_id=payload.user_id,
+        user_id=payload.user_id or user.email,
     )
+    # Stamp tenancy on the generated case so it shows up in this org's list
+    case.org_id = org_id
+    case.created_by_user_id = user.id
+    db.commit()
     return _load_case(db, case.id)
 
 
 @router.get("", response_model=list[CaseListItem])
-def list_cases(db: Session = Depends(get_db)) -> list[Case]:
+def list_cases(
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> list[Case]:
+    # tenant auto-filter applies here via the SQLAlchemy event hook
     return db.execute(select(Case).order_by(Case.created_at.desc())).scalars().all()
 
 
 @router.get("/{case_id}", response_model=CaseOut)
-def get_case(case_id: uuid.UUID, db: Session = Depends(get_db)) -> Case:
+def get_case(
+    case_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> Case:
     return _load_case(db, case_id)
 
 
@@ -77,6 +103,7 @@ async def run_case(
     payload: RunIn,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
 ) -> dict:
     case = _load_case(db, case_id)
     if case.status not in (CaseStatus.DRAFT, CaseStatus.PAUSED_HIL, CaseStatus.FAILED):
@@ -86,7 +113,11 @@ async def run_case(
 
 
 @router.get("/{case_id}/status")
-def case_status(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
+def case_status(
+    case_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     case = _load_case(db, case_id)
     pending = db.execute(
         select(HilCheckpoint)
@@ -120,7 +151,11 @@ def case_status(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/{case_id}/report")
-def case_report(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
+def case_report(
+    case_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     case = _load_case(db, case_id)
     ruling = db.execute(select(Ruling).where(Ruling.case_id == case_id)).scalar_one_or_none()
     outcome = db.execute(select(Outcome).where(Outcome.case_id == case_id)).scalar_one_or_none()
@@ -128,7 +163,11 @@ def case_report(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/{case_id}/report.pdf")
-def case_report_pdf(case_id: uuid.UUID, db: Session = Depends(get_db)) -> Response:
+def case_report_pdf(
+    case_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> Response:
     case = _load_case(db, case_id)
     ruling = db.execute(select(Ruling).where(Ruling.case_id == case_id)).scalar_one_or_none()
     outcome = db.execute(select(Outcome).where(Outcome.case_id == case_id)).scalar_one_or_none()

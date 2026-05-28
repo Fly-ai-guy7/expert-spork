@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum, Index, Integer, String, Text
+from sqlalchemy import Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -26,9 +26,16 @@ class Case(Base, TimestampMixin):
     __table_args__ = (
         Index("ix_cases_status", "status"),
         Index("ix_cases_source_difficulty", "source", "difficulty"),
+        Index("ix_cases_org", "org_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UuidCol(), primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        UuidCol(), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True
+    )
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UuidCol(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     title_ar: Mapped[str | None] = mapped_column(Text, nullable=True)
     title_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary_ar: Mapped[str | None] = mapped_column(Text, nullable=True)

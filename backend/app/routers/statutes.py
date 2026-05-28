@@ -4,20 +4,28 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.auth.deps import current_user
 from app.db import get_db
-from app.models import Statute, StatuteArticle
+from app.models import Statute, StatuteArticle, User
 from app.schemas.statute import StatuteDetail, StatuteOut
 
 router = APIRouter(prefix="/api/statutes", tags=["statutes"])
 
 
 @router.get("", response_model=list[StatuteOut])
-def list_statutes(db: Session = Depends(get_db)) -> list[Statute]:
+def list_statutes(
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> list[Statute]:
     return db.execute(select(Statute).order_by(Statute.year.desc())).scalars().all()
 
 
 @router.get("/search")
-def search_articles(q: str = Query(min_length=2), db: Session = Depends(get_db)) -> list[dict]:
+def search_articles(
+    q: str = Query(min_length=2),
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> list[dict]:
     pattern = f"%{q}%"
     stmt = (
         select(StatuteArticle, Statute)

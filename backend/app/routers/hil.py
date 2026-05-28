@@ -5,8 +5,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.deps import current_user
 from app.db import SessionLocal, get_db
-from app.models import HilCheckpoint, HilStatus
+from app.models import HilCheckpoint, HilStatus, User
 from app.schemas.simulation import HilActionIn, TraineeSubmissionIn
 from app.services import orchestrator
 
@@ -14,7 +15,11 @@ router = APIRouter(prefix="/api/hil", tags=["hil"])
 
 
 @router.get("/pending")
-def list_pending(case_id: uuid.UUID | None = None, db: Session = Depends(get_db)) -> list[dict]:
+def list_pending(
+    case_id: uuid.UUID | None = None,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> list[dict]:
     stmt = select(HilCheckpoint).where(HilCheckpoint.status == HilStatus.PENDING)
     if case_id:
         stmt = stmt.where(HilCheckpoint.case_id == case_id)
@@ -33,7 +38,12 @@ def list_pending(case_id: uuid.UUID | None = None, db: Session = Depends(get_db)
 
 
 @router.post("/{cp_id}/approve")
-def approve(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db)) -> dict:
+def approve(
+    cp_id: uuid.UUID,
+    payload: HilActionIn,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     cp = _get(db, cp_id)
     cp.status = HilStatus.APPROVED
     cp.notes = payload.notes
@@ -43,7 +53,12 @@ def approve(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db
 
 
 @router.post("/{cp_id}/modify")
-def modify(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db)) -> dict:
+def modify(
+    cp_id: uuid.UUID,
+    payload: HilActionIn,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     cp = _get(db, cp_id)
     cp.status = HilStatus.MODIFIED
     cp.notes = payload.notes
@@ -54,7 +69,12 @@ def modify(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db)
 
 
 @router.post("/{cp_id}/halt")
-def halt(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db)) -> dict:
+def halt(
+    cp_id: uuid.UUID,
+    payload: HilActionIn,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> dict:
     cp = _get(db, cp_id)
     cp.status = HilStatus.HALTED
     cp.notes = payload.notes
@@ -69,6 +89,7 @@ async def submit_trainee(
     payload: TraineeSubmissionIn,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
 ) -> dict:
     cp = _get(db, cp_id)
     background_tasks.add_task(
