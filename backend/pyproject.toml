@@ -25,6 +25,7 @@ dependencies = [
     "structlog>=24.1",
     "prometheus-client>=0.20",
     "sentry-sdk[fastapi]>=2.0",
+    "gunicorn>=22.0",
 ]
 
 [project.optional-dependencies]

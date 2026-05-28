@@ -1,0 +1,121 @@
+# Production topology. Bring up with:
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#
+# Differences from the dev compose:
+# - backend/worker build the `prod` Dockerfile target (gunicorn, non-root,
+#   no source mounts, no --reload)
+# - Caddy is the TLS edge + SPA host (set DOMAIN + ACME_EMAIL)
+# - a backup sidecar dumps Postgres daily to a named volume
+# - secrets come from .env.prod (never commit it); EQUALISE_ENV=production
+#   makes the backend refuse to boot with missing keys
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-equalise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:-equalise}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-equalise} -d ${POSTGRES_DB:-equalise}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.prod
+    environment:
+      EQUALISE_ENV: production
+    # Run migrations + seed corpus, then serve via gunicorn (image CMD).
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.corpus_loader &&
+             gunicorn app.main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 -w 4 --timeout 120 --access-logfile - --error-logfile -"
+    expose:
+      - "8000"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.prod
+    environment:
+      EQUALISE_ENV: production
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+
+  caddy:
+    build:
+      context: .
+      dockerfile: infra/caddy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-equalise}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
+      PGDATABASE: ${POSTGRES_DB:-equalise}
+      RETENTION: ${BACKUP_RETENTION:-14}
+      S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+    volumes:
+      - ./infra/backup/backup.sh:/backup.sh:ro
+      - backups:/backups
+    entrypoint: ["sh", "-c", "while true; do /backup.sh || echo '[backup] failed'; sleep 86400; done"]
+
+volumes:
+  postgres-data:
+  redis-data:
+  caddy-data:
+  caddy-config:
+  backups:

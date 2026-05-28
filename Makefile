@@ -1,4 +1,4 @@
-.PHONY: dev seed test test-backend test-frontend migrate upgrade pdf-sample clean lint format ci-backend ci-frontend pre-commit-install worker
+.PHONY: dev seed test test-backend test-frontend migrate upgrade pdf-sample clean lint format ci-backend ci-frontend pre-commit-install worker prod-build prod-up prod-down prod-logs backup-now
 
 dev:
 	docker-compose up --build
@@ -53,3 +53,20 @@ pre-commit-install:
 
 worker:
 	docker-compose exec backend celery -A app.workers.celery_app worker --loglevel=info
+
+# --- Production (docker-compose.prod.yml + .env.prod) ---
+
+prod-build:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod build
+
+prod-up:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+prod-down:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod down
+
+prod-logs:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f --tail=100
+
+backup-now:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod exec backup /backup.sh

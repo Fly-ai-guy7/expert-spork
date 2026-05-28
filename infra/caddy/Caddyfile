@@ -1,0 +1,31 @@
+# Single edge for EQUALISE Egypt.
+# - Auto-TLS when DOMAIN is a real hostname (Let's Encrypt); internal certs
+#   for localhost.
+# - Reverse-proxies the API surface to the backend; serves the SPA otherwise.
+{
+	email {$ACME_EMAIL:admin@example.com}
+}
+
+{$DOMAIN:localhost} {
+	encode gzip zstd
+
+	# API + ops surface → FastAPI backend
+	@backend path /api/* /health /metrics /docs /docs/* /redoc /openapi.json
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	# Everything else → SPA with client-side routing fallback
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
