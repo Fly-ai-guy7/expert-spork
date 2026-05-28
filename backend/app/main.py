@@ -8,7 +8,7 @@ from app.config import settings
 from app.observability.logging import setup_logging
 from app.observability.metrics import render_latest
 from app.observability.middleware import ObservabilityMiddleware
-from app.routers import cases, health, hil, statutes, training
+from app.routers import admin, cases, health, hil, statutes, training
 
 logging.basicConfig(level=settings.log_level)
 setup_logging(level=settings.log_level, json_logs=settings.log_json)
@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(statutes.router)
     app.include_router(hil.router)
     app.include_router(training.router)
+    app.include_router(admin.router)
 
     if settings.metrics_enabled:
 

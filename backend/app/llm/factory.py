@@ -42,13 +42,19 @@ def _canonical(name: str) -> str:
 
 
 def _usage_callback(provider: str, model: str, usage: dict) -> None:
-    # Imported lazily so the LLM layer doesn't hard-depend on observability.
+    # Imported lazily so the LLM layer doesn't hard-depend on these modules.
     try:
         from app.observability.metrics import record_llm_usage
 
         record_llm_usage(provider, model, usage)
     except Exception:  # noqa: BLE001
         logger.debug("metrics record failed", exc_info=True)
+    try:
+        from app.services.usage_recorder import record
+
+        record(provider, model, usage)
+    except Exception:  # noqa: BLE001
+        logger.debug("usage record failed", exc_info=True)
 
 
 def _failure_callback(provider: str) -> None:

@@ -6,6 +6,7 @@ from app.models.evidence import Evidence, EvidenceKind
 from app.models.fact import Fact
 from app.models.hil import HilCheckpoint, HilStage, HilStatus
 from app.models.job import Job, JobKind, JobStatus
+from app.models.llm_usage import LlmUsage
 from app.models.membership import Membership, Role
 from app.models.organization import Organization
 from app.models.outcome import Outcome
@@ -31,6 +32,7 @@ __all__ = [
     "Job",
     "JobKind",
     "JobStatus",
+    "LlmUsage",
     "Membership",
     "Organization",
     "Outcome",

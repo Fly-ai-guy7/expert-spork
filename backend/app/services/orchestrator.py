@@ -204,6 +204,21 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
 
     _t0 = _time.perf_counter()
     case = _load_case(db, case_id)
+    org_id = case.org_id
+
+    # Cost governance: refuse to start if the org has met its monthly token
+    # budget. Runs without a tenant (org_id is None) are never gated.
+    from app.services import usage_recorder
+
+    if usage_recorder.is_over_budget(db, org_id):
+        case.status = CaseStatus.FAILED
+        db.commit()
+        return {
+            "case_id": str(case_id),
+            "status": "FAILED",
+            "reason": "monthly_token_budget_exceeded",
+        }
+
     case.status = CaseStatus.RUNNING
     db.commit()
 
@@ -302,6 +317,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         if not prosecution_done:
             if training and training.trainee_role == TraineeRole.PROSECUTION:
                 cp = _pause_for_trainee(db, case, round_no, "PROSECUTION")
+                usage_recorder.flush(db, org_id=org_id, case_id=case_id)
                 return {"case_id": str(case_id), "status": "PAUSED_HIL", "checkpoint_id": str(cp.id)}
             ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case), "extra": {"round_no": round_no}})
             arg = await _run_agent(
@@ -314,6 +330,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         if not defense_done:
             if training and training.trainee_role == TraineeRole.DEFENSE:
                 cp = _pause_for_trainee(db, case, round_no, "DEFENSE")
+                usage_recorder.flush(db, org_id=org_id, case_id=case_id)
                 return {"case_id": str(case_id), "status": "PAUSED_HIL", "checkpoint_id": str(cp.id)}
             ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case), "extra": {"round_no": round_no}})
             arg = await _run_agent(
@@ -421,6 +438,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
     case = _load_case(db, case_id)
     case.status = CaseStatus.COMPLETE
     db.commit()
+    usage_recorder.flush(db, org_id=org_id, case_id=case_id)
     _observe_pipeline_duration(_time.perf_counter() - _t0)
     return {"case_id": str(case_id), "status": "COMPLETE"}
 
