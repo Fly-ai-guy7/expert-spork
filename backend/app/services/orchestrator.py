@@ -164,6 +164,8 @@ async def _run_agent(
     out = await agent.run(ctx)
     citation_refs = out.raw.get("citations", []) or []
     article_ids, unverified = verify_citations(db, citation_refs)
+    if unverified:
+        _record_hallucinations(len(unverified))
     arg = Argument(
         case_id=ctx.case_id,
         debate_round_id=debate_round_id,
@@ -181,6 +183,15 @@ async def _run_agent(
     return arg
 
 
+def _record_hallucinations(n: int) -> None:
+    try:
+        from app.observability.metrics import record_hallucinations
+
+        record_hallucinations(n)
+    except Exception:  # noqa: BLE001 — metrics must never break the pipeline
+        pass
+
+
 def _build_prior(case: Case) -> list[dict]:
     return [
         {"agent": a.agent.value, "round": a.round_no, "content": a.content_en or a.content_ar}
@@ -189,6 +200,9 @@ def _build_prior(case: Case) -> list[dict]:
 
 
 async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None = None) -> dict:
+    import time as _time
+
+    _t0 = _time.perf_counter()
     case = _load_case(db, case_id)
     case.status = CaseStatus.RUNNING
     db.commit()
@@ -407,7 +421,17 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
     case = _load_case(db, case_id)
     case.status = CaseStatus.COMPLETE
     db.commit()
+    _observe_pipeline_duration(_time.perf_counter() - _t0)
     return {"case_id": str(case_id), "status": "COMPLETE"}
+
+
+def _observe_pipeline_duration(seconds: float) -> None:
+    try:
+        from app.observability.metrics import PIPELINE_SECONDS
+
+        PIPELINE_SECONDS.observe(seconds)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _pause_for_trainee(db: Session, case: Case, round_no: int, side: str) -> HilCheckpoint:

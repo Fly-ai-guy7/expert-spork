@@ -13,6 +13,8 @@ class DeepSeekClient(LLMClient):
         self._client = AsyncOpenAI(
             api_key=settings.deepseek_api_key,
             base_url="https://api.deepseek.com/v1",
+            timeout=settings.llm_timeout_seconds,
+            max_retries=0,  # retries handled by ResilientLLMClient
         )
 
     async def complete(

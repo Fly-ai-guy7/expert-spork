@@ -10,7 +10,11 @@ class ClaudeClient(LLMClient):
     def __init__(self, model: str, name: str | None = None):
         self.model = model
         self.name = name or model
-        self._client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._client = AsyncAnthropic(
+            api_key=settings.anthropic_api_key,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=0,  # retries handled by ResilientLLMClient
+        )
 
     async def complete(
         self,

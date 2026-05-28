@@ -21,6 +21,10 @@ dependencies = [
     "python-jose[cryptography]>=3.3",
     "email-validator>=2.2",
     "celery[redis]>=5.3",
+    "tenacity>=8.2",
+    "structlog>=24.1",
+    "prometheus-client>=0.20",
+    "sentry-sdk[fastapi]>=2.0",
 ]
 
 [project.optional-dependencies]

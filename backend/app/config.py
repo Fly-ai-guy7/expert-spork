@@ -47,6 +47,16 @@ class Settings(BaseSettings):
     celery_broker_url: str = ""
     celery_result_backend: str = ""
 
+    # LLM resilience
+    llm_max_retries: int = 3
+    llm_timeout_seconds: float = 60.0
+    llm_circuit_threshold: int = 5
+    llm_circuit_cooldown_seconds: float = 60.0
+
+    # Observability
+    log_json: bool = True
+    metrics_enabled: bool = True
+
     @property
     def celery_eager(self) -> bool:
         return not self.celery_broker_url
