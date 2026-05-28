@@ -66,7 +66,23 @@
 {% if ruling %}
 <div class="kv"><span class="k">احتمالية نجاح المدعي:</span> {{ "%.0f"|format(ruling.plaintiff_success_prob or 0) }}%</div>
 <div class="kv"><span class="k">تم تطبيق التجاوز:</span> {{ "نعم" if ruling.override_applied else "لا" }}</div>
+{% if ruling.council_size and ruling.council_size > 1 %}
+<div class="kv"><span class="k">الهيئة القضائية:</span> {{ ruling.council_size }} أعضاء — {{ (ruling.council_vote or {}).get("for_plaintiff", 0) }} للمدعي / {{ (ruling.council_vote or {}).get("for_defendant", 0) }} للمدعى عليه</div>
+{% endif %}
 <p>{{ ruling.text_ar or ruling.text_en or "" }}</p>
+
+{% if ruling.council_verdicts %}
+<h3>أحكام أعضاء الهيئة</h3>
+<ul class="gaps">
+  {% for v in ruling.council_verdicts %}
+  <li><strong>{{ v.member_llm }}</strong> — {{ "لصالح المدعي" if v.verdict == "FOR_PLAINTIFF" else "لصالح المدعى عليه" }} ({{ "%.0f"|format(v.plaintiff_success_prob or 0) }}%){% if v.override_flagged %} · تم رفع تجاوز{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if ruling.dissent_ar %}
+<h3>الرأي المخالف</h3>
+<p>{{ ruling.dissent_ar }}</p>
+{% endif %}
 
 <h3>الثغرات الجوهرية في الأدلة</h3>
 <ul class="gaps">

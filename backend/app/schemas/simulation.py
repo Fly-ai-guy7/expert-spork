@@ -21,3 +21,9 @@ class TraineeSubmissionIn(BaseModel):
 class HilActionIn(BaseModel):
     notes: str | None = None
     modified_payload: dict | None = None
+
+
+class CounselRequestIn(BaseModel):
+    content_en: str | None = None
+    content_ar: str | None = None
+    citations: list[str] = []

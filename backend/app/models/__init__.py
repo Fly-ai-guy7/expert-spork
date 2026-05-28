@@ -1,6 +1,7 @@
 from app.models.argument import Argument
 from app.models.base import TimestampMixin
 from app.models.case import Case, CaseSource, CaseStatus
+from app.models.council import CouncilVerdict
 from app.models.debate import DebateRound
 from app.models.evidence import Evidence, EvidenceKind
 from app.models.fact import Fact
@@ -17,6 +18,7 @@ __all__ = [
     "Case",
     "CaseSource",
     "CaseStatus",
+    "CouncilVerdict",
     "DebateRound",
     "Evidence",
     "EvidenceKind",

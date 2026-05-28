@@ -15,23 +15,24 @@ extraction, statute lookup, and opposing-counsel argumentation.
 
 ```
 case input  →  Evidence Migration LLM  →  Cross-LLM Debate (Prosecution vs Defense)
-                                                ↓
+                                                ↓        ↑ Advisory Counsel (trainee mentor)
                                           Scoring Layer
                                                 ↓
-                                    Judicial Reasoning + Override
+                              Judicial Council (multi-LLM panel) + Override
                                                 ↓
                                   Ruling → Outcome → Coaching Report
 ```
 
-Six agents, each grounded in the Egyptian statute corpus shipped in `corpus/`:
+Agents, each grounded in the Egyptian statute corpus shipped in `corpus/`:
 
 | Agent | LLM | Role |
 |---|---|---|
 | Evidence Migration | Claude Sonnet | Fact extraction, disputed/undisputed tagging |
 | Prosecution | Claude Opus / DeepSeek (alternating) | Plaintiff arguments |
 | Defense | DeepSeek / Claude Opus (alternating) | Defendant arguments |
-| Judicial Reasoning | Claude Opus | Ruling + override authority |
+| Judicial Council | Claude Opus + Claude Sonnet + DeepSeek | Panel of judges → majority ruling + dissents + override |
 | Scoring | Claude Sonnet | Argument quality on 4 dimensions |
+| Advisory Counsel | Claude Sonnet | On-demand private mentor for the trainee at their turn |
 | HIL / Trainee | none | DB-gated checkpoint |
 
 Cross-LLM swap per round means Claude argues Prosecution in round 1, Defense in round 2, etc., to
@@ -75,7 +76,12 @@ curl -X POST http://localhost:8000/api/cases/<CASE_ID>/run-training \
   -H 'Content-Type: application/json' \
   -d '{"trainee_role":"DEFENSE","user_id":"trainee","difficulty":2}'
 
-# Poll status — when TRAINEE_TURN appears, submit:
+# Poll status — when TRAINEE_TURN appears, optionally ask Advisory Counsel for help:
+curl -X POST http://localhost:8000/api/hil/<CP_ID>/counsel \
+  -H 'Content-Type: application/json' \
+  -d '{"content_en":"my draft so far...","citations":["82/2002:115"]}'
+
+# ...then submit your argument:
 curl -X POST http://localhost:8000/api/hil/<CP_ID>/submit-trainee \
   -H 'Content-Type: application/json' \
   -d '{"content_en":"...","citations":["82/2002:115"]}'

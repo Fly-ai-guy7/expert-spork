@@ -88,6 +88,15 @@ def _canned_response(prompt: str) -> dict:
             "rationale_en": "Solid citations, thin on intent.",
             "rationale_ar": "استشهادات جيدة، الدليل ضعيف.",
         }
+    if "strategy_en" in p or "missing_arguments" in p or "advisory counsel" in p:
+        return {
+            "strategy_en": "Lead with the prior-use defense and force the plaintiff to prove bad faith.",
+            "strategy_ar": "ابدأ بدفع الاستخدام السابق.",
+            "suggested_citations": ["82/2002:115"],
+            "strengths": ["clear prior use since 2019"],
+            "risks": ["thin documentary trail"],
+            "missing_arguments": ["limitation period"],
+        }
     if "generate a practice case" in p or "synthetic egyptian" in p or "area_of_law" in p:
         return {
             "title_en": "ALPHA-T v. ALPHATEK",

@@ -194,6 +194,21 @@ def _report_payload(case: Case, ruling: Ruling | None, outcome: Outcome | None) 
             "critical_evidence_gaps": ruling.critical_evidence_gaps if ruling else [],
             "precedent_refs": ruling.precedent_refs if ruling else [],
             "override_applied": ruling.override_applied if ruling else False,
+            "council_size": ruling.council_size if ruling else None,
+            "council_vote": ruling.council_vote if ruling else None,
+            "dissent_en": ruling.dissent_en if ruling else None,
+            "dissent_ar": ruling.dissent_ar if ruling else None,
+            "council_verdicts": [
+                {
+                    "member_llm": v.member_llm,
+                    "verdict": v.verdict,
+                    "plaintiff_success_prob": v.plaintiff_success_prob,
+                    "override_flagged": v.override_flagged,
+                    "reasoning_en": v.reasoning_en,
+                    "reasoning_ar": v.reasoning_ar,
+                }
+                for v in sorted(ruling.council_verdicts, key=lambda x: x.created_at)
+            ] if ruling else [],
         } if ruling else None,
         "outcome": {
             "projected_prob": outcome.projected_prob if outcome else None,
