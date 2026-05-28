@@ -50,3 +50,26 @@ def test_pdf_generation_smoke():
         Lang.EN,
     )
     assert pdf.startswith(b"%PDF")
+
+
+def test_coaching_pdf_smoke():
+    """Render a coaching PDF with realistic per-round + missed-citations data."""
+    from app.services.pdf_service import render_coaching_pdf
+
+    pdf = render_coaching_pdf(
+        {
+            "grade": "B",
+            "total_score": 72.0,
+            "per_round": [
+                {"round_no": 1, "factual": 80, "provable": 70, "unbiased": 75, "legal_law_based": 65, "overall": 72,
+                 "rationale_en": "Solid factual base; thin on statute coverage."},
+            ],
+            "missed_citations": ["82/2002:115"],
+            "evidence_gaps_to_address": ["proof of bad-faith adoption"],
+            "weak_patterns": ["Insufficient statute citations — ground in Egyptian code"],
+            "session": {"id": "s1", "trainee_role": "DEFENSE", "difficulty": 2, "user_id": "alice"},
+            "case": {"id": "c1", "title_en": "Smoke", "title_ar": None, "area_of_law": "IP"},
+        },
+        Lang.EN,
+    )
+    assert pdf.startswith(b"%PDF")
