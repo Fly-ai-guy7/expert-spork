@@ -11,7 +11,21 @@ from sqlalchemy.orm import (
 
 from app.config import settings
 
-engine = create_engine(settings.database_url, pool_pre_ping=True, future=True)
+
+def _engine_kwargs() -> dict:
+    kwargs: dict = {"pool_pre_ping": True, "future": True}
+    # SQLite (tests) doesn't accept pool sizing args; only tune real pools.
+    if not settings.database_url.startswith("sqlite"):
+        kwargs.update(
+            pool_size=10,
+            max_overflow=20,
+            pool_recycle=1800,  # recycle conns every 30 min to dodge stale ones
+            pool_timeout=30,
+        )
+    return kwargs
+
+
+engine = create_engine(settings.database_url, **_engine_kwargs())
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
 
 

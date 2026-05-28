@@ -26,6 +26,7 @@ dependencies = [
     "prometheus-client>=0.20",
     "sentry-sdk[fastapi]>=2.0",
     "gunicorn>=22.0",
+    "slowapi>=0.1.9",
 ]
 
 [project.optional-dependencies]

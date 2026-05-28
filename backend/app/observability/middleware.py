@@ -11,6 +11,7 @@ import uuid
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+from starlette.responses import Response
 
 from app.observability.logging import request_id_var
 from app.observability.metrics import HTTP_REQUEST_SECONDS
@@ -37,3 +38,22 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
                 method=request.method, path=path, status=str(status)
             ).observe(elapsed)
             request_id_var.reset(token)
+
+
+# Static security headers applied to every response. CSP is intentionally
+# strict for the API; the SPA is served by Caddy which sets its own.
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+}
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        for k, v in _SECURITY_HEADERS.items():
+            response.headers.setdefault(k, v)
+        return response

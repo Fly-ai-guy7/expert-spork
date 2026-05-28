@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     log_json: bool = True
     metrics_enabled: bool = True
 
+    # Security
+    rate_limit_enabled: bool = True
+    rate_limit_default: str = "120/minute"
+
     @property
     def celery_eager(self) -> bool:
         return not self.celery_broker_url

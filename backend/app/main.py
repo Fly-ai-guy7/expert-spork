@@ -2,12 +2,16 @@ import logging
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from app.auth.router import router as auth_router
 from app.config import settings
 from app.observability.logging import setup_logging
 from app.observability.metrics import render_latest
-from app.observability.middleware import ObservabilityMiddleware
+from app.observability.middleware import ObservabilityMiddleware, SecurityHeadersMiddleware
 from app.routers import admin, cases, health, hil, statutes, training
 
 logging.basicConfig(level=settings.log_level)
@@ -42,6 +46,18 @@ def create_app() -> FastAPI:
         ),
     )
 
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=[settings.rate_limit_default],
+        enabled=settings.rate_limit_enabled,
+    )
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Middleware order (outermost first): security headers -> rate limit ->
+    # observability -> CORS.
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(SlowAPIMiddleware)
     app.add_middleware(ObservabilityMiddleware)
     app.add_middleware(
         CORSMiddleware,

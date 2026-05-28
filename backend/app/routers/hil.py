@@ -9,6 +9,7 @@ from app.auth.deps import current_user
 from app.db import get_db
 from app.models import HilCheckpoint, HilStatus, User
 from app.schemas.simulation import HilActionIn, TraineeSubmissionIn
+from app.security.sanitize import sanitize_citations, sanitize_text
 from app.services import job_service
 
 router = APIRouter(prefix="/api/hil", tags=["hil"])
@@ -92,7 +93,12 @@ def submit_trainee(
 ) -> dict:
     cp = _get(db, cp_id)
     job = job_service.enqueue_trainee_resume(
-        db, cp.case_id, cp_id, payload.content_en, payload.content_ar, payload.citations
+        db,
+        cp.case_id,
+        cp_id,
+        sanitize_text(payload.content_en),
+        sanitize_text(payload.content_ar),
+        sanitize_citations(payload.citations),
     )
     return {"id": str(cp.id), "job_id": str(job.id), "status": job.status.value}
 

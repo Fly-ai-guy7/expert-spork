@@ -83,6 +83,66 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  cve-scan:
+    name: Dependency CVE scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: pip-audit (backend)
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip install -e ./backend
+          pip-audit --strict --ignore-vuln GHSA-none || true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: npm audit (frontend)
+        working-directory: frontend
+        run: npm audit --omit=dev || true
+
+  migrations:
+    name: Alembic roundtrip (Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: equalise
+          POSTGRES_PASSWORD: equalise
+          POSTGRES_DB: equalise
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U equalise" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+      - name: Apply all migrations, then roundtrip the latest
+        env:
+          DATABASE_URL: postgresql+psycopg://equalise:equalise@localhost:5432/equalise
+        run: |
+          # All upgrades must apply cleanly on real Postgres (catches
+          # JSONB/enum issues SQLite tests miss).
+          alembic upgrade head
+          # The most recent migration must be reversible.
+          alembic downgrade -1
+          alembic upgrade head
+
   docker-build:
     name: Docker build (prod images)
     runs-on: ubuntu-latest
