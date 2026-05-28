@@ -1,16 +1,16 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.deps import current_user, require_role
-from app.db import SessionLocal, get_db
+from app.db import get_db
 from app.i18n import Lang
 from app.models import Case, CaseStatus, Role, TraineeRole, TrainingSession, User
 from app.schemas.case import StartTrainingIn
-from app.services import orchestrator, pdf_service, training_analytics
+from app.services import job_service, pdf_service, training_analytics
 
 router = APIRouter(prefix="/api", tags=["training"])
 
@@ -19,7 +19,6 @@ router = APIRouter(prefix="/api", tags=["training"])
 def run_training(
     case_id: uuid.UUID,
     payload: StartTrainingIn,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ) -> dict:
@@ -43,8 +42,13 @@ def run_training(
     db.commit()
     db.refresh(ts)
 
-    background_tasks.add_task(_run_in_background, case_id, None)
-    return {"training_session_id": str(ts.id), "case_id": str(case_id), "status": "RUNNING"}
+    job = job_service.enqueue_simulation(db, case_id, None)
+    return {
+        "training_session_id": str(ts.id),
+        "case_id": str(case_id),
+        "job_id": str(job.id),
+        "status": job.status.value,
+    }
 
 
 @router.get("/training/{session_id}/coaching")
@@ -158,16 +162,3 @@ def list_training_sessions(
         }
         for s in sessions
     ]
-
-
-def _run_in_background(case_id: uuid.UUID, max_rounds: int | None) -> None:
-    import asyncio
-
-    async def _go():
-        db = SessionLocal()
-        try:
-            await orchestrator.run_simulation(db, case_id, max_rounds)
-        finally:
-            db.close()
-
-    asyncio.run(_go())

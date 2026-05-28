@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
     otel_exporter_otlp_endpoint: str = ""
 
+    # Job queue. When broker is empty, Celery runs in eager (in-process) mode —
+    # used by dev and the test suite. Production sets a real Redis URL.
+    celery_broker_url: str = ""
+    celery_result_backend: str = ""
+
+    @property
+    def celery_eager(self) -> bool:
+        return not self.celery_broker_url
+
     @property
     def is_production(self) -> bool:
         return self.equalise_env.lower() == "production"

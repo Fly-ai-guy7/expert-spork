@@ -1,4 +1,4 @@
-.PHONY: dev seed test test-backend test-frontend migrate upgrade pdf-sample clean lint format ci-backend ci-frontend pre-commit-install
+.PHONY: dev seed test test-backend test-frontend migrate upgrade pdf-sample clean lint format ci-backend ci-frontend pre-commit-install worker
 
 dev:
 	docker-compose up --build
@@ -50,3 +50,6 @@ ci-frontend:
 
 pre-commit-install:
 	pip install pre-commit && pre-commit install
+
+worker:
+	docker-compose exec backend celery -A app.workers.celery_app worker --loglevel=info

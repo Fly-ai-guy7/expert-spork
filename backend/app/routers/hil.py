@@ -1,15 +1,15 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.deps import current_user
-from app.db import SessionLocal, get_db
+from app.db import get_db
 from app.models import HilCheckpoint, HilStatus, User
 from app.schemas.simulation import HilActionIn, TraineeSubmissionIn
-from app.services import orchestrator
+from app.services import job_service
 
 router = APIRouter(prefix="/api/hil", tags=["hil"])
 
@@ -84,18 +84,17 @@ def halt(
 
 
 @router.post("/{cp_id}/submit-trainee", status_code=202)
-async def submit_trainee(
+def submit_trainee(
     cp_id: uuid.UUID,
     payload: TraineeSubmissionIn,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _user: User = Depends(current_user),
 ) -> dict:
     cp = _get(db, cp_id)
-    background_tasks.add_task(
-        _submit_in_background, cp_id, payload.content_en, payload.content_ar, payload.citations
+    job = job_service.enqueue_trainee_resume(
+        db, cp.case_id, cp_id, payload.content_en, payload.content_ar, payload.citations
     )
-    return {"id": str(cp.id), "status": "RESUMING"}
+    return {"id": str(cp.id), "job_id": str(job.id), "status": job.status.value}
 
 
 def _get(db: Session, cp_id: uuid.UUID) -> HilCheckpoint:
@@ -103,18 +102,3 @@ def _get(db: Session, cp_id: uuid.UUID) -> HilCheckpoint:
     if cp is None:
         raise HTTPException(404, "Checkpoint not found")
     return cp
-
-
-def _submit_in_background(
-    cp_id: uuid.UUID, content_en: str | None, content_ar: str | None, citations: list[str]
-) -> None:
-    import asyncio
-
-    async def _go():
-        db = SessionLocal()
-        try:
-            await orchestrator.submit_trainee_argument(db, cp_id, content_en, content_ar, citations)
-        finally:
-            db.close()
-
-    asyncio.run(_go())

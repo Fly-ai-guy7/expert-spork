@@ -1,11 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth.deps import current_org_id_dep, current_user
-from app.db import SessionLocal, get_db
+from app.db import get_db
 from app.disclaimer import disclaimer_block
 from app.i18n import Lang
 from app.models import (
@@ -15,13 +15,14 @@ from app.models import (
     Fact,
     HilCheckpoint,
     HilStatus,
+    Job,
     Outcome,
     Party,
     Ruling,
     User,
 )
 from app.schemas.case import CaseIn, CaseListItem, CaseOut, GenerateCaseIn, RunIn
-from app.services import case_generator, orchestrator, pdf_service
+from app.services import case_generator, job_service, pdf_service
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
@@ -98,18 +99,22 @@ def get_case(
 
 
 @router.post("/{case_id}/run")
-async def run_case(
+def run_case(
     case_id: uuid.UUID,
     payload: RunIn,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _user: User = Depends(current_user),
 ) -> dict:
     case = _load_case(db, case_id)
     if case.status not in (CaseStatus.DRAFT, CaseStatus.PAUSED_HIL, CaseStatus.FAILED):
         raise HTTPException(409, f"Case in status {case.status}, cannot run")
-    background_tasks.add_task(_run_in_background, case_id, payload.max_rounds)
-    return {"case_id": str(case_id), "status": "RUNNING", "disclaimer": disclaimer_block()}
+    job = job_service.enqueue_simulation(db, case_id, payload.max_rounds)
+    return {
+        "case_id": str(case_id),
+        "job_id": str(job.id),
+        "status": job.status.value,
+        "disclaimer": disclaimer_block(),
+    }
 
 
 @router.get("/{case_id}/status")
@@ -124,9 +129,18 @@ def case_status(
         .where(HilCheckpoint.case_id == case_id, HilCheckpoint.status == HilStatus.PENDING)
         .order_by(HilCheckpoint.created_at.desc())
     ).scalars().first()
+    latest_job = db.execute(
+        select(Job).where(Job.case_id == case_id).order_by(Job.created_at.desc())
+    ).scalars().first()
     return {
         "case_id": str(case.id),
         "status": case.status.value,
+        "job": {
+            "id": str(latest_job.id),
+            "kind": latest_job.kind.value,
+            "status": latest_job.status.value,
+            "error": latest_job.error,
+        } if latest_job else None,
         "rounds_complete": len([r for r in case.debate_rounds if r.status == "COMPLETE"]),
         "rounds_total": len(case.debate_rounds),
         "arguments": [
@@ -249,17 +263,3 @@ def _report_payload(case: Case, ruling: Ruling | None, outcome: Outcome | None) 
             "pretrial_resolution_ar": outcome.pretrial_resolution_ar if outcome else None,
         } if outcome else None,
     }
-
-
-def _run_in_background(case_id: uuid.UUID, max_rounds: int | None) -> None:
-    """Background task — gets its own DB session."""
-    import asyncio
-
-    async def _go():
-        db = SessionLocal()
-        try:
-            await orchestrator.run_simulation(db, case_id, max_rounds)
-        finally:
-            db.close()
-
-    asyncio.run(_go())
