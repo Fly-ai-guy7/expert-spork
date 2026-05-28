@@ -2,11 +2,10 @@ import enum
 import uuid
 
 from sqlalchemy import Boolean, Enum, ForeignKey, Text
-from app.models.base import UuidCol
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import TimestampMixin
+from app.models.base import TimestampMixin, UuidCol
 
 
 class EvidenceKind(str, enum.Enum):

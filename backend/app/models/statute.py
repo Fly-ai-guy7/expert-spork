@@ -1,11 +1,10 @@
 import uuid
 
 from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
-from app.models.base import JsonCol, UuidCol
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import TimestampMixin
+from app.models.base import JsonCol, TimestampMixin, UuidCol
 
 
 class Statute(Base, TimestampMixin):

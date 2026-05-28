@@ -16,7 +16,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Case, TrainingSession
+from app.models import TrainingSession
 
 DIMENSIONS = ("factual", "provable", "unbiased", "legal_law_based")
 DIMENSION_LABEL = {

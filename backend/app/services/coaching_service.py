@@ -1,10 +1,10 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Argument, Ruling, Score, TrainingSession
+from app.models import Argument, Ruling, TrainingSession
 from app.models.argument import AgentRole
 
 
@@ -77,7 +77,7 @@ def generate_coaching_report(db: Session, training_session_id: uuid.UUID) -> dic
 
     ts.coaching_report = report
     ts.total_score = total
-    ts.completed_at = datetime.now(timezone.utc)
+    ts.completed_at = datetime.now(UTC)
     db.commit()
     return report
 

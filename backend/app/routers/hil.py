@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
@@ -37,7 +37,7 @@ def approve(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db
     cp = _get(db, cp_id)
     cp.status = HilStatus.APPROVED
     cp.notes = payload.notes
-    cp.responded_at = datetime.now(timezone.utc)
+    cp.responded_at = datetime.now(UTC)
     db.commit()
     return {"id": str(cp.id), "status": cp.status.value}
 
@@ -48,7 +48,7 @@ def modify(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db)
     cp.status = HilStatus.MODIFIED
     cp.notes = payload.notes
     cp.modified_payload = payload.modified_payload
-    cp.responded_at = datetime.now(timezone.utc)
+    cp.responded_at = datetime.now(UTC)
     db.commit()
     return {"id": str(cp.id), "status": cp.status.value}
 
@@ -58,7 +58,7 @@ def halt(cp_id: uuid.UUID, payload: HilActionIn, db: Session = Depends(get_db)) 
     cp = _get(db, cp_id)
     cp.status = HilStatus.HALTED
     cp.notes = payload.notes
-    cp.responded_at = datetime.now(timezone.utc)
+    cp.responded_at = datetime.now(UTC)
     db.commit()
     return {"id": str(cp.id), "status": cp.status.value}
 

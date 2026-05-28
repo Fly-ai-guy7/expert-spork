@@ -1,4 +1,4 @@
-.PHONY: dev seed test test-backend test-frontend migrate upgrade pdf-sample clean lint format
+.PHONY: dev seed test test-backend test-frontend migrate upgrade pdf-sample clean lint format ci-backend ci-frontend pre-commit-install
 
 dev:
 	docker-compose up --build
@@ -39,3 +39,14 @@ lint:
 
 format:
 	docker-compose exec backend ruff format .
+
+# --- No-docker targets (what CI runs) ---
+
+ci-backend:
+	cd backend && ruff check . && pytest -q
+
+ci-frontend:
+	cd frontend && (npm ci || npm install) && npm run lint --if-present && npm test -- --run
+
+pre-commit-install:
+	pip install pre-commit && pre-commit install

@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.db import get_db, SessionLocal
+from app.db import SessionLocal, get_db
 from app.disclaimer import disclaimer_block
 from app.i18n import Lang
 from app.models import (
@@ -16,8 +16,6 @@ from app.models import (
     HilStatus,
     Outcome,
     Party,
-    PartyKind,
-    PartyRole,
     Ruling,
 )
 from app.schemas.case import CaseIn, CaseListItem, CaseOut, GenerateCaseIn, RunIn

@@ -12,14 +12,15 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
+from datetime import UTC
 from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
-from app.db import Base
 from app import models  # noqa: F401 — registers all tables
+from app.db import Base
 from app.models import (
     Case,
     CaseSource,
@@ -172,7 +173,8 @@ def test_scenario_runs_end_to_end(sqlite_db, mock_llm, scenario_key):
 def test_training_mode_pause_and_resume(sqlite_db, mock_llm, trainee_role_str):
     """Trainee plays one side; orchestrator pauses at TRAINEE_TURN, trainee
     submits an argument, pipeline resumes and produces a coaching report."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     from app.models import TraineeRole, TrainingSession
 
     fixture = SCENARIOS["ip"]
@@ -182,7 +184,7 @@ def test_training_mode_pause_and_resume(sqlite_db, mock_llm, trainee_role_str):
         case_id=case_id,
         trainee_role=TraineeRole(trainee_role_str),
         difficulty=2,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
     )
     sqlite_db.add(ts)
     sqlite_db.commit()

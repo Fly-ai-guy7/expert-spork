@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import select
@@ -34,7 +34,7 @@ def run_training(
         case_id=case_id,
         trainee_role=role,
         difficulty=payload.difficulty,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
     )
     db.add(ts)
     case.status = CaseStatus.DRAFT  # ensure it can be started

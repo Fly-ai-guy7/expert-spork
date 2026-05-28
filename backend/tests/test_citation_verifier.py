@@ -9,11 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import json
-import uuid
+from datetime import UTC
 
-import pytest
-
-from app.models import Argument, Case
+from app.models import Case
 from app.models.argument import AgentRole
 from app.services import orchestrator
 from app.services.corpus_service import verify_citations
@@ -123,7 +121,8 @@ def test_hallucinated_citation_is_caught(sqlite_db, mock_llm, monkeypatch):
 
 def test_trainee_submission_hallucinations_caught(sqlite_db, mock_llm):
     """Trainee-submitted citations go through the same verifier."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     from app.models import TraineeRole, TrainingSession
 
     case_id = _create_case_from_fixture(sqlite_db, SCENARIOS["ip"])
@@ -132,7 +131,7 @@ def test_trainee_submission_hallucinations_caught(sqlite_db, mock_llm):
         case_id=case_id,
         trainee_role=TraineeRole.DEFENSE,
         difficulty=2,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
     )
     sqlite_db.add(ts)
     sqlite_db.commit()

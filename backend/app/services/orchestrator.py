@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -462,7 +462,7 @@ async def submit_trainee_argument(
     )
     db.add(trainee_arg)
     cp.status = HilStatus.SUBMITTED
-    cp.responded_at = datetime.now(timezone.utc)
+    cp.responded_at = datetime.now(UTC)
     db.commit()
 
     lang = Lang(case.language_primary)

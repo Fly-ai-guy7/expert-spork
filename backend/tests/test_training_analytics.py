@@ -9,7 +9,7 @@ construct realistic coaching_report payloads directly) and exercises:
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -44,7 +44,7 @@ def _mk_session(
     difficulty: int = 2,
     completed_offset_days: int = 0,
 ) -> TrainingSession:
-    now = datetime.now(timezone.utc) + timedelta(days=completed_offset_days)
+    now = datetime.now(UTC) + timedelta(days=completed_offset_days)
     ts = TrainingSession(
         user_id=user_id,
         case_id=case.id,

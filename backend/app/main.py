@@ -10,6 +10,7 @@ logging.basicConfig(level=settings.log_level)
 
 
 def create_app() -> FastAPI:
+    settings.assert_production_ready()
     app = FastAPI(
         title="EQUALISE Egypt API",
         version="0.1.0",
