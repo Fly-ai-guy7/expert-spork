@@ -32,6 +32,7 @@ class Argument(Base, TimestampMixin):
     content_ar: Mapped[str | None] = mapped_column(Text, nullable=True)
     content_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     citations: Mapped[list | None] = mapped_column(JsonCol(), nullable=True)
+    unverified_citations: Mapped[list | None] = mapped_column(JsonCol(), nullable=True)
     llm_used: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     case: Mapped["Case"] = relationship(back_populates="arguments")  # noqa: F821

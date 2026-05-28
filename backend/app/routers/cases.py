@@ -109,9 +109,13 @@ def case_status(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
                 "content_ar": a.content_ar,
                 "llm_used": a.llm_used,
                 "score_overall": a.score.overall if a.score else None,
+                "unverified_citations": a.unverified_citations or [],
             }
             for a in sorted(case.arguments, key=lambda x: (x.round_no, x.created_at))
         ],
+        "hallucinated_citations_count": sum(
+            len(a.unverified_citations or []) for a in case.arguments
+        ),
         "pending_checkpoint_id": str(pending.id) if pending else None,
         "pending_checkpoint_stage": pending.stage.value if pending else None,
     }
@@ -170,6 +174,7 @@ def _report_payload(case: Case, ruling: Ruling | None, outcome: Outcome | None) 
                 "content_ar": a.content_ar,
                 "llm_used": a.llm_used,
                 "score_overall": a.score.overall if a.score else None,
+                "unverified_citations": a.unverified_citations or [],
             })
     return {
         "disclaimer": disclaimer_block(),
@@ -187,6 +192,11 @@ def _report_payload(case: Case, ruling: Ruling | None, outcome: Outcome | None) 
         "prosecution_arguments": args_by_role["PROSECUTION"],
         "defense_arguments": args_by_role["DEFENSE"],
         "trainee_arguments": args_by_role["TRAINEE"],
+        "hallucinated_citations": [
+            ref
+            for a in case.arguments
+            for ref in (a.unverified_citations or [])
+        ],
         "ruling": {
             "plaintiff_success_prob": ruling.plaintiff_success_prob if ruling else None,
             "text_en": ruling.text_en if ruling else None,

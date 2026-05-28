@@ -41,7 +41,7 @@ from app.models import (
     TrainingSession,
 )
 from app.models.argument import AgentRole
-from app.services.corpus_service import build_statute_block, find_articles_by_short_codes
+from app.services.corpus_service import build_statute_block, verify_citations
 
 logger = logging.getLogger(__name__)
 
@@ -162,8 +162,8 @@ async def _run_agent(
     debate_round_id: uuid.UUID | None,
 ) -> Argument:
     out = await agent.run(ctx)
-    citation_refs = out.raw.get("citations", [])
-    article_ids = find_articles_by_short_codes(db, citation_refs) if citation_refs else []
+    citation_refs = out.raw.get("citations", []) or []
+    article_ids, unverified = verify_citations(db, citation_refs)
     arg = Argument(
         case_id=ctx.case_id,
         debate_round_id=debate_round_id,
@@ -172,6 +172,7 @@ async def _run_agent(
         content_en=out.content_en,
         content_ar=out.content_ar,
         citations=[str(i) for i in article_ids],
+        unverified_citations=unverified or None,
         llm_used=out.llm_used,
     )
     db.add(arg)
@@ -447,7 +448,7 @@ async def submit_trainee_argument(
         db.commit()
         db.refresh(round_row)
 
-    article_ids = find_articles_by_short_codes(db, citations or [])
+    article_ids, unverified = verify_citations(db, citations or [])
     trainee_arg = Argument(
         case_id=case.id,
         debate_round_id=round_row.id,
@@ -456,6 +457,7 @@ async def submit_trainee_argument(
         content_en=content_en,
         content_ar=content_ar,
         citations=[str(i) for i in article_ids],
+        unverified_citations=unverified or None,
         llm_used=None,
     )
     db.add(trainee_arg)

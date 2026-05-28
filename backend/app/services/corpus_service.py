@@ -23,18 +23,29 @@ def build_statute_block(db: Session, short_codes: list[str] | None, lang: Lang) 
     return "\n".join(lines)
 
 
-def find_articles_by_short_codes(
+def verify_citations(
     db: Session, refs: list[str]
-) -> list[uuid.UUID]:
-    """Resolve mixed refs like '82/2002:1' or '82/2002 art. 1' to article UUIDs."""
-    ids: list[uuid.UUID] = []
-    for ref in refs:
-        ref = ref.strip()
+) -> tuple[list[uuid.UUID], list[str]]:
+    """Verify each citation ref against the loaded corpus.
+
+    Returns (valid_article_ids, unverified_refs). A ref is unverified when it
+    is malformed (no parseable short_code+article_number) OR the (short_code,
+    article_number) pair has no row in `statute_articles`. This is the
+    hallucination guardrail — LLMs occasionally cite real-looking law numbers
+    with fake article numbers; this surfaces them per-argument.
+    """
+    valid_ids: list[uuid.UUID] = []
+    unverified: list[str] = []
+    for raw in refs:
+        ref = raw.strip() if isinstance(raw, str) else str(raw).strip()
+        if not ref:
+            continue
         if ":" in ref:
             short, article_no = ref.split(":", 1)
         elif " art. " in ref:
             short, article_no = ref.split(" art. ", 1)
         else:
+            unverified.append(ref)
             continue
         short = short.strip()
         article_no = article_no.strip()
@@ -45,5 +56,15 @@ def find_articles_by_short_codes(
         )
         row = db.execute(stmt).first()
         if row:
-            ids.append(row[0])
-    return ids
+            valid_ids.append(row[0])
+        else:
+            unverified.append(ref)
+    return valid_ids, unverified
+
+
+def find_articles_by_short_codes(
+    db: Session, refs: list[str]
+) -> list[uuid.UUID]:
+    """Backwards-compatible wrapper that drops unverified refs silently."""
+    valid_ids, _ = verify_citations(db, refs)
+    return valid_ids
