@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { useCase, useCaseStatus, useRunCase } from "@/api/hooks";
+import { useCaseEvents } from "@/api/useCaseEvents";
 import { api } from "@/api/client";
 import { PipelineTimeline } from "@/components/PipelineTimeline";
 import { DebateRoundCard } from "@/components/DebateRoundCard";
@@ -11,7 +12,10 @@ export function CaseDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
   const { data: caseData } = useCase(id);
-  const { data: status, refetch } = useCaseStatus(id);
+  // SSE drives freshness; the long-interval poll is a safety net if the
+  // EventSource connection dies and the browser doesn't reconnect.
+  const { data: status, refetch } = useCaseStatus(id, 10_000);
+  useCaseEvents(id);
   const runCase = useRunCase();
 
   if (!caseData || !id) return <p>{t("actions.loading")}</p>;

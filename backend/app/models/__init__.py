@@ -1,4 +1,5 @@
 from app.models.argument import Argument
+from app.models.audit_event import AuditEvent
 from app.models.base import TimestampMixin
 from app.models.case import Case, CaseSource, CaseStatus
 from app.models.debate import DebateRound
@@ -19,6 +20,7 @@ from app.models.user import User
 
 __all__ = [
     "Argument",
+    "AuditEvent",
     "Case",
     "CaseSource",
     "CaseStatus",

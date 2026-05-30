@@ -25,7 +25,7 @@ from app.models import (
     User,
 )
 from app.schemas.case import CaseIn, CaseListItem, CaseOut, CasePage, GenerateCaseIn, RunIn
-from app.services import case_generator, event_bus, job_service, pdf_service
+from app.services import audit, case_generator, event_bus, job_service, pdf_service
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -33,6 +33,7 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 @router.post("", response_model=CaseOut, status_code=201)
 def create_case(
     payload: CaseIn,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
     org_id: uuid.UUID = Depends(current_org_id_dep),
@@ -59,6 +60,11 @@ def create_case(
         db.add(Evidence(case_id=case.id, **e.model_dump()))
     db.commit()
     db.refresh(case)
+    audit.record(
+        db, action="CASE_CREATE", resource_type="case", resource_id=case.id,
+        after={"title_en": case.title_en, "area_of_law": case.area_of_law},
+        actor=user, org_id=org_id, request=request,
+    )
     return _load_case(db, case.id)
 
 
@@ -135,8 +141,9 @@ def get_case(
 def run_case(
     case_id: uuid.UUID,
     payload: RunIn,
+    request: Request,
     db: Session = Depends(get_db),
-    _user: User = Depends(current_user),
+    user: User = Depends(current_user),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> dict:
     case = _load_case(db, case_id)
@@ -154,6 +161,11 @@ def run_case(
     if case.status not in (CaseStatus.DRAFT, CaseStatus.PAUSED_HIL, CaseStatus.FAILED):
         raise HTTPException(409, f"Case in status {case.status}, cannot run")
     job = job_service.enqueue_simulation(db, case_id, payload.max_rounds, idempotency_key)
+    audit.record(
+        db, action="CASE_RUN", resource_type="case", resource_id=case_id,
+        after={"job_id": str(job.id), "max_rounds": payload.max_rounds},
+        actor=user, request=request,
+    )
     return {
         "case_id": str(case_id),
         "job_id": str(job.id),

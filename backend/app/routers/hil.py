@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,7 +10,7 @@ from app.db import get_db
 from app.models import HilCheckpoint, HilStatus, User
 from app.schemas.simulation import HilActionIn, TraineeSubmissionIn
 from app.security.sanitize import sanitize_citations, sanitize_text
-from app.services import job_service
+from app.services import audit, job_service
 
 router = APIRouter(prefix="/hil", tags=["hil"])
 
@@ -88,8 +88,9 @@ def halt(
 def submit_trainee(
     cp_id: uuid.UUID,
     payload: TraineeSubmissionIn,
+    request: Request,
     db: Session = Depends(get_db),
-    _user: User = Depends(current_user),
+    user: User = Depends(current_user),
 ) -> dict:
     cp = _get(db, cp_id)
     job = job_service.enqueue_trainee_resume(
@@ -99,6 +100,12 @@ def submit_trainee(
         sanitize_text(payload.content_en),
         sanitize_text(payload.content_ar),
         sanitize_citations(payload.citations),
+    )
+    audit.record(
+        db, action="TRAINEE_SUBMIT", resource_type="case", resource_id=cp.case_id,
+        after={"checkpoint_id": str(cp_id), "job_id": str(job.id),
+               "citation_count": len(payload.citations or [])},
+        actor=user, request=request,
     )
     return {"id": str(cp.id), "job_id": str(job.id), "status": job.status.value}
 

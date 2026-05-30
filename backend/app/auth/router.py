@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -13,6 +13,7 @@ from app.auth.deps import current_user
 from app.auth.security import hash_password, issue_token, verify_password
 from app.db import get_db
 from app.models import Membership, Organization, Role, User
+from app.services import audit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -49,7 +50,7 @@ def _slugify(name: str) -> str:
 
 
 @router.post("/register", response_model=TokenOut, status_code=201)
-def register(payload: RegisterIn, db: Session = Depends(get_db)) -> TokenOut:
+def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db)) -> TokenOut:
     """Self-serve: create a user + a new org + ADMIN membership in one call."""
     existing = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
     if existing:
@@ -77,6 +78,11 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)) -> TokenOut:
     membership = Membership(user_id=user.id, org_id=org.id, role=Role.ADMIN)
     db.add(membership)
     db.commit()
+
+    audit.record(
+        db, action="USER_REGISTER", resource_type="user", resource_id=user.id,
+        after={"email": user.email, "org_slug": org.slug}, actor=user, org_id=org.id, request=request,
+    )
 
     token = issue_token(user.id, org.id, Role.ADMIN.value)
     return TokenOut(access_token=token, user_id=user.id, org_id=org.id, role=Role.ADMIN.value)
@@ -130,6 +136,7 @@ class SwitchOrgIn(BaseModel):
 @router.post("/switch-org", response_model=TokenOut)
 def switch_org(
     payload: SwitchOrgIn,
+    request: Request,
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> TokenOut:
@@ -138,5 +145,9 @@ def switch_org(
     ).scalar_one_or_none()
     if not m:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Not a member of that organisation")
+    audit.record(
+        db, action="SWITCH_ORG", resource_type="organization", resource_id=m.org_id,
+        actor=user, org_id=m.org_id, request=request,
+    )
     token = issue_token(user.id, m.org_id, m.role.value)
     return TokenOut(access_token=token, user_id=user.id, org_id=m.org_id, role=m.role.value)
