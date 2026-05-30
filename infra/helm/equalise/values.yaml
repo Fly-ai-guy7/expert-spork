@@ -1,0 +1,61 @@
+image:
+  repository: ghcr.io/your-org/equalise-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Sensitive values must come from an external Secret (sealed-secrets, ExternalSecrets,
+# or AWS Secrets Manager). Don't put them in values.yaml.
+existingSecret: equalise-secrets
+# Required keys inside the secret:
+#   ANTHROPIC_API_KEY, DEEPSEEK_API_KEY, JWT_SECRET, DATABASE_URL,
+#   CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SENTRY_DSN (optional)
+
+env:
+  EQUALISE_ENV: production
+  LOG_LEVEL: INFO
+  CORS_ORIGINS: https://equalise.example.com
+  CLAUDE_OPUS_MODEL: claude-opus-4-7
+  CLAUDE_SONNET_MODEL: claude-sonnet-4-6
+  DEEPSEEK_MODEL: deepseek-chat
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_DEFAULT: 120/minute
+
+backend:
+  replicas: 2
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits:   { cpu: 1000m, memory: 1Gi }
+  port: 8000
+  service:
+    type: ClusterIP
+    port: 80
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPU: 70
+
+worker:
+  replicas: 2
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits:   { cpu: 1000m, memory: 1Gi }
+  concurrency: 4
+
+redis:
+  # Set to false in production and point CELERY_BROKER_URL at a managed Redis.
+  enabled: true
+  image: redis:7-alpine
+  persistence:
+    enabled: false
+    storage: 1Gi
+
+migrations:
+  # Runs `alembic upgrade head` as a pre-install + pre-upgrade hook Job.
+  enabled: true
+
+ingress:
+  enabled: false  # Caddy handles edge TLS in our default topology
+  className: nginx
+  host: equalise.example.com
+  tls: true

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: equalise
+description: EQUALISE Egypt — backend API + Celery worker + Redis. Postgres is expected to be managed externally (RDS, Aiven, Supabase) and wired via DATABASE_URL.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: platform

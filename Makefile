@@ -43,10 +43,10 @@ format:
 # --- No-docker targets (what CI runs) ---
 
 ci-backend:
-	cd backend && ruff check . && pytest -q
+	cd backend && ruff check . && pytest -q --cov=app --cov-report=term --cov-fail-under=80
 
 ci-frontend:
-	cd frontend && (npm ci || npm install) && npm run lint --if-present && npm test -- --run
+	cd frontend && (npm ci || npm install) && npm run lint --if-present && npm test -- --run && npm run build && node scripts/check-bundle-size.mjs
 
 pre-commit-install:
 	pip install pre-commit && pre-commit install
