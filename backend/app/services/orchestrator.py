@@ -213,6 +213,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
     if usage_recorder.is_over_budget(db, org_id):
         case.status = CaseStatus.FAILED
         db.commit()
+        _publish_event(case_id, {"status": "failed", "reason": "monthly_token_budget_exceeded"})
         return {
             "case_id": str(case_id),
             "status": "FAILED",
@@ -221,6 +222,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
 
     case.status = CaseStatus.RUNNING
     db.commit()
+    _publish_event(case_id, {"status": "running", "stage": "started"})
 
     lang = Lang(case.language_primary)
     # Persist max_rounds on the case so HIL/trainee resumes honor the original value
@@ -318,6 +320,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
             if training and training.trainee_role == TraineeRole.PROSECUTION:
                 cp = _pause_for_trainee(db, case, round_no, "PROSECUTION")
                 usage_recorder.flush(db, org_id=org_id, case_id=case_id)
+                _publish_event(case_id, {"status": "paused", "side": "PROSECUTION", "round_no": round_no, "checkpoint_id": str(cp.id)})
                 return {"case_id": str(case_id), "status": "PAUSED_HIL", "checkpoint_id": str(cp.id)}
             ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case), "extra": {"round_no": round_no}})
             arg = await _run_agent(
@@ -331,6 +334,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
             if training and training.trainee_role == TraineeRole.DEFENSE:
                 cp = _pause_for_trainee(db, case, round_no, "DEFENSE")
                 usage_recorder.flush(db, org_id=org_id, case_id=case_id)
+                _publish_event(case_id, {"status": "paused", "side": "DEFENSE", "round_no": round_no, "checkpoint_id": str(cp.id)})
                 return {"case_id": str(case_id), "status": "PAUSED_HIL", "checkpoint_id": str(cp.id)}
             ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case), "extra": {"round_no": round_no}})
             arg = await _run_agent(
@@ -440,7 +444,17 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
     db.commit()
     usage_recorder.flush(db, org_id=org_id, case_id=case_id)
     _observe_pipeline_duration(_time.perf_counter() - _t0)
+    _publish_event(case_id, {"status": "complete"})
     return {"case_id": str(case_id), "status": "COMPLETE"}
+
+
+def _publish_event(case_id: uuid.UUID, payload: dict) -> None:
+    try:
+        from app.services import event_bus
+
+        event_bus.publish(case_id, payload)
+    except Exception:  # noqa: BLE001 — events must never break the pipeline
+        pass
 
 
 def _observe_pipeline_duration(seconds: float) -> None:

@@ -1,6 +1,8 @@
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -23,7 +25,7 @@ from app.models import (
     User,
 )
 from app.schemas.case import CaseIn, CaseListItem, CaseOut, CasePage, GenerateCaseIn, RunIn
-from app.services import case_generator, job_service, pdf_service
+from app.services import case_generator, event_bus, job_service, pdf_service
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -235,6 +237,31 @@ def case_report_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="case-{case_id}.pdf"'},
+    )
+
+
+@router.get("/{case_id}/events")
+async def case_events(
+    case_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> StreamingResponse:
+    """Server-Sent Events stream for live pipeline updates.
+
+    Replays the case's recent event history (so a late client doesn't miss
+    anything) then tails new events until the pipeline reaches a terminal
+    state (complete/failed/paused) or the idle timeout elapses.
+    """
+    _load_case(db, case_id)  # 404 + tenant scoping
+
+    async def _gen():
+        async for evt in event_bus.subscribe(case_id, replay=True):
+            yield f"data: {json.dumps(evt)}\n\n"
+
+    return StreamingResponse(
+        _gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
