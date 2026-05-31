@@ -20,7 +20,7 @@ export function CaseDetailPage() {
     (i18n.language === "ar" ? caseData.title_ar : caseData.title_en) ||
     caseData.title_en ||
     caseData.title_ar ||
-    "(untitled)";
+    t("case.untitled");
 
   const traineeTurn =
     status?.pending_checkpoint_id && status.pending_checkpoint_stage === "TRAINEE_TURN";
@@ -28,9 +28,19 @@ export function CaseDetailPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-brand">{title}</h1>
-        <div className="text-xs text-slate-500 mt-1">
-          {caseData.status} · {caseData.source} · {caseData.area_of_law || "—"}
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{title}</h1>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+            {caseData.status}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+            {caseData.source}
+          </span>
+          {caseData.area_of_law && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+              {caseData.area_of_law}
+            </span>
+          )}
         </div>
       </header>
 
@@ -68,7 +78,7 @@ export function CaseDetailPage() {
 
       {(status?.arguments || []).some((a) => a.agent === "TRAINEE") && (
         <section>
-          <h2 className="text-sm font-semibold mb-2">Trainee</h2>
+          <h2 className="text-sm font-semibold mb-2">{t("case.trainee")}</h2>
           {(status?.arguments || [])
             .filter((a) => a.agent === "TRAINEE")
             .map((a) => (

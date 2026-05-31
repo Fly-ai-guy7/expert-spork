@@ -50,7 +50,9 @@
     "submit_argument": "تقديم الدفع",
     "argument_placeholder": "اكتب دفعك هنا، مستشهداً بالتشريعات بصيغة short_code (مثل 82/2002:113)…",
     "download_pdf": "تحميل ملف الحكم PDF",
-    "view_coaching": "عرض تقرير التدريب"
+    "view_coaching": "عرض تقرير التدريب",
+    "trainee": "متدرب",
+    "untitled": "(بدون عنوان)"
   },
   "statutes": {
     "title": "مجموعة التشريعات المصرية",
