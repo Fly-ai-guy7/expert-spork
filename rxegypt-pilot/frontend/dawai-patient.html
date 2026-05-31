@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" id="html">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>دواء · Dawai — Experts Pharmacy</title>
+  <style>
+    :root { --green:#1f7a4d; --green-d:#14573a; --rx:#b3261e; --sand:#f6f4ee; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Tahoma, "Cairo", sans-serif; background:var(--sand); color:#1c2421; }
+    header { background:var(--green); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .wrap { max-width:760px; margin:0 auto; padding:16px; }
+    .tabs { display:flex; gap:8px; margin-bottom:14px; }
+    .tabs button { flex:1; padding:10px; border:0; border-radius:8px; background:#e6ece8; cursor:pointer; }
+    .tabs button.active { background:var(--green); color:#fff; }
+    .disclaimer { background:#fff7e6; border:1px solid #f0d79a; color:#7a5a14; padding:12px; border-radius:8px; font-size:.85rem; margin-bottom:14px; }
+    .disclaimer .ar { direction:rtl; text-align:right; margin-top:6px; }
+    input, select, textarea { width:100%; padding:11px; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .card { background:#fff; border:1px solid #e4e8e4; border-radius:10px; padding:14px; margin:10px 0; }
+    .card h3 { margin:0 0 4px; }
+    .rx-badge { background:var(--rx); color:#fff; font-size:.7rem; padding:2px 7px; border-radius:5px; }
+    .otc-badge { background:#e6f2eb; color:var(--green-d); font-size:.7rem; padding:2px 7px; border-radius:5px; }
+    .meta { font-size:.82rem; color:#6b756e; }
+    .guide-item { padding:12px; border-bottom:1px solid #eef0ed; }
+    .guide-item strong { color:var(--green-d); }
+    .hidden { display:none; }
+    footer { text-align:center; padding:16px; color:#6b756e; font-size:.78rem; }
+    [dir="rtl"] .tabs, [dir="rtl"] header { direction:rtl; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong id="brand">🌿 Dawai · دواء — Experts Pharmacy</strong>
+    <button onclick="toggleLang()" style="background:#fff;color:var(--green-d);border:0;border-radius:7px;padding:7px 12px;cursor:pointer">عربي / EN</button>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs">
+      <button id="tabLookup" class="active" onclick="show('lookup')" data-en="Drug Lookup" data-ar="البحث عن دواء">Drug Lookup</button>
+      <button id="tabGuide" onclick="show('guide')" data-en="Health Information Guide" data-ar="دليل المعلومات الصحية">Health Information Guide</button>
+    </div>
+
+    <!-- Drug lookup -->
+    <section id="lookup">
+      <input id="q" placeholder="Search medicine name / ابحث باسم الدواء" oninput="lookup()" />
+      <div id="results"></div>
+    </section>
+
+    <!-- Health Information Guide (formerly symptom checker) -->
+    <section id="guide" class="hidden">
+      <div class="disclaimer">
+        <strong data-en="Important:" data-ar="هام:">Important:</strong>
+        <span data-en="This guide provides general health information only. It is NOT a diagnosis and does NOT replace a doctor or pharmacist. Always consult a qualified healthcare professional. In an emergency, call 123."
+              data-ar-skip>This guide provides general health information only. It is NOT a diagnosis and does NOT replace a doctor or pharmacist. Always consult a qualified healthcare professional. In an emergency, call 123.</span>
+        <div class="ar">هذا الدليل يقدم معلومات صحية عامة فقط. وهو ليس تشخيصًا ولا يغني عن استشارة الطبيب أو الصيدلي.
+          استشر دائمًا أخصائي رعاية صحية مؤهل. في حالة الطوارئ، اتصل بـ ١٢٣.</div>
+      </div>
+      <select id="topic" onchange="renderGuide()">
+        <option value="">— Choose a topic / اختر موضوعًا —</option>
+        <option value="hydration">Hydration & rehydration / الترطيب</option>
+        <option value="fever">Fever — general info / الحمى</option>
+        <option value="cold">Common cold care / نزلات البرد</option>
+        <option value="stomach">Digestive comfort / الراحة الهضمية</option>
+      </select>
+      <div id="guideBody"></div>
+    </section>
+  </div>
+
+  <footer>
+    🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜<br/>
+    RxEgypt · Dawai Patient App · Experts Pharmacy Hurghada
+  </footer>
+
+  <script src="rxegypt-api.js"></script>
+  <script>
+    let lang = 'en';
+
+    // NOTE (legal): the Health Information Guide gives general, non-diagnostic
+    // info only. No Rx-drug suggestions, no severity ratings — by design.
+    const GUIDE = {
+      hydration: { en: 'Drink fluids regularly. Oral rehydration salts (ORS) can help replace lost fluids and salts. Speak to your pharmacist about suitable products.',
+                   ar: 'اشرب السوائل بانتظام. تساعد أملاح معالجة الجفاف (ORS) على تعويض السوائل والأملاح المفقودة. استشر الصيدلي حول المنتجات المناسبة.' },
+      fever:     { en: 'Rest and fluids are important. A pharmacist can advise on over-the-counter options. See a doctor if a fever persists, is very high, or affects a young child.',
+                   ar: 'الراحة والسوائل مهمة. يمكن للصيدلي تقديم النصيحة حول الخيارات المتاحة دون وصفة. راجع الطبيب إذا استمرت الحمى أو كانت مرتفعة جدًا أو لدى طفل صغير.' },
+      cold:      { en: 'Rest, warm fluids, and saline nasal care may ease symptoms. Ask your pharmacist about suitable products for your situation.',
+                   ar: 'الراحة والسوائل الدافئة والعناية الأنفية بالمحلول الملحي قد تخفف الأعراض. اسأل الصيدلي عن المنتجات المناسبة لحالتك.' },
+      stomach:   { en: 'Eat light, stay hydrated, and rest. If discomfort continues or is severe, consult a doctor or pharmacist.',
+                   ar: 'تناول طعامًا خفيفًا، حافظ على الترطيب، واسترح. إذا استمر الانزعاج أو كان شديدًا، استشر الطبيب أو الصيدلي.' }
+    };
+
+    function toggleLang() {
+      lang = lang === 'en' ? 'ar' : 'en';
+      const html = document.getElementById('html');
+      html.lang = lang;
+      html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-en]').forEach(el => {
+        const t = el.getAttribute('data-' + lang);
+        if (t) el.textContent = t;
+      });
+      renderGuide();
+    }
+
+    function show(which) {
+      document.getElementById('lookup').classList.toggle('hidden', which !== 'lookup');
+      document.getElementById('guide').classList.toggle('hidden', which !== 'guide');
+      document.getElementById('tabLookup').classList.toggle('active', which === 'lookup');
+      document.getElementById('tabGuide').classList.toggle('active', which === 'guide');
+    }
+
+    async function lookup() {
+      const q = document.getElementById('q').value;
+      const drugs = await RxEgyptAPI.searchDrugs(q);
+      document.getElementById('results').innerHTML = drugs.map(d => `
+        <div class="card">
+          <h3>${lang==='ar'?d.name_ar:d.name_en} ${d.rx?'<span class="rx-badge">Rx</span>':'<span class="otc-badge">OTC</span>'}</h3>
+          <div class="meta">${d.generic} · ${d.strength} · ${d.form} · EGP ${d.price_egp.toFixed(2)}</div>
+          ${d.rx ? `<div class="meta" style="color:var(--rx)">${lang==='ar'?'يتطلب وصفة طبية':'Requires a prescription'}</div>` : ''}
+        </div>`).join('') || `<p>${lang==='ar'?'لا توجد نتائج':'No results.'}</p>`;
+    }
+
+    function renderGuide() {
+      const key = document.getElementById('topic').value;
+      const body = document.getElementById('guideBody');
+      if (!key) { body.innerHTML = ''; return; }
+      body.innerHTML = `<div class="card"><div class="guide-item">${GUIDE[key][lang]}</div>
+        <div class="meta" style="margin-top:8px">${lang==='ar'?'معلومات عامة — ليست تشخيصًا.':'General information — not a diagnosis.'}</div></div>`;
+    }
+
+    lookup();
+  </script>
+</body>
+</html>

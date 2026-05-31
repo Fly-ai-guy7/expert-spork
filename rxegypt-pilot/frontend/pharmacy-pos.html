@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Experts Pharmacy — POS</title>
+  <style>
+    :root { --green:#1f7a4d; --green-d:#14573a; --rx:#b3261e; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background:#eef1ee; color:#1c2421; }
+    header { background:var(--green-d); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .grid { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; padding:16px; max-width:1100px; margin:0 auto; }
+    .panel { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .panel h2 { margin:0 0 12px; font-size:1.05rem; color:var(--green-d); }
+    .scan { display:flex; gap:8px; }
+    .scan input { flex:1; padding:12px; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .scan button { padding:12px 16px; background:var(--green); color:#fff; border:0; border-radius:8px; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th,td { text-align:left; padding:8px; border-bottom:1px solid #eef0ed; }
+    .rx-badge { background:var(--rx); color:#fff; font-size:.65rem; padding:2px 6px; border-radius:4px; }
+    .qty { width:60px; padding:6px; border:1px solid #cfd6d1; border-radius:6px; }
+    .total { text-align:right; font-size:1.3rem; font-weight:700; margin-top:12px; }
+    .stock-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .stock-row input { width:80px; padding:6px; border:1px solid #cfd6d1; border-radius:6px; }
+    .low { color:var(--rx); font-weight:600; }
+    footer { text-align:center; padding:14px; color:#6b756e; font-size:.75rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>🌿 Experts Pharmacy Hurghada — Point of Sale</strong>
+    <span id="mode" style="font-size:.8rem; opacity:.8"></span>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Sale — EAN-13 Barcode Scan</h2>
+      <div class="scan">
+        <input id="barcode" placeholder="Scan or type barcode…" onkeydown="if(event.key==='Enter')scan()" autofocus />
+        <button onclick="scan()">Add</button>
+      </div>
+      <table id="saleTable">
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="total">Total: EGP <span id="saleTotal">0.00</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Quick Stock Update</h2>
+      <p style="font-size:.85rem;color:#667">Look up a drug, set new quantity. (Live mode requires pharmacist login.)</p>
+      <div class="scan" style="margin-bottom:12px">
+        <input id="stockSearch" placeholder="Search drug…" onkeydown="if(event.key==='Enter')stockSearch()" />
+        <button onclick="stockSearch()">Find</button>
+      </div>
+      <div id="stockResults"></div>
+    </div>
+  </div>
+
+  <footer>
+    🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜ · RxEgypt POS · Experts Pharmacy Hurghada
+  </footer>
+
+  <script src="rxegypt-api.js"></script>
+  <script>
+    const sale = [];
+    document.getElementById('mode').textContent = 'mode: ' + RxEgyptAPI.mode;
+
+    async function scan() {
+      const input = document.getElementById('barcode');
+      const code = input.value.trim();
+      if (!code) return;
+      try {
+        const d = await RxEgyptAPI.lookupBarcode(code);
+        const ex = sale.find(i => i.id === d.id);
+        if (ex) ex.qty++; else sale.push({ ...d, qty: 1 });
+        renderSale();
+      } catch (e) {
+        alert('Barcode not found: ' + code);
+      }
+      input.value = '';
+      input.focus();
+    }
+
+    function renderSale() {
+      const tb = document.querySelector('#saleTable tbody');
+      tb.innerHTML = sale.map(i => `
+        <tr>
+          <td>${i.name_en} ${i.rx ? '<span class="rx-badge">Rx</span>' : ''}<br><small>${i.name_ar}</small></td>
+          <td><input class="qty" type="number" min="1" value="${i.qty}" onchange="setQty(${i.id}, this.value)"></td>
+          <td>${i.price_egp.toFixed(2)}</td>
+          <td>${(i.price_egp * i.qty).toFixed(2)}</td>
+        </tr>`).join('');
+      document.getElementById('saleTotal').textContent =
+        sale.reduce((s,i)=>s+i.price_egp*i.qty,0).toFixed(2);
+    }
+    function setQty(id, v) {
+      const it = sale.find(i => i.id === id);
+      it.qty = Math.max(1, parseInt(v) || 1);
+      renderSale();
+    }
+
+    async function stockSearch() {
+      const q = document.getElementById('stockSearch').value;
+      const drugs = await RxEgyptAPI.searchDrugs(q);
+      document.getElementById('stockResults').innerHTML = drugs.map(d => `
+        <div class="stock-row">
+          <span style="flex:1">${d.name_en} ${d.rx ? '<span class="rx-badge">Rx</span>':''}</span>
+          <input type="number" min="0" placeholder="qty" id="stk-${d.id}">
+          <button onclick="setStock(${d.id})">Set</button>
+        </div>`).join('') || '<p>No results.</p>';
+    }
+    function setStock(id) {
+      const qty = document.getElementById('stk-' + id).value;
+      // In live mode this calls PUT /inventory/{id}; demo just acknowledges.
+      alert(`Stock for drug #${id} set to ${qty} (demo). Live mode posts to /inventory/${id}.`);
+    }
+  </script>
+</body>
+</html>

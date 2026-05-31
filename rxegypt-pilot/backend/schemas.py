@@ -1,0 +1,107 @@
+"""Pydantic request/response schemas."""
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from models import OrderStatus
+
+
+class DrugOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name_en: str
+    name_ar: str
+    generic: str
+    form: str
+    strength: str
+    category: str
+    manufacturer: str
+    barcode: str
+    price_egp: float
+    rx: bool
+
+
+class InventoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    drug_id: int
+    quantity: int
+    reorder_level: int
+    updated_at: datetime
+
+
+class InventoryUpdate(BaseModel):
+    quantity: int = Field(ge=0)
+    reorder_level: int | None = Field(default=None, ge=0)
+
+
+# --- Auth ---
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+    full_name: str = ""
+    phone: str = ""
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: EmailStr
+    full_name: str
+    phone: str
+    role: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+# --- Consent (PDPL) ---
+class ConsentIn(BaseModel):
+    purpose: str = "health_data_processing"
+    granted: bool
+    policy_version: str = "1.0"
+    detail: str = ""
+
+
+class ConsentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    purpose: str
+    granted: bool
+    policy_version: str
+    created_at: datetime
+
+
+# --- Orders ---
+class OrderItemIn(BaseModel):
+    drug_id: int
+    quantity: int = Field(ge=1)
+
+
+class OrderItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    drug_id: int
+    quantity: int
+    unit_price_egp: float
+
+
+class OrderCreate(BaseModel):
+    items: list[OrderItemIn]
+
+
+class OrderOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: OrderStatus
+    requires_rx_verification: bool
+    rx_verified_by: str
+    total_egp: float
+    items: list[OrderItemOut]
+    created_at: datetime

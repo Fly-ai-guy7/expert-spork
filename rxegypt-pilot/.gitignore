@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+backend/venv/
+backend/.venv/
+.env
+*.sqlite3
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

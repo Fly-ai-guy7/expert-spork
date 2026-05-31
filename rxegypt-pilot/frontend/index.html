@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Experts Pharmacy Hurghada — RxEgypt</title>
+  <style>
+    :root { --green:#1f7a4d; --green-d:#14573a; --sand:#f6f4ee; --ink:#1c2421; --rx:#b3261e; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background:var(--sand); color:var(--ink); }
+    header { background:var(--green); color:#fff; padding:18px 20px; display:flex; align-items:center; gap:12px; }
+    header .logo { font-size:1.4rem; font-weight:700; }
+    header .sub { opacity:.85; font-size:.85rem; }
+    .wrap { max-width:880px; margin:0 auto; padding:20px; }
+    .search { display:flex; gap:8px; margin:16px 0; }
+    .search input { flex:1; padding:12px; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .search button { padding:12px 18px; background:var(--green); color:#fff; border:0; border-radius:8px; cursor:pointer; }
+    .card { background:#fff; border:1px solid #e4e8e4; border-radius:10px; padding:14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .card h3 { margin:0 0 4px; font-size:1.05rem; }
+    .card .ar { color:#5b665f; font-size:.95rem; }
+    .meta { font-size:.8rem; color:#6b756e; margin-top:4px; }
+    .rx-badge { background:var(--rx); color:#fff; font-size:.7rem; padding:3px 7px; border-radius:5px; font-weight:600; }
+    .otc-badge { background:#e6f2eb; color:var(--green-d); font-size:.7rem; padding:3px 7px; border-radius:5px; font-weight:600; }
+    .add { padding:8px 14px; border:0; border-radius:7px; background:var(--green); color:#fff; cursor:pointer; white-space:nowrap; }
+    .price { font-weight:700; }
+    .cart-bar { position:sticky; bottom:0; background:#fff; border-top:2px solid var(--green); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .cart-bar button { padding:12px 20px; background:var(--green); color:#fff; border:0; border-radius:8px; cursor:pointer; }
+    /* Modal */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+    .overlay.show { display:flex; }
+    .modal { background:#fff; border-radius:12px; max-width:560px; width:100%; padding:24px; max-height:90vh; overflow:auto; }
+    .modal h2 { margin-top:0; color:var(--green-d); }
+    .modal .ar { direction:rtl; text-align:right; color:#3a443e; }
+    .modal label { display:flex; gap:10px; align-items:flex-start; margin:14px 0; font-size:.92rem; }
+    .modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+    .btn { padding:10px 18px; border-radius:8px; border:0; cursor:pointer; }
+    .btn-primary { background:var(--green); color:#fff; }
+    .btn-primary:disabled { background:#9bb6a8; cursor:not-allowed; }
+    .btn-ghost { background:#eef1ee; }
+    .rx-note { background:#fdecea; border:1px solid #f3c1bd; color:#8a1d16; padding:12px; border-radius:8px; font-size:.9rem; }
+    footer { text-align:center; padding:18px; color:#6b756e; font-size:.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="logo">🌿 Experts Pharmacy — Hurghada</div>
+      <div class="sub">صيدلية إكسبرتس — الأحياء، الغردقة | Powered by RxEgypt</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="search">
+      <input id="q" placeholder="Search medicines / ابحث عن دواء" />
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <div class="cart-bar">
+    <div>Cart: <strong id="cartCount">0</strong> · <span class="price">EGP <span id="cartTotal">0.00</span></span></div>
+    <button onclick="checkout()">Checkout</button>
+  </div>
+
+  <!-- PDPL consent modal (Law 151/2020) -->
+  <div class="overlay" id="consentOverlay">
+    <div class="modal">
+      <h2>Data Privacy Consent</h2>
+      <p>Experts Pharmacy uses RxEgypt to process your order and health information.
+         Under Egypt's Personal Data Protection Law (151/2020), we need your explicit consent.</p>
+      <p class="ar"><strong>الموافقة على خصوصية البيانات:</strong> تستخدم صيدلية إكسبرتس منصة RxEgypt
+         لمعالجة طلبك ومعلوماتك الصحية. بموجب قانون حماية البيانات الشخصية المصري (١٥١/٢٠٢٠)،
+         نحتاج إلى موافقتك الصريحة.</p>
+      <label><input type="checkbox" id="cConsent" onchange="updateConsentBtn()" />
+        I consent to the processing of my personal and health data for fulfilling my pharmacy order.
+        / أوافق على معالجة بياناتي الشخصية والصحية لتنفيذ طلبي.</label>
+      <div class="actions">
+        <button class="btn btn-primary" id="consentBtn" disabled onclick="grantConsent()">Agree &amp; Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rx verification modal -->
+  <div class="overlay" id="rxOverlay">
+    <div class="modal">
+      <h2>Prescription Required</h2>
+      <div class="rx-note">
+        Your cart contains prescription-only medicine. By Egyptian law, a pharmacist must verify
+        your prescription before this order can be prepared.<br/><br/>
+        <span class="ar">تحتوي سلتك على دواء يُصرف بوصفة طبية. وفقًا للقانون المصري، يجب على الصيدلي
+        التحقق من وصفتك قبل تجهيز الطلب.</span>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="closeRx()">Back</button>
+        <button class="btn btn-primary" onclick="sendWhatsApp()">Confirm via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜<br/>
+    RxEgypt Pilot · Experts Pharmacy Hurghada
+  </footer>
+
+  <script src="rxegypt-api.js"></script>
+  <script>
+    const cart = [];
+    let lastOrder = null;
+    const PHARMACY_WA = '20100000000'; // replace with live pharmacy WhatsApp
+
+    function hasConsent() { return localStorage.getItem('rxegypt_consent') === 'granted'; }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!hasConsent()) document.getElementById('consentOverlay').classList.add('show');
+      doSearch();
+    });
+
+    function updateConsentBtn() {
+      document.getElementById('consentBtn').disabled = !document.getElementById('cConsent').checked;
+    }
+    async function grantConsent() {
+      await RxEgyptAPI.recordConsent({ purpose: 'health_data_processing', granted: true, policy_version: '1.0' });
+      localStorage.setItem('rxegypt_consent', 'granted');
+      document.getElementById('consentOverlay').classList.remove('show');
+    }
+
+    async function doSearch() {
+      const q = document.getElementById('q').value;
+      const drugs = await RxEgyptAPI.searchDrugs(q);
+      const el = document.getElementById('results');
+      el.innerHTML = drugs.map(d => `
+        <div class="card">
+          <div>
+            <h3>${d.name_en} ${d.rx ? '<span class="rx-badge">Rx</span>' : '<span class="otc-badge">OTC</span>'}</h3>
+            <div class="ar">${d.name_ar}</div>
+            <div class="meta">${d.generic} · ${d.strength} · ${d.form}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="price">EGP ${d.price_egp.toFixed(2)}</div>
+            <button class="add" onclick='addToCart(${JSON.stringify(d)})'>Add</button>
+          </div>
+        </div>`).join('') || '<p>No results.</p>';
+    }
+
+    function addToCart(d) {
+      const existing = cart.find(i => i.drug_id === d.id);
+      if (existing) existing.quantity++;
+      else cart.push({ drug_id: d.id, quantity: 1, price: d.price_egp, rx: d.rx, name: d.name_en });
+      renderCart();
+    }
+    function renderCart() {
+      document.getElementById('cartCount').textContent = cart.reduce((s,i)=>s+i.quantity,0);
+      document.getElementById('cartTotal').textContent = cart.reduce((s,i)=>s+i.price*i.quantity,0).toFixed(2);
+    }
+
+    async function checkout() {
+      if (!cart.length) return alert('Your cart is empty.');
+      if (!hasConsent()) { document.getElementById('consentOverlay').classList.add('show'); return; }
+      lastOrder = await RxEgyptAPI.createOrder(cart.map(i => ({ drug_id: i.drug_id, quantity: i.quantity })));
+      if (lastOrder.requires_rx_verification) {
+        document.getElementById('rxOverlay').classList.add('show');
+      } else {
+        alert(`Order #${lastOrder.id} placed. Total EGP ${lastOrder.total_egp.toFixed(2)}. Proceed to payment.`);
+      }
+    }
+    function closeRx() { document.getElementById('rxOverlay').classList.remove('show'); }
+    function sendWhatsApp() {
+      const msg = encodeURIComponent(
+        `Experts Pharmacy — Rx confirmation\nOrder #${lastOrder.id}\nTotal: EGP ${lastOrder.total_egp.toFixed(2)}\nPlease confirm my prescription.`
+      );
+      window.open(`https://wa.me/${PHARMACY_WA}?text=${msg}`, '_blank');
+      closeRx();
+    }
+  </script>
+</body>
+</html>
