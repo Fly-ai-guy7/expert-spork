@@ -6,9 +6,34 @@
   "disclaimer": "AI Simulation Only — Not Legal Advice — All outputs require review by a qualified Egyptian lawyer.",
   "nav": {
     "training": "Training",
+    "dashboard": "Dashboard",
     "cases": "Cases",
     "new_case": "New Case",
     "statutes": "Statutes"
+  },
+  "dashboard": {
+    "title": "Case Intelligence Dashboard",
+    "open_cases": "Open cases",
+    "pending_checkpoints": "Pending checkpoints",
+    "awaiting_trainee": "Awaiting trainee",
+    "overdue": "Overdue",
+    "risk_heatmap": "Risk heatmap",
+    "area": "Area of law",
+    "difficulty_short": "D",
+    "avg_risk": "Avg risk",
+    "no_risk": "No scored outcomes yet.",
+    "overdue_items": "Overdue items",
+    "over_hours": "over {{hours}}h",
+    "no_overdue": "Nothing overdue. 🎉",
+    "recent_activity": "Recent activity",
+    "no_activity": "No activity yet.",
+    "empty": "No dashboard data.",
+    "activity": {
+      "case_created": "Case created",
+      "ruling_issued": "Ruling issued",
+      "training_completed": "Training completed",
+      "checkpoint_responded": "Checkpoint responded"
+    }
   },
   "training": {
     "dashboard_title": "Training Dashboard",

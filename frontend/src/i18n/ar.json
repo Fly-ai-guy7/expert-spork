@@ -6,9 +6,34 @@
   "disclaimer": "محاكاة بالذكاء الاصطناعي فقط — ليست استشارة قانونية — جميع النتائج تتطلب مراجعة من محامٍ مصري مؤهل.",
   "nav": {
     "training": "التدريب",
+    "dashboard": "لوحة المعلومات",
     "cases": "القضايا",
     "new_case": "قضية جديدة",
     "statutes": "التشريعات"
+  },
+  "dashboard": {
+    "title": "لوحة معلومات القضايا",
+    "open_cases": "قضايا مفتوحة",
+    "pending_checkpoints": "نقاط مراجعة معلقة",
+    "awaiting_trainee": "بانتظار المتدرب",
+    "overdue": "متأخرة",
+    "risk_heatmap": "خريطة المخاطر الحرارية",
+    "area": "مجال القانون",
+    "difficulty_short": "ص",
+    "avg_risk": "متوسط المخاطر",
+    "no_risk": "لا توجد نتائج مقيَّمة بعد.",
+    "overdue_items": "العناصر المتأخرة",
+    "over_hours": "أكثر من {{hours}} ساعة",
+    "no_overdue": "لا يوجد متأخرات. 🎉",
+    "recent_activity": "النشاط الأخير",
+    "no_activity": "لا يوجد نشاط بعد.",
+    "empty": "لا توجد بيانات للوحة المعلومات.",
+    "activity": {
+      "case_created": "تم إنشاء قضية",
+      "ruling_issued": "صدر حكم",
+      "training_completed": "اكتمل التدريب",
+      "checkpoint_responded": "تمت الاستجابة لنقطة المراجعة"
+    }
   },
   "training": {
     "dashboard_title": "لوحة التدريب",

@@ -19,6 +19,9 @@ export function Nav() {
           <NavLink to="/" className={linkClass} end>
             {t("nav.training")}
           </NavLink>
+          <NavLink to="/dashboard" className={linkClass}>
+            {t("nav.dashboard")}
+          </NavLink>
           <NavLink to="/cases" className={linkClass}>
             {t("nav.cases")}
           </NavLink>
