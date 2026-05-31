@@ -36,8 +36,11 @@ rxegypt-pilot/
 │   │   ├── orders.py          ← orders + Rx gating + WhatsApp verify
 │   │   └── auth.py            ← JWT auth + PDPL consent
 │   ├── seed/
-│   │   ├── drugs_egypt.json   ← Egyptian drug seed data (sample)
+│   │   ├── drugs_egypt.json   ← Egyptian drug seed data (~80 sample)
 │   │   └── seed_drugs.py      ← idempotent seeder
+│   ├── migrations/            ← Alembic (env.py + versions/)
+│   ├── alembic.ini
+│   ├── tests/                 ← pytest suite (isolated SQLite)
 │   └── requirements.txt
 ├── legal/
 │   ├── RXEG-LEGAL-001.md      ← Egyptian regulatory compliance framework
@@ -59,11 +62,12 @@ rxegypt-pilot/
 | API client (rxegypt-api.js) | ✅ Scaffolded | Demo mode + live backend switching |
 | FastAPI backend | ✅ Scaffolded | JWT auth, drugs, inventory, orders |
 | SQLAlchemy models | ✅ Scaffolded | Drug, Inventory, User, Order, OrderItem, Consent |
-| Drug seed DB | 🟡 Sample (30 drugs) | Expand toward 250 from EDA/market data |
+| Drug seed DB | 🟡 Sample (80 drugs) | Expand toward 250 from EDA/market data |
 | Rx drug gating | ✅ Scaffolded | Order → pending_rx_verification + WhatsApp + pharmacist verify |
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
 | Paymob payment integration | 🟡 Hooks only | Needs live Paymob credentials |
-| Alembic migrations | 🔴 Not started | Currently `create_all` via seeder; add Alembic before prod |
+| Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
+| Backend tests (pytest) | ✅ Scaffolded | 20 tests: Rx gating, consent, auth, inventory, drugs |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
 
@@ -86,12 +90,11 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 
 ## PRIORITY NEXT TASKS
 
-1. Add **Alembic** migrations (replace `create_all`).
-2. **Paymob live integration** — swap hooks for live credentials + test.
-3. Expand **drug seed DB** toward 250 entries (verify Rx scheduling vs EDA).
-4. **Consent withdrawal + data deletion** (PDPL data-subject rights).
-5. Backend **tests** (pytest) for Rx gating + consent flows.
-6. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
+1. **Paymob live integration** — swap hooks for live credentials + test.
+2. Expand **drug seed DB** from 80 toward 250 entries (verify Rx scheduling vs EDA).
+3. **Consent withdrawal + data deletion** (PDPL data-subject rights).
+4. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
+5. Frontend **live-mode wiring** for pharmacist inventory writes (POS → PUT /inventory).
 
 ---
 

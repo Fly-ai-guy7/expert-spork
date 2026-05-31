@@ -34,11 +34,19 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # then edit values
 
-# Seed the drug DB (creates tables + 30 sample Egyptian drugs)
+# Create the schema (Alembic), then seed ~80 sample Egyptian drugs
+alembic upgrade head
 python seed/seed_drugs.py
 
 uvicorn main:app --reload --port 8000
 # → http://localhost:8000/docs
+```
+
+### Tests
+
+```bash
+cd backend
+pytest -q          # runs on an isolated in-memory SQLite DB
 ```
 
 ## Quick start — frontend

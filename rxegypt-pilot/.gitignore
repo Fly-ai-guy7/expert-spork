@@ -5,6 +5,8 @@ backend/venv/
 backend/.venv/
 .env
 *.sqlite3
+*.db
+.pytest_cache/
 
 # OS / editor
 .DS_Store
