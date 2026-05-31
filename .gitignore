@@ -45,3 +45,4 @@ postgres-data/
 # Frontend build
 frontend/dist/
 frontend/.turbo/
+*.tsbuildinfo

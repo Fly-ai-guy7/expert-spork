@@ -5,8 +5,17 @@ import type {
   CaseDetail,
   CaseStatusPayload,
   CaseSummary,
+  Dashboard,
   TrainingSessionRecord,
 } from "./types";
+
+export function useDashboard() {
+  return useQuery({
+    queryKey: ["dashboard"],
+    queryFn: async () => (await api.get<Dashboard>("/api/dashboard")).data,
+    refetchInterval: 30_000,
+  });
+}
 
 export function useCases() {
   return useQuery({

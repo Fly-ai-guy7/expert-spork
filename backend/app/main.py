@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import cases, health, hil, statutes, training
+from app.routers import cases, dashboard, health, hil, statutes, training
 
 logging.basicConfig(level=settings.log_level)
 
@@ -29,6 +29,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router)
+    app.include_router(dashboard.router)
     app.include_router(cases.router)
     app.include_router(statutes.router)
     app.include_router(hil.router)

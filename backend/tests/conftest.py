@@ -117,6 +117,31 @@ def mock_llm(monkeypatch):
     return client
 
 
+@pytest.fixture
+def db_session():
+    """A DB session bound to a transaction that is rolled back after the test.
+
+    Requires a reachable Postgres (skipped otherwise via ``pg_required``). Tables
+    are created if missing; all writes are rolled back so tests stay isolated.
+    Note: ``autoflush`` is off (matching ``SessionLocal``), so seed rows must be
+    explicitly ``flush()``-ed before exercising read paths.
+    """
+    from sqlalchemy.orm import Session as SASession
+
+    from app.db import Base, engine
+
+    connection = engine.connect()
+    trans = connection.begin()
+    Base.metadata.create_all(bind=connection, checkfirst=True)
+    session = SASession(bind=connection, autoflush=False, expire_on_commit=False)
+    try:
+        yield session
+    finally:
+        session.close()
+        trans.rollback()
+        connection.close()
+
+
 def _can_connect_pg() -> bool:
     if not os.environ.get("DATABASE_URL"):
         return False

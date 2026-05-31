@@ -79,3 +79,58 @@ export interface TrainingSessionRecord {
   started_at: string | null;
   completed_at: string | null;
 }
+
+export interface OverdueItem {
+  checkpoint_id: string;
+  case_id: string;
+  title_en: string | null;
+  title_ar: string | null;
+  stage: string;
+  created_at: string;
+  age_hours: number;
+}
+
+export interface RiskCell {
+  area_of_law: string;
+  difficulty: number | null;
+  avg_risk: number;
+  count: number;
+}
+
+export type ActivityType =
+  | "case_created"
+  | "ruling_issued"
+  | "training_completed"
+  | "checkpoint_responded";
+
+export interface ActivityEvent {
+  type: ActivityType;
+  at: string;
+  case_id: string;
+  title_en: string | null;
+  title_ar: string | null;
+  detail: string;
+}
+
+export interface Dashboard {
+  generated_at: string;
+  open_issues: {
+    by_status: Record<CaseStatus, number>;
+    open_total: number;
+    pending_checkpoints: number;
+    awaiting_trainee: number;
+  };
+  overdue: {
+    threshold_hours: number;
+    count: number;
+    items: OverdueItem[];
+  };
+  risk_heatmap: {
+    areas: string[];
+    difficulties: number[];
+    cells: RiskCell[];
+    max_risk: number;
+  };
+  recent_activity: ActivityEvent[];
+  disclaimer: { en: string; ar: string };
+}
