@@ -83,6 +83,10 @@ Items at or below reorder level. → `InventoryOut[]`
 
 ## Orders — `/orders`
 
+### `GET /orders`  *(auth)*
+The current user's orders, newest first.
+→ `200` `OrderOut[]`
+
 ### `POST /orders`  *(auth)*
 Create an order.
 ```json
@@ -132,7 +136,8 @@ Create a payment intent for a `pending_payment` order.
 - `400` if the order is not awaiting payment.
 
 ### `POST /orders/{order_id}/fulfill`  *(pharmacist/admin)*
-Mark a `paid` order as `fulfilled` (handed to the patient).
+Mark a `paid` order as `fulfilled` (handed to the patient). Decrements stock for
+each item that has an inventory record (clamped at 0).
 → `200` `OrderOut` · `400` if not paid
 
 ---

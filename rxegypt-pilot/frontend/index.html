@@ -127,6 +127,17 @@
     </div>
   </div>
 
+  <!-- My orders modal -->
+  <div class="overlay" id="ordersOverlay">
+    <div class="modal">
+      <h2>My orders</h2>
+      <div id="ordersList" style="font-size:.92rem">Loading…</div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="closeOrders()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Payment modal -->
   <div class="overlay" id="payOverlay">
     <div class="modal">
@@ -178,10 +189,43 @@
       if (RxEgyptAPI.mode === 'demo' || !RxEgyptAPI.isAuthenticated()) { el.innerHTML = ''; return; }
       try {
         const u = await RxEgyptAPI.me();
-        el.innerHTML = `Signed in as ${u.email} <button onclick="openPrivacy()">Privacy</button> <button onclick="doLogout()">Logout</button>`;
+        el.innerHTML = `Signed in as ${u.email} <button onclick="openOrders()">My orders</button> <button onclick="openPrivacy()">Privacy</button> <button onclick="doLogout()">Logout</button>`;
       } catch { el.innerHTML = ''; }
     }
     function doLogout() { RxEgyptAPI.logout(); refreshAuthStatus(); }
+
+    // --- my orders ---
+    const STATUS_LABEL = {
+      pending_rx_verification: '⏳ Awaiting pharmacist Rx check',
+      pending_payment: '💳 Awaiting payment',
+      paid: '✅ Paid — being prepared',
+      fulfilled: '📦 Ready / collected',
+      cancelled: '✖ Cancelled',
+      cart: 'Cart',
+    };
+    async function openOrders() {
+      const list = document.getElementById('ordersList');
+      list.innerHTML = 'Loading…';
+      document.getElementById('ordersOverlay').classList.add('show');
+      try {
+        const orders = await RxEgyptAPI.myOrders();
+        if (!orders.length) { list.innerHTML = '<p>No orders yet.</p>'; return; }
+        list.innerHTML = orders.map(o => `
+          <div style="border:1px solid #e4e8e4;border-radius:8px;padding:10px;margin-bottom:8px">
+            <strong>Order #${o.id}</strong> · EGP ${o.total_egp.toFixed(2)}
+            <div class="meta">${STATUS_LABEL[o.status] || o.status}</div>
+            ${o.status === 'pending_payment'
+              ? `<button class="btn btn-primary" style="margin-top:8px;padding:7px 14px" onclick="payFromList(${o.id}, ${o.total_egp})">Pay now</button>`
+              : ''}
+          </div>`).join('');
+      } catch (e) { list.innerHTML = `<p>Could not load orders: ${e.message || 'error'}</p>`; }
+    }
+    function closeOrders() { document.getElementById('ordersOverlay').classList.remove('show'); }
+    function payFromList(id, total) {
+      lastOrder = { id, total_egp: total, requires_rx_verification: false };
+      closeOrders();
+      openPay(lastOrder);
+    }
 
     // --- PDPL data-subject rights ---
     function openPrivacy() {

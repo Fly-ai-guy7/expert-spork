@@ -72,3 +72,22 @@ def test_empty_order_rejected(client, patient_token):
     r = client.post("/api/v1/orders", json={"items": []},
                     headers=_auth(patient_token))
     assert r.status_code == 400
+
+
+def test_my_orders_lists_only_own_orders(client, patient_token):
+    client.post("/api/v1/orders", json={"items": [{"drug_id": 1, "quantity": 1}]},
+                headers=_auth(patient_token))
+    client.post("/api/v1/orders", json={"items": [{"drug_id": 2, "quantity": 1}]},
+                headers=_auth(patient_token))
+    mine = client.get("/api/v1/orders", headers=_auth(patient_token)).json()
+    assert len(mine) == 2
+
+    # a second patient sees none of the first's orders
+    client.post("/api/v1/auth/register", json={"email": "other@x.com", "password": "password1"})
+    other = client.post("/api/v1/auth/login",
+                        data={"username": "other@x.com", "password": "password1"}).json()["access_token"]
+    assert client.get("/api/v1/orders", headers=_auth(other)).json() == []
+
+
+def test_my_orders_requires_auth(client):
+    assert client.get("/api/v1/orders").status_code == 401

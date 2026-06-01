@@ -77,12 +77,13 @@ rxegypt-pilot/
 | Drug catalogue | ✅ Real data (24,868) | CC0 Egyptian dataset, SHA-256 verified; Rx flags heuristic — confirm vs EDA |
 | Rx drug gating | ✅ Scaffolded | Order → pending_rx_verification + WhatsApp + pharmacist verify |
 | Pharmacist Rx queue | ✅ Live-wired | `GET /orders/pending-rx` + approve/reject in POS UI |
-| Fulfillment queue | ✅ Live-wired | `GET /orders/paid` + mark-fulfilled in POS UI |
+| Fulfillment queue | ✅ Live-wired | `GET /orders/paid` + mark-fulfilled in POS UI; decrements stock |
+| Patient order history | ✅ Live-wired | `GET /orders` + "My orders" modal (pay pending orders later) |
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
 | PDPL data-subject rights | ✅ Built | Consent status/withdraw, data export, account erasure (anonymize) |
 | Payment flow (Paymob) | 🟡 Built + mock | Full lifecycle (pay→paid→fulfilled) works in MOCK mode; live 3-step + HMAC callback wired, needs credentials to test |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 50 tests: Rx + fulfillment queues, payments lifecycle, consent + PDPL rights, auth, inventory, drugs, Rx derivation |
+| Backend tests (pytest) | ✅ Scaffolded | 54 tests: Rx + fulfillment queues, payments + stock decrement, my-orders, PDPL rights, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |

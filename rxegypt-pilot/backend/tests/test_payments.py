@@ -90,6 +90,27 @@ def test_pharmacist_fulfills_paid_order_removed_from_queue(client, patient_token
     ]
 
 
+def test_fulfillment_decrements_inventory(client, patient_token, pharmacist_token):
+    before = client.get("/api/v1/inventory/1").json()["quantity"]  # seeded at 50
+    order = client.post("/api/v1/orders", json={"items": [{"drug_id": 1, "quantity": 3}]},
+                        headers=_auth(patient_token)).json()
+    client.post("/api/v1/payments/mock/confirm",
+                json={"order_id": order["id"], "success": True}, headers=_auth(patient_token))
+    client.post(f"/api/v1/orders/{order['id']}/fulfill", headers=_auth(pharmacist_token))
+    after = client.get("/api/v1/inventory/1").json()["quantity"]
+    assert after == before - 3
+
+
+def test_fulfillment_stock_clamped_at_zero(client, patient_token, pharmacist_token):
+    # order more than is in stock (seeded 50) → stock floors at 0, doesn't go negative
+    order = client.post("/api/v1/orders", json={"items": [{"drug_id": 1, "quantity": 999}]},
+                        headers=_auth(patient_token)).json()
+    client.post("/api/v1/payments/mock/confirm",
+                json={"order_id": order["id"], "success": True}, headers=_auth(patient_token))
+    client.post(f"/api/v1/orders/{order['id']}/fulfill", headers=_auth(pharmacist_token))
+    assert client.get("/api/v1/inventory/1").json()["quantity"] == 0
+
+
 def test_patient_cannot_fulfill(client, patient_token):
     order = _otc_order(client, patient_token)
     client.post("/api/v1/payments/mock/confirm",

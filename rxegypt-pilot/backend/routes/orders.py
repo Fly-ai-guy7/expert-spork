@@ -14,12 +14,25 @@ from sqlalchemy.orm import Session
 import payments
 from config import get_settings
 from db import get_db
-from models import Drug, Order, OrderItem, OrderStatus, User
+from models import Drug, Inventory, Order, OrderItem, OrderStatus, User
 from schemas import OrderCreate, OrderOut, RxQueueItem, RxQueueOrder
 from security import get_current_user, require_pharmacist
 
 settings = get_settings()
 router = APIRouter(prefix="/orders", tags=["orders"])
+
+
+@router.get("", response_model=list[OrderOut])
+def my_orders(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """The current user's orders, newest first."""
+    return list(
+        db.scalars(
+            select(Order).where(Order.user_id == user.id).order_by(Order.created_at.desc())
+        )
+    )
 
 
 @router.post("", response_model=OrderOut, status_code=201)
@@ -213,6 +226,15 @@ def fulfill_order(
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status != OrderStatus.PAID:
         raise HTTPException(status_code=400, detail="Order is not paid")
+
+    # Decrement stock for items that have an inventory record (clamped at 0).
+    # Drugs without an inventory row are left untracked — the catalogue is far
+    # larger than what the pharmacy stocks.
+    for item in order.items:
+        inv = db.scalar(select(Inventory).where(Inventory.drug_id == item.drug_id))
+        if inv is not None:
+            inv.quantity = max(0, inv.quantity - item.quantity)
+
     order.status = OrderStatus.FULFILLED
     db.commit()
     db.refresh(order)

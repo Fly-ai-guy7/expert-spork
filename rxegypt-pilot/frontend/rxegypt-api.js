@@ -170,6 +170,11 @@
       return http(`/orders/${orderId}`);
     },
 
+    async myOrders() {
+      if (DEMO) return _lastDemoOrder ? [_lastDemoOrder] : [];
+      return http('/orders');
+    },
+
     async rxWhatsApp(orderId) {
       if (DEMO) {
         const o = _lastDemoOrder || { id: orderId, total_egp: 0 };
