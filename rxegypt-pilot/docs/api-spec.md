@@ -119,6 +119,33 @@ Pharmacist verifies the prescription; order → `pending_payment`.
 Pharmacist declines the prescription; order → `cancelled`.
 → `200` `OrderOut` · `400` if not awaiting verification
 
+### `POST /orders/{order_id}/pay`  *(auth — owner)*
+Create a payment intent for a `pending_payment` order.
+→ `200` `{ order_id, amount_egp, reference, checkout_url, mock }`
+- **Live (Paymob configured):** `checkout_url` is the Paymob iframe URL; `mock=false`.
+- **Mock (no `PAYMOB_API_KEY`):** `mock=true`; settle via `POST /payments/mock/confirm`.
+- `400` if the order is not awaiting payment.
+
+### `POST /orders/{order_id}/fulfill`  *(pharmacist/admin)*
+Mark a `paid` order as `fulfilled` (handed to the patient).
+→ `200` `OrderOut` · `400` if not paid
+
+---
+
+## Payments — `/payments`
+
+### `POST /payments/mock/confirm`  *(auth — owner; MOCK mode only)*
+Simulates the gateway settling a payment (no Paymob credentials configured).
+```json
+{ "order_id": 12, "success": true }
+```
+→ `200` `OrderOut` (status `paid` on success) · `404` in live mode
+
+### `POST /payments/paymob/callback`  *(no auth; LIVE mode only)*
+Paymob processed-transaction server callback. HMAC-SHA512 verified via the
+`hmac` query param; on success the referenced order → `paid`.
+→ `200` `{ received, order_id, status }` · `400` invalid HMAC · `404` in mock mode
+
 ---
 
 ## Order status lifecycle

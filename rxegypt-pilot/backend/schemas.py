@@ -145,3 +145,10 @@ class DataExport(BaseModel):
     user: UserOut
     consents: list[ConsentOut]
     orders: list[OrderOut]
+
+
+class MockPayment(BaseModel):
+    """Simulated gateway result, used only when payments run in MOCK mode."""
+
+    order_id: int
+    success: bool = True

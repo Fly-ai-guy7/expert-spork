@@ -36,11 +36,13 @@ rxegypt-pilot/
 │   ├── models.py              ← SQLAlchemy models
 │   ├── schemas.py             ← Pydantic schemas
 │   ├── security.py            ← JWT + password hashing + role guards
+│   ├── payments.py            ← Paymob client + MOCK mode + HMAC verify
 │   ├── routes/
 │   │   ├── drugs.py           ← drug search + barcode lookup
 │   │   ├── inventory.py       ← stock management
-│   │   ├── orders.py          ← orders + Rx gating + WhatsApp verify
-│   │   └── auth.py            ← JWT auth + PDPL consent
+│   │   ├── orders.py          ← orders + Rx gating/queue + pay + fulfill
+│   │   ├── payments.py        ← mock confirm + Paymob callback
+│   │   └── auth.py            ← JWT auth + PDPL consent + data-subject rights
 │   ├── seed/
 │   │   ├── build_egyptian_drugs.py ← fetch+verify CC0 dataset → seed (provenance)
 │   │   ├── drugs_egypt.json.gz ← 24,868-drug Egyptian catalogue (built)
@@ -77,9 +79,9 @@ rxegypt-pilot/
 | Pharmacist Rx queue | ✅ Live-wired | `GET /orders/pending-rx` + approve/reject in POS UI |
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
 | PDPL data-subject rights | ✅ Built | Consent status/withdraw, data export, account erasure (anonymize) |
-| Paymob payment integration | 🟡 Hooks only | Needs live Paymob credentials |
+| Payment flow (Paymob) | 🟡 Built + mock | Full lifecycle (pay→paid→fulfilled) works in MOCK mode; live 3-step + HMAC callback wired, needs credentials to test |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 38 tests: Rx gating + queue, consent + PDPL rights, auth, inventory, drugs, Rx derivation |
+| Backend tests (pytest) | ✅ Scaffolded | 47 tests: Rx gating + queue, payments lifecycle, consent + PDPL rights, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
@@ -105,9 +107,10 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 
 1. **Reconcile Rx flags vs EDA register** — the imported `rx` values are
    heuristic (see seed/PROVENANCE.md); confirm scheduling before go-live.
-2. **Paymob live integration** — swap hooks for live credentials + test.
+2. **Paymob go-live** — set credentials, validate the HMAC callback against live
+   Paymob docs, and register the callback URL.
 3. Add **barcodes + strengths** to the catalogue (EDA/GS1) — source lacks both.
-4. **Payment flow** — wire `pending_payment` → Paymob (live creds) → `paid`/`fulfilled`.
+4. **Fulfillment UI** — POS view of paid orders to mark fulfilled.
 5. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
 
 ---

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import payments
 from config import get_settings
 from db import get_db
 from models import Drug, Order, OrderItem, OrderStatus, User
@@ -161,6 +162,49 @@ def verify_rx(
         )
     order.rx_verified_by = pharmacist.email
     order.status = OrderStatus.PENDING_PAYMENT
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+@router.post("/{order_id}/pay")
+def pay_order(
+    order_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a payment intent for an order awaiting payment.
+
+    Returns a checkout URL (live Paymob) or a `mock` flag (no credentials),
+    in which case the client uses `POST /payments/mock/confirm` to settle.
+    """
+    order = db.get(Order, order_id)
+    if not order or (order.user_id != user.id and user.role == "patient"):
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != OrderStatus.PENDING_PAYMENT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Order is not payable (status: {order.status.value})",
+        )
+    intent = payments.create_payment(order, user)
+    order.paymob_order_id = intent["reference"]
+    db.commit()
+    return {"order_id": order.id, "amount_egp": order.total_egp, **intent}
+
+
+@router.post("/{order_id}/fulfill", response_model=OrderOut)
+def fulfill_order(
+    order_id: int,
+    _: User = Depends(require_pharmacist),
+    db: Session = Depends(get_db),
+):
+    """Pharmacist marks a paid order as fulfilled (handed to the patient)."""
+    order = db.get(Order, order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != OrderStatus.PAID:
+        raise HTTPException(status_code=400, detail="Order is not paid")
+    order.status = OrderStatus.FULFILLED
     db.commit()
     db.refresh(order)
     return order

@@ -25,9 +25,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 8
 
-    # Paymob (Egypt) — hooks only until live credentials are provided
+    # Paymob (Egypt) — when paymob_api_key is empty, payments run in MOCK mode.
     paymob_api_key: str = ""
     paymob_integration_id: str = ""
+    paymob_iframe_id: str = ""
+    paymob_hmac_secret: str = ""
 
     # Rx gating — pharmacist WhatsApp verification line
     pharmacist_whatsapp: str = "+20"

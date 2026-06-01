@@ -206,6 +206,26 @@
       return http(`/orders/${orderId}/reject-rx`, { method: 'POST' });
     },
 
+    // --- payments ---
+    async payOrder(orderId) {
+      if (DEMO) {
+        const o = _lastDemoOrder || { id: orderId, total_egp: 0 };
+        return { order_id: orderId, amount_egp: o.total_egp, reference: `mock-${orderId}`, checkout_url: '', mock: true };
+      }
+      return http(`/orders/${orderId}/pay`, { method: 'POST' });
+    },
+
+    // MOCK mode only: simulate the gateway settling the payment.
+    async mockConfirmPayment(orderId, success = true) {
+      if (DEMO) { if (_lastDemoOrder && _lastDemoOrder.id === orderId && success) _lastDemoOrder.status = 'paid'; return { id: orderId, status: success ? 'paid' : 'pending_payment', items: [], total_egp: 0 }; }
+      return http('/payments/mock/confirm', { method: 'POST', body: JSON.stringify({ order_id: orderId, success }) });
+    },
+
+    async fulfillOrder(orderId) {
+      if (DEMO) { if (_lastDemoOrder && _lastDemoOrder.id === orderId) _lastDemoOrder.status = 'fulfilled'; return { id: orderId, status: 'fulfilled', items: [], total_egp: 0 }; }
+      return http(`/orders/${orderId}/fulfill`, { method: 'POST' });
+    },
+
     // --- consent + PDPL data-subject rights ---
     async recordConsent(payload) {
       if (DEMO) return { id: 1, ...payload, created_at: new Date().toISOString() };

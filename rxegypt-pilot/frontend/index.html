@@ -127,6 +127,19 @@
     </div>
   </div>
 
+  <!-- Payment modal -->
+  <div class="overlay" id="payOverlay">
+    <div class="modal">
+      <h2>Payment</h2>
+      <p id="payInfo" style="font-size:.95rem"></p>
+      <div class="err" id="payMsg" style="color:var(--green-d)"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="closePay()">Later</button>
+        <button class="btn btn-primary" id="payBtn" onclick="payNow()">Pay now</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PDPL data-subject rights -->
   <div class="overlay" id="privacyOverlay">
     <div class="modal">
@@ -360,7 +373,36 @@
       if (lastOrder.requires_rx_verification) {
         document.getElementById('rxOverlay').classList.add('show');
       } else {
-        alert(`Order #${lastOrder.id} placed. Total EGP ${lastOrder.total_egp.toFixed(2)}. Proceed to payment.`);
+        openPay(lastOrder);
+      }
+    }
+
+    // --- payment ---
+    function openPay(order) {
+      document.getElementById('payInfo').textContent =
+        `Order #${order.id} · Total EGP ${order.total_egp.toFixed(2)}`;
+      document.getElementById('payMsg').textContent = '';
+      document.getElementById('payBtn').disabled = false;
+      document.getElementById('payOverlay').classList.add('show');
+    }
+    function closePay() { document.getElementById('payOverlay').classList.remove('show'); }
+    async function payNow() {
+      const msg = document.getElementById('payMsg');
+      try {
+        const intent = await RxEgyptAPI.payOrder(lastOrder.id);
+        if (intent.mock) {
+          // No live gateway configured — settle via the mock confirm flow.
+          await RxEgyptAPI.mockConfirmPayment(lastOrder.id, true);
+          document.getElementById('payBtn').disabled = true;
+          msg.textContent = `✓ Payment successful (test mode). Order #${lastOrder.id} is paid.`;
+        } else if (intent.checkout_url) {
+          window.open(intent.checkout_url, '_blank');
+          msg.textContent = 'Complete your payment in the new tab. Your order updates once the bank confirms.';
+        } else {
+          msg.textContent = 'Payment could not be started — please try again.';
+        }
+      } catch (e) {
+        msg.textContent = 'Payment failed: ' + (e.message || 'error');
       }
     }
 
