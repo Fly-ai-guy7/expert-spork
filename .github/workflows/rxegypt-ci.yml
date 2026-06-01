@@ -1,0 +1,58 @@
+name: RxEgypt CI
+
+# Scoped to the RxEgypt pilot only — does not run for changes elsewhere in the repo.
+on:
+  push:
+    paths:
+      - "rxegypt-pilot/**"
+      - ".github/workflows/rxegypt-ci.yml"
+  pull_request:
+    paths:
+      - "rxegypt-pilot/**"
+      - ".github/workflows/rxegypt-ci.yml"
+
+defaults:
+  run:
+    working-directory: rxegypt-pilot
+
+jobs:
+  backend:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: rxegypt-pilot/backend/requirements.txt
+      - name: Install dependencies
+        working-directory: rxegypt-pilot/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run migrations (SQLite) + seed
+        working-directory: rxegypt-pilot/backend
+        env:
+          DATABASE_URL: sqlite+pysqlite:///./ci.db
+          SECRET_KEY: ci-secret
+        run: |
+          alembic upgrade head
+          python seed/seed_drugs.py
+      - name: pytest
+        working-directory: rxegypt-pilot/backend
+        run: python -m pytest -q
+
+  frontend:
+    name: Frontend JS syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Syntax-check client scripts
+        working-directory: rxegypt-pilot/frontend
+        run: |
+          node --check rxegypt-api.js
+          node --check config.js
