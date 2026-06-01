@@ -104,6 +104,11 @@ with patient contact and drug names.
                  "quantity": 1, "unit_price_egp": 96.0 } ] } ]
 ```
 
+### `GET /orders/paid`  *(pharmacist/admin)*
+Fulfillment queue: `paid` orders awaiting hand-off, oldest first (same
+`RxQueueOrder[]` shape as the Rx queue).
+→ `200` `RxQueueOrder[]`
+
 ### `GET /orders/{order_id}`  *(auth — owner or staff)*
 → `OrderOut` | `404`
 

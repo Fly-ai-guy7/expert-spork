@@ -101,6 +101,14 @@
       <p style="font-size:.85rem;color:#667">Orders awaiting prescription verification. Approve to release for payment, or reject to cancel.</p>
       <div id="rxQueue"><p style="color:#889">Sign in as a pharmacist to load the queue.</p></div>
     </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Fulfillment Queue
+        <button onclick="loadFulfillQueue()" style="float:right;padding:6px 12px;background:var(--green);color:#fff;border:0;border-radius:6px;cursor:pointer">Refresh</button>
+      </h2>
+      <p style="font-size:.85rem;color:#667">Paid orders ready to hand to the patient. Mark fulfilled on collection.</p>
+      <div id="fulfillQueue"><p style="color:#889">Sign in as a pharmacist to load the queue.</p></div>
+    </div>
   </div>
 
   <footer>
@@ -118,7 +126,7 @@
     window.addEventListener('DOMContentLoaded', initAuth);
 
     async function initAuth() {
-      if (RxEgyptAPI.mode === 'demo') { setStatus('demo pharmacist'); loadRxQueue(); return; }
+      if (RxEgyptAPI.mode === 'demo') { setStatus('demo pharmacist'); refreshQueues(); return; }
       if (!RxEgyptAPI.isAuthenticated()) { openLogin(); return; }
       try {
         const u = await RxEgyptAPI.me();
@@ -128,7 +136,7 @@
           return;
         }
         setStatus(u.email);
-        loadRxQueue();
+        refreshQueues();
       } catch { openLogin(); }
     }
 
@@ -158,11 +166,13 @@
         }
         document.getElementById('authOverlay').classList.remove('show');
         setStatus(u.email);
-        loadRxQueue();
+        refreshQueues();
       } catch (e) {
         err.textContent = e.message || 'Sign in failed.';
       }
     }
+
+    function refreshQueues() { loadRxQueue(); loadFulfillQueue(); }
 
     // --- Rx verification queue ---
     async function loadRxQueue() {
@@ -202,6 +212,43 @@
       } catch (e) {
         if (e.status === 403 || e.status === 401) { openLogin('Pharmacist sign-in required.'); return; }
         alert('Action failed: ' + (e.message || 'error'));
+      }
+    }
+
+    // --- fulfillment queue (paid orders) ---
+    async function loadFulfillQueue() {
+      const el = document.getElementById('fulfillQueue');
+      let orders;
+      try {
+        orders = await RxEgyptAPI.paidOrders();
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as a pharmacist to load the queue.</p>'; return; }
+        el.innerHTML = `<p class="bad">Could not load queue: ${e.message || 'error'}</p>`; return;
+      }
+      if (!orders.length) { el.innerHTML = '<p style="color:#889">No paid orders awaiting fulfillment.</p>'; return; }
+      el.innerHTML = orders.map(o => `
+        <div class="qcard" id="f-${o.id}">
+          <div class="head">
+            <div>
+              <strong>Order #${o.id}</strong> · EGP ${o.total_egp.toFixed(2)}
+              <div class="who">${o.patient_email}${o.patient_phone ? ' · ' + o.patient_phone : ''} · ${new Date(o.created_at).toLocaleString()}</div>
+            </div>
+            <div class="acts">
+              <button class="approve" onclick="fulfill(${o.id})">Mark fulfilled</button>
+            </div>
+          </div>
+          <ul>${o.items.map(i => `<li>${i.quantity}× ${i.name_en} ${i.rx ? '<span class="rx-badge">Rx</span>' : ''}</li>`).join('')}</ul>
+        </div>`).join('');
+    }
+
+    async function fulfill(id) {
+      const card = document.getElementById('f-' + id);
+      try {
+        await RxEgyptAPI.fulfillOrder(id);
+        if (card) card.outerHTML = `<div class="qcard"><strong>Order #${id}</strong> — fulfilled. ✓</div>`;
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { openLogin('Pharmacist sign-in required.'); return; }
+        alert('Fulfill failed: ' + (e.message || 'error'));
       }
     }
 

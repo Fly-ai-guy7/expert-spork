@@ -66,8 +66,38 @@ def create_order(
     return order
 
 
-# NOTE: this literal route must be declared BEFORE "/{order_id}" so the path
-# "/orders/pending-rx" is not captured by the int order_id parameter.
+def _serialize_queue(order: Order) -> RxQueueOrder:
+    """Build a pharmacist-facing view of an order (patient + drug detail)."""
+    return RxQueueOrder(
+        id=order.id,
+        patient_email=order.user.email if order.user else "",
+        patient_name=order.user.full_name if order.user else "",
+        patient_phone=order.user.phone if order.user else "",
+        total_egp=order.total_egp,
+        created_at=order.created_at,
+        items=[
+            RxQueueItem(
+                drug_id=item.drug_id,
+                name_en=item.drug.name_en if item.drug else "",
+                name_ar=item.drug.name_ar if item.drug else "",
+                rx=item.drug.rx if item.drug else False,
+                quantity=item.quantity,
+                unit_price_egp=item.unit_price_egp,
+            )
+            for item in order.items
+        ],
+    )
+
+
+def _queue_for(db: Session, status: OrderStatus) -> list[RxQueueOrder]:
+    orders = db.scalars(
+        select(Order).where(Order.status == status).order_by(Order.created_at.asc())
+    ).all()
+    return [_serialize_queue(o) for o in orders]
+
+
+# NOTE: these literal routes must be declared BEFORE "/{order_id}" so paths like
+# "/orders/pending-rx" are not captured by the int order_id parameter.
 @router.get("/pending-rx", response_model=list[RxQueueOrder])
 def pending_rx_queue(
     _: User = Depends(require_pharmacist),
@@ -79,37 +109,16 @@ def pending_rx_queue(
     confirm the prescription. This closes the Rx-gating loop — without it,
     gated orders would never surface to a pharmacist.
     """
-    orders = db.scalars(
-        select(Order)
-        .where(Order.status == OrderStatus.PENDING_RX_VERIFICATION)
-        .order_by(Order.created_at.asc())
-    ).all()
+    return _queue_for(db, OrderStatus.PENDING_RX_VERIFICATION)
 
-    queue = []
-    for order in orders:
-        items = [
-            RxQueueItem(
-                drug_id=item.drug_id,
-                name_en=item.drug.name_en if item.drug else "",
-                name_ar=item.drug.name_ar if item.drug else "",
-                rx=item.drug.rx if item.drug else False,
-                quantity=item.quantity,
-                unit_price_egp=item.unit_price_egp,
-            )
-            for item in order.items
-        ]
-        queue.append(
-            RxQueueOrder(
-                id=order.id,
-                patient_email=order.user.email if order.user else "",
-                patient_name=order.user.full_name if order.user else "",
-                patient_phone=order.user.phone if order.user else "",
-                total_egp=order.total_egp,
-                created_at=order.created_at,
-                items=items,
-            )
-        )
-    return queue
+
+@router.get("/paid", response_model=list[RxQueueOrder])
+def paid_queue(
+    _: User = Depends(require_pharmacist),
+    db: Session = Depends(get_db),
+):
+    """Fulfillment queue: paid orders awaiting hand-off, oldest first."""
+    return _queue_for(db, OrderStatus.PAID)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

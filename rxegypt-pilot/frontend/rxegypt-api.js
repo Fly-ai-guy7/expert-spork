@@ -221,6 +221,23 @@
       return http('/payments/mock/confirm', { method: 'POST', body: JSON.stringify({ order_id: orderId, success }) });
     },
 
+    async paidOrders() {
+      if (DEMO) {
+        return _lastDemoOrder && _lastDemoOrder.status === 'paid'
+          ? [{
+              id: _lastDemoOrder.id, patient_email: 'demo@local', patient_name: 'Demo User',
+              patient_phone: '', total_egp: _lastDemoOrder.total_egp,
+              created_at: _lastDemoOrder.created_at,
+              items: (_lastDemoOrder.items || []).map((l) => {
+                const d = DEMO_DRUGS.find((x) => x.id === l.drug_id) || {};
+                return { drug_id: l.drug_id, name_en: d.name_en || '', name_ar: d.name_ar || '', rx: !!d.rx, quantity: l.quantity, unit_price_egp: l.unit_price_egp };
+              })
+            }]
+          : [];
+      }
+      return http('/orders/paid');
+    },
+
     async fulfillOrder(orderId) {
       if (DEMO) { if (_lastDemoOrder && _lastDemoOrder.id === orderId) _lastDemoOrder.status = 'fulfilled'; return { id: orderId, status: 'fulfilled', items: [], total_egp: 0 }; }
       return http(`/orders/${orderId}/fulfill`, { method: 'POST' });

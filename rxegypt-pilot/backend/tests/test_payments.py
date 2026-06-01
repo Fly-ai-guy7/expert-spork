@@ -61,12 +61,33 @@ def test_cannot_pay_twice(client, patient_token):
     assert client.post(f"/api/v1/orders/{order['id']}/pay", headers=_auth(patient_token)).status_code == 400
 
 
-def test_pharmacist_fulfills_paid_order(client, patient_token, pharmacist_token):
+def test_paid_queue_lists_paid_orders(client, patient_token, pharmacist_token):
+    order = _otc_order(client, patient_token)
+    # not paid yet → absent from the fulfillment queue
+    assert order["id"] not in [
+        o["id"] for o in client.get("/api/v1/orders/paid", headers=_auth(pharmacist_token)).json()
+    ]
+    client.post("/api/v1/payments/mock/confirm",
+                json={"order_id": order["id"], "success": True}, headers=_auth(patient_token))
+    queue = client.get("/api/v1/orders/paid", headers=_auth(pharmacist_token)).json()
+    assert order["id"] in [o["id"] for o in queue]
+
+
+def test_paid_queue_requires_pharmacist(client, patient_token):
+    assert client.get("/api/v1/orders/paid").status_code == 401
+    assert client.get("/api/v1/orders/paid", headers=_auth(patient_token)).status_code == 403
+
+
+def test_pharmacist_fulfills_paid_order_removed_from_queue(client, patient_token, pharmacist_token):
     order = _otc_order(client, patient_token)
     client.post("/api/v1/payments/mock/confirm",
                 json={"order_id": order["id"], "success": True}, headers=_auth(patient_token))
     r = client.post(f"/api/v1/orders/{order['id']}/fulfill", headers=_auth(pharmacist_token))
     assert r.json()["status"] == "fulfilled"
+    # fulfilled → no longer in the paid queue
+    assert order["id"] not in [
+        o["id"] for o in client.get("/api/v1/orders/paid", headers=_auth(pharmacist_token)).json()
+    ]
 
 
 def test_patient_cannot_fulfill(client, patient_token):
