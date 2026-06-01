@@ -6,7 +6,10 @@ host (Fly.io secrets, Cloudflare, etc.).
 """
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_DEV_SECRET = "dev-only-secret-change-me"
 
 
 class Settings(BaseSettings):
@@ -21,7 +24,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg2://user:pass@localhost/rxegypt"
 
     # Auth (JWT)
-    secret_key: str = "dev-only-secret-change-me"
+    secret_key: str = _DEV_SECRET
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 8
 
@@ -36,6 +39,21 @@ class Settings(BaseSettings):
 
     # CORS
     cors_origins: str = "http://localhost:3000"
+
+    @model_validator(mode="after")
+    def _guard_production(self):
+        """Fail fast if a production deploy is missing a real secret."""
+        if self.environment == "production" and (
+            not self.secret_key
+            or self.secret_key == _DEV_SECRET
+            or len(self.secret_key) < 16
+        ):
+            raise ValueError(
+                "SECRET_KEY must be set to a strong value (>=16 chars) in "
+                "production. Set it via host secrets (e.g. `fly secrets set "
+                "SECRET_KEY=...`)."
+            )
+        return self
 
 
 @lru_cache

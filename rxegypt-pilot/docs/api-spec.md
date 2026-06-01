@@ -68,7 +68,8 @@ EAN-13 lookup. → `200` `DrugOut` | `404`
 ## Inventory — `/inventory`
 
 ### `GET /inventory/low-stock`
-Items at or below reorder level. → `InventoryOut[]`
+Items at or below reorder level, lowest first, enriched with drug names.
+→ `LowStockItem[]` `{ drug_id, name_en, name_ar, quantity, reorder_level }`
 
 ### `GET /inventory/{drug_id}`
 → `InventoryOut` | `404`

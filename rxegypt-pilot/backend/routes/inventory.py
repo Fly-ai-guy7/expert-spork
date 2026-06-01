@@ -5,17 +5,31 @@ from sqlalchemy.orm import Session
 
 from db import get_db
 from models import Drug, Inventory, User
-from schemas import InventoryOut, InventoryUpdate
+from schemas import InventoryOut, InventoryUpdate, LowStockItem
 from security import require_pharmacist
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
 
-@router.get("/low-stock", response_model=list[InventoryOut])
+@router.get("/low-stock", response_model=list[LowStockItem])
 def low_stock(db: Session = Depends(get_db)):
-    """Items at or below their reorder level."""
-    stmt = select(Inventory).where(Inventory.quantity <= Inventory.reorder_level)
-    return list(db.scalars(stmt))
+    """Items at or below their reorder level, with drug names for reordering."""
+    stmt = (
+        select(Inventory, Drug)
+        .join(Drug, Drug.id == Inventory.drug_id)
+        .where(Inventory.quantity <= Inventory.reorder_level)
+        .order_by(Inventory.quantity.asc())
+    )
+    return [
+        LowStockItem(
+            drug_id=inv.drug_id,
+            name_en=drug.name_en,
+            name_ar=drug.name_ar,
+            quantity=inv.quantity,
+            reorder_level=inv.reorder_level,
+        )
+        for inv, drug in db.execute(stmt).all()
+    ]
 
 
 @router.get("/{drug_id}", response_model=InventoryOut)

@@ -37,6 +37,16 @@ class InventoryUpdate(BaseModel):
     reorder_level: int | None = Field(default=None, ge=0)
 
 
+class LowStockItem(BaseModel):
+    """A low-stock line enriched with the drug name for the reorder view."""
+
+    drug_id: int
+    name_en: str
+    name_ar: str
+    quantity: int
+    reorder_level: int
+
+
 # --- Auth ---
 class UserRegister(BaseModel):
     email: EmailStr

@@ -86,7 +86,8 @@ rxegypt-pilot/
 | Backend tests (pytest) | ✅ Scaffolded | 54 tests: Rx + fulfillment queues, payments + stock decrement, my-orders, PDPL rights, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
-| CI (GitHub Actions) | ✅ Built | `.github/workflows/rxegypt-ci.yml` — pytest + JS check, path-scoped to rxegypt-pilot/ |
+| CI (GitHub Actions) | ✅ Built | `.github/workflows/rxegypt-ci.yml` — pytest + JS unit tests, path-scoped to rxegypt-pilot/ |
+| Prod safety guard | ✅ Built | App refuses to boot in production with the dev/weak SECRET_KEY |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
 
 ---

@@ -109,6 +109,14 @@
       <p style="font-size:.85rem;color:#667">Paid orders ready to hand to the patient. Mark fulfilled on collection.</p>
       <div id="fulfillQueue"><p style="color:#889">Sign in as a pharmacist to load the queue.</p></div>
     </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Low Stock
+        <button onclick="loadLowStock()" style="float:right;padding:6px 12px;background:var(--green);color:#fff;border:0;border-radius:6px;cursor:pointer">Refresh</button>
+      </h2>
+      <p style="font-size:.85rem;color:#667">Items at or below their reorder level — restock these.</p>
+      <div id="lowStock"><p style="color:#889">—</p></div>
+    </div>
   </div>
 
   <footer>
@@ -172,7 +180,22 @@
       }
     }
 
-    function refreshQueues() { loadRxQueue(); loadFulfillQueue(); }
+    function refreshQueues() { loadRxQueue(); loadFulfillQueue(); loadLowStock(); }
+
+    async function loadLowStock() {
+      const el = document.getElementById('lowStock');
+      let items;
+      try {
+        items = await RxEgyptAPI.lowStock();
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as a pharmacist to view low stock.</p>'; return; }
+        el.innerHTML = `<p class="bad">Could not load: ${e.message || 'error'}</p>`; return;
+      }
+      if (!items.length) { el.innerHTML = '<p style="color:#889">Nothing below reorder level. 👍</p>'; return; }
+      el.innerHTML = '<table><thead><tr><th>Drug</th><th>Qty</th><th>Reorder ≤</th></tr></thead><tbody>' +
+        items.map(i => `<tr><td>${i.name_en}</td><td class="low">${i.quantity}</td><td>${i.reorder_level}</td></tr>`).join('') +
+        '</tbody></table>';
+    }
 
     // --- Rx verification queue ---
     async function loadRxQueue() {

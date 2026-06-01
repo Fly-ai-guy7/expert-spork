@@ -19,4 +19,7 @@ def test_pharmacist_updates_inventory_and_low_stock(client, pharmacist_token):
     assert r.status_code == 200 and r.json()["quantity"] == 3
 
     low = client.get("/api/v1/inventory/low-stock").json()
-    assert any(item["drug_id"] == 1 for item in low)
+    item = next(i for i in low if i["drug_id"] == 1)
+    # enriched with the drug name for reordering
+    assert item["name_en"] == "Panadol"
+    assert item["quantity"] == 3 and item["reorder_level"] == 10
