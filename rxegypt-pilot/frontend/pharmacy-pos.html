@@ -22,15 +22,44 @@
     .total { text-align:right; font-size:1.3rem; font-weight:700; margin-top:12px; }
     .stock-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
     .stock-row input { width:80px; padding:6px; border:1px solid #cfd6d1; border-radius:6px; }
+    .stock-row .ok { color:var(--green-d); font-size:.8rem; }
+    .stock-row .bad { color:var(--rx); font-size:.8rem; }
     .low { color:var(--rx); font-weight:600; }
+    header .auth-status { font-size:.8rem; opacity:.9; }
+    header .auth-status button { background:#fff; color:var(--green-d); border:0; border-radius:6px; padding:5px 10px; cursor:pointer; margin-left:8px; }
+    /* Modal */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+    .overlay.show { display:flex; }
+    .modal { background:#fff; border-radius:12px; max-width:420px; width:100%; padding:24px; }
+    .modal h2 { margin:0 0 12px; color:var(--green-d); }
+    .modal .field { display:block; width:100%; padding:11px; margin:8px 0; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .modal .err { color:var(--rx); font-size:.85rem; min-height:1.1em; margin:4px 0; }
+    .modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .btn { padding:10px 18px; border-radius:8px; border:0; cursor:pointer; }
+    .btn-primary { background:var(--green); color:#fff; }
     footer { text-align:center; padding:14px; color:#6b756e; font-size:.75rem; }
   </style>
 </head>
 <body>
   <header>
     <strong>🌿 Experts Pharmacy Hurghada — Point of Sale</strong>
-    <span id="mode" style="font-size:.8rem; opacity:.8"></span>
+    <span class="auth-status" id="authStatus"><span id="mode" style="opacity:.8"></span></span>
   </header>
+
+  <!-- Pharmacist login modal -->
+  <div class="overlay" id="authOverlay">
+    <div class="modal">
+      <h2>Pharmacist sign in</h2>
+      <p style="font-size:.85rem;color:#5b665f">Stock changes require a pharmacist account.</p>
+      <div class="err" id="authErr"></div>
+      <input class="field" id="authEmail" type="email" placeholder="Email" autocomplete="username" />
+      <input class="field" id="authPassword" type="password" placeholder="Password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')submitAuth()" />
+      <div class="actions">
+        <button class="btn btn-primary" onclick="submitAuth()">Sign in</button>
+      </div>
+    </div>
+  </div>
 
   <div class="grid">
     <div class="panel">
@@ -61,10 +90,60 @@
     🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜ · RxEgypt POS · Experts Pharmacy Hurghada
   </footer>
 
+  <!-- Use a pharmacist-scoped token so POS and patient sessions don't collide. -->
+  <script>window.RXEGYPT_TOKEN_KEY = 'rxegypt_token_pharmacist';</script>
+  <script src="config.js"></script>
   <script src="rxegypt-api.js"></script>
   <script>
     const sale = [];
     document.getElementById('mode').textContent = 'mode: ' + RxEgyptAPI.mode;
+
+    window.addEventListener('DOMContentLoaded', initAuth);
+
+    async function initAuth() {
+      if (RxEgyptAPI.mode === 'demo') { setStatus('demo pharmacist'); return; }
+      if (!RxEgyptAPI.isAuthenticated()) { openLogin(); return; }
+      try {
+        const u = await RxEgyptAPI.me();
+        if (!['pharmacist', 'admin'].includes(u.role)) {
+          RxEgyptAPI.logout();
+          openLogin('This account is not a pharmacist account.');
+          return;
+        }
+        setStatus(u.email);
+      } catch { openLogin(); }
+    }
+
+    function setStatus(label) {
+      document.getElementById('authStatus').innerHTML =
+        `mode: ${RxEgyptAPI.mode} · ${label} <button onclick="doLogout()">Logout</button>`;
+    }
+    function doLogout() { RxEgyptAPI.logout(); location.reload(); }
+
+    function openLogin(msg) {
+      document.getElementById('authErr').textContent = msg || '';
+      document.getElementById('authOverlay').classList.add('show');
+    }
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const err = document.getElementById('authErr');
+      err.textContent = '';
+      if (!email || !password) { err.textContent = 'Email and password required.'; return; }
+      try {
+        await RxEgyptAPI.login(email, password);
+        const u = await RxEgyptAPI.me();
+        if (!['pharmacist', 'admin'].includes(u.role)) {
+          RxEgyptAPI.logout();
+          err.textContent = 'This account is not a pharmacist account.';
+          return;
+        }
+        document.getElementById('authOverlay').classList.remove('show');
+        setStatus(u.email);
+      } catch (e) {
+        err.textContent = e.message || 'Sign in failed.';
+      }
+    }
 
     async function scan() {
       const input = document.getElementById('barcode');
@@ -108,12 +187,26 @@
           <span style="flex:1">${d.name_en} ${d.rx ? '<span class="rx-badge">Rx</span>':''}</span>
           <input type="number" min="0" placeholder="qty" id="stk-${d.id}">
           <button onclick="setStock(${d.id})">Set</button>
+          <span id="msg-${d.id}"></span>
         </div>`).join('') || '<p>No results.</p>';
     }
-    function setStock(id) {
-      const qty = document.getElementById('stk-' + id).value;
-      // In live mode this calls PUT /inventory/{id}; demo just acknowledges.
-      alert(`Stock for drug #${id} set to ${qty} (demo). Live mode posts to /inventory/${id}.`);
+
+    async function setStock(id) {
+      const raw = document.getElementById('stk-' + id).value;
+      const msg = document.getElementById('msg-' + id);
+      const qty = parseInt(raw, 10);
+      if (!Number.isInteger(qty) || qty < 0) {
+        msg.className = 'bad'; msg.textContent = 'enter a valid qty'; return;
+      }
+      try {
+        const inv = await RxEgyptAPI.updateInventory(id, { quantity: qty });
+        msg.className = 'ok'; msg.textContent = `✓ stock = ${inv.quantity}`;
+      } catch (e) {
+        msg.className = 'bad';
+        if (e.status === 403) { msg.textContent = 'pharmacist login required'; openLogin('Pharmacist privileges required — please sign in.'); }
+        else if (e.status === 401) { msg.textContent = 'session expired'; openLogin('Your session expired — please sign in again.'); }
+        else { msg.textContent = e.message || 'update failed'; }
+      }
     }
   </script>
 </body>

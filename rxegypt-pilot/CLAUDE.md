@@ -39,7 +39,8 @@ rxegypt-pilot/
 │   │   ├── build_egyptian_drugs.py ← fetch+verify CC0 dataset → seed (provenance)
 │   │   ├── drugs_egypt.json.gz ← 24,868-drug Egyptian catalogue (built)
 │   │   ├── PROVENANCE.md       ← source, license, SHA-256, Rx derivation rules
-│   │   └── seed_drugs.py       ← bulk loader (--force to reload)
+│   │   ├── seed_drugs.py       ← bulk loader (--force to reload)
+│   │   └── create_user.py      ← CLI to create pharmacist/admin accounts
 │   ├── migrations/            ← Alembic (env.py + versions/)
 │   ├── alembic.ini
 │   ├── tests/                 ← pytest suite (isolated SQLite)
@@ -57,11 +58,12 @@ rxegypt-pilot/
 
 | Component | Status | Notes |
 |---|---|---|
-| Patient frontend (index.html) | ✅ Scaffolded | Branded; PDPL modal + Rx gating UI |
-| Pharmacy POS (pharmacy-pos.html) | ✅ Scaffolded | EAN-13 barcode entry, stock lookup |
-| Patient drug app (dawai-patient.html) | ✅ Scaffolded | Bilingual AR/EN, RTL |
+| Patient frontend (index.html) | ✅ Live-wired | Browse-free; login + PDPL consent at checkout; backend Rx-WhatsApp |
+| Pharmacy POS (pharmacy-pos.html) | ✅ Live-wired | Pharmacist login (role-checked) + real `PUT /inventory` writes |
+| Patient drug app (dawai-patient.html) | ✅ Scaffolded | Bilingual AR/EN, RTL (read-only search) |
 | Health Information Guide | ✅ Scaffolded | Renamed from symptom checker; disclaimers; no severity/Rx |
-| API client (rxegypt-api.js) | ✅ Scaffolded | Demo mode + live backend switching |
+| API client (rxegypt-api.js) | ✅ Live-wired | Demo + live; auth helpers, per-role token, 401/403 handling |
+| Frontend config (config.js) | ✅ Built | Single switch for demo ↔ live (backend URL) |
 | FastAPI backend | ✅ Scaffolded | JWT auth, drugs, inventory, orders |
 | SQLAlchemy models | ✅ Scaffolded | Drug, Inventory, User, Order, OrderItem, Consent |
 | Drug catalogue | ✅ Real data (24,868) | CC0 Egyptian dataset, SHA-256 verified; Rx flags heuristic — confirm vs EDA |
@@ -69,7 +71,7 @@ rxegypt-pilot/
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
 | Paymob payment integration | 🟡 Hooks only | Needs live Paymob credentials |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 20 tests: Rx gating, consent, auth, inventory, drugs |
+| Backend tests (pytest) | ✅ Scaffolded | 25 tests: Rx gating, consent, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
 
@@ -97,8 +99,8 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 2. **Paymob live integration** — swap hooks for live credentials + test.
 3. Add **barcodes + strengths** to the catalogue (EDA/GS1) — source lacks both.
 4. **Consent withdrawal + data deletion** (PDPL data-subject rights).
-4. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
-5. Frontend **live-mode wiring** for pharmacist inventory writes (POS → PUT /inventory).
+5. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
+6. **Pharmacist Rx-verification queue** UI (list `pending_rx_verification` + approve).
 
 ---
 

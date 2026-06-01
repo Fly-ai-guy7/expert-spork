@@ -39,6 +39,10 @@ alembic upgrade head
 python seed/build_egyptian_drugs.py   # fetch + verify the CC0 Egyptian dataset
 python seed/seed_drugs.py             # bulk-load 24,868 drugs
 
+# Create a pharmacist account (POS login). /auth/register only makes patients.
+python seed/create_user.py --email pharmacist@experts.eg --password secret123 \
+    --role pharmacist --name "Head Pharmacist"
+
 uvicorn main:app --reload --port 8000
 # → http://localhost:8000/docs
 ```
@@ -79,12 +83,19 @@ python -m http.server 3000
 # open http://localhost:3000/index.html
 ```
 
-The frontend runs in **demo mode** (bundled sample data, no backend) until you
-point it at the API. To use the live backend, set before loading any page:
+The frontend runs in **demo mode** (bundled sample data, no backend) by default.
+To use the live backend, edit `frontend/config.js` and uncomment:
 
 ```js
 window.RXEGYPT_API_URL = 'http://localhost:8000/api/v1';
 ```
+
+`config.js` is loaded before `rxegypt-api.js` on every page, so it's the single
+place to switch demo ↔ live. Serve the frontend from `http://localhost:3000`
+(the default `CORS_ORIGINS`). Patient flow is **browse-free; login + PDPL consent
+are required at checkout**. The POS (`pharmacy-pos.html`) prompts for a
+**pharmacist** login and uses a separate token, so patient and pharmacist
+sessions don't collide.
 
 ## Key features
 

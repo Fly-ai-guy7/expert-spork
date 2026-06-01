@@ -38,6 +38,11 @@
     .btn-primary:disabled { background:#9bb6a8; cursor:not-allowed; }
     .btn-ghost { background:#eef1ee; }
     .rx-note { background:#fdecea; border:1px solid #f3c1bd; color:#8a1d16; padding:12px; border-radius:8px; font-size:.9rem; }
+    .modal .field { display:block; width:100%; padding:11px; margin:8px 0; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .modal .err { color:var(--rx); font-size:.85rem; min-height:1.1em; margin:4px 0; }
+    .modal .toggle { background:none; border:0; color:var(--green-d); text-decoration:underline; cursor:pointer; padding:0; font-size:.88rem; }
+    .auth-status { margin-left:auto; font-size:.82rem; opacity:.9; }
+    .auth-status button { background:#fff; color:var(--green-d); border:0; border-radius:6px; padding:5px 10px; cursor:pointer; margin-left:8px; }
     footer { text-align:center; padding:18px; color:#6b756e; font-size:.8rem; }
   </style>
 </head>
@@ -47,6 +52,7 @@
       <div class="logo">🌿 Experts Pharmacy — Hurghada</div>
       <div class="sub">صيدلية إكسبرتس — الأحياء، الغردقة | Powered by RxEgypt</div>
     </div>
+    <div class="auth-status" id="authStatus"></div>
   </header>
 
   <div class="wrap">
@@ -60,6 +66,30 @@
   <div class="cart-bar">
     <div>Cart: <strong id="cartCount">0</strong> · <span class="price">EGP <span id="cartTotal">0.00</span></span></div>
     <button onclick="checkout()">Checkout</button>
+  </div>
+
+  <!-- Login / register modal (required at checkout) -->
+  <div class="overlay" id="authOverlay">
+    <div class="modal">
+      <h2 id="authTitle">Sign in to checkout</h2>
+      <p style="font-size:.9rem;color:#5b665f">Create an account or sign in to place your order.
+        / سجّل الدخول أو أنشئ حسابًا لإتمام الطلب.</p>
+      <div class="err" id="authErr"></div>
+      <input class="field" id="authEmail" type="email" placeholder="Email / البريد الإلكتروني" autocomplete="email" />
+      <input class="field" id="authPassword" type="password" placeholder="Password (min 8) / كلمة المرور" autocomplete="current-password" />
+      <div id="registerFields" style="display:none">
+        <input class="field" id="authName" type="text" placeholder="Full name (optional) / الاسم" />
+        <input class="field" id="authPhone" type="tel" placeholder="Phone (optional) / الهاتف" />
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="cancelAuth()">Cancel</button>
+        <button class="btn btn-primary" id="authSubmit" onclick="submitAuth()">Sign in</button>
+      </div>
+      <p style="margin:10px 0 0;font-size:.88rem">
+        <span id="authSwitchText">New patient?</span>
+        <button class="toggle" id="authToggle" onclick="toggleAuthMode()">Create an account</button>
+      </p>
+    </div>
   </div>
 
   <!-- PDPL consent modal (Law 151/2020) -->
@@ -102,26 +132,120 @@
     RxEgypt Pilot · Experts Pharmacy Hurghada
   </footer>
 
+  <script src="config.js"></script>
   <script src="rxegypt-api.js"></script>
   <script>
     const cart = [];
     let lastOrder = null;
-    const PHARMACY_WA = '20100000000'; // replace with live pharmacy WhatsApp
-
-    function hasConsent() { return localStorage.getItem('rxegypt_consent') === 'granted'; }
 
     window.addEventListener('DOMContentLoaded', () => {
-      if (!hasConsent()) document.getElementById('consentOverlay').classList.add('show');
+      refreshAuthStatus();
       doSearch();
     });
 
+    // --- auth status header ---
+    async function refreshAuthStatus() {
+      const el = document.getElementById('authStatus');
+      if (RxEgyptAPI.mode === 'demo' || !RxEgyptAPI.isAuthenticated()) { el.innerHTML = ''; return; }
+      try {
+        const u = await RxEgyptAPI.me();
+        el.innerHTML = `Signed in as ${u.email} <button onclick="doLogout()">Logout</button>`;
+      } catch { el.innerHTML = ''; }
+    }
+    function doLogout() { RxEgyptAPI.logout(); refreshAuthStatus(); }
+
+    // --- login / register modal (promise-based) ---
+    let _authResolve = null;
+    let _authMode = 'login'; // 'login' | 'register'
+
+    function ensureAuth() {
+      return new Promise((resolve) => {
+        _authResolve = resolve;
+        setAuthMode('login');
+        document.getElementById('authErr').textContent = '';
+        document.getElementById('authOverlay').classList.add('show');
+      });
+    }
+    function setAuthMode(mode) {
+      _authMode = mode;
+      const reg = mode === 'register';
+      document.getElementById('registerFields').style.display = reg ? 'block' : 'none';
+      document.getElementById('authTitle').textContent = reg ? 'Create your account' : 'Sign in to checkout';
+      document.getElementById('authSubmit').textContent = reg ? 'Create account' : 'Sign in';
+      document.getElementById('authSwitchText').textContent = reg ? 'Already have an account?' : 'New patient?';
+      document.getElementById('authToggle').textContent = reg ? 'Sign in instead' : 'Create an account';
+    }
+    function toggleAuthMode() {
+      document.getElementById('authErr').textContent = '';
+      setAuthMode(_authMode === 'login' ? 'register' : 'login');
+    }
+    function cancelAuth() {
+      document.getElementById('authOverlay').classList.remove('show');
+      if (_authResolve) { _authResolve(false); _authResolve = null; }
+    }
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const err = document.getElementById('authErr');
+      err.textContent = '';
+      if (!email || !password) { err.textContent = 'Email and password are required.'; return; }
+      if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+      try {
+        if (_authMode === 'register') {
+          await RxEgyptAPI.register({
+            email, password,
+            full_name: document.getElementById('authName').value.trim(),
+            phone: document.getElementById('authPhone').value.trim()
+          });
+          try {
+            await RxEgyptAPI.login(email, password);
+          } catch {
+            err.textContent = 'Account created — please sign in.';
+            setAuthMode('login');
+            return;
+          }
+        } else {
+          await RxEgyptAPI.login(email, password);
+        }
+      } catch (e) {
+        err.textContent = e.message || 'Authentication failed.';
+        return;
+      }
+      document.getElementById('authOverlay').classList.remove('show');
+      await refreshAuthStatus();
+      if (_authResolve) { _authResolve(true); _authResolve = null; }
+    }
+
+    // --- PDPL consent (per-user, post-auth) ---
+    let _consentResolve = null;
+    async function consentKey() {
+      try { const u = await RxEgyptAPI.me(); return `rxegypt_consent:${u.id}:${u.email}`; }
+      catch { return 'rxegypt_consent'; }
+    }
+    async function ensureConsent() {
+      const key = await consentKey();
+      if (localStorage.getItem(key) === 'granted') return true;
+      return new Promise((resolve) => {
+        _consentResolve = resolve;
+        document.getElementById('cConsent').checked = false;
+        updateConsentBtn();
+        document.getElementById('consentOverlay').classList.add('show');
+      });
+    }
     function updateConsentBtn() {
       document.getElementById('consentBtn').disabled = !document.getElementById('cConsent').checked;
     }
     async function grantConsent() {
-      await RxEgyptAPI.recordConsent({ purpose: 'health_data_processing', granted: true, policy_version: '1.0' });
-      localStorage.setItem('rxegypt_consent', 'granted');
+      try {
+        await RxEgyptAPI.recordConsent({ purpose: 'health_data_processing', granted: true, policy_version: '1.0' });
+      } catch (e) {
+        if (e.status === 401) throw e; // bubble up so checkout can re-auth
+        alert('Could not record consent: ' + (e.message || 'error'));
+        return;
+      }
+      localStorage.setItem(await consentKey(), 'granted');
       document.getElementById('consentOverlay').classList.remove('show');
+      if (_consentResolve) { _consentResolve(true); _consentResolve = null; }
     }
 
     async function doSearch() {
@@ -155,20 +279,44 @@
 
     async function checkout() {
       if (!cart.length) return alert('Your cart is empty.');
-      if (!hasConsent()) { document.getElementById('consentOverlay').classList.add('show'); return; }
+      try {
+        await placeOrder();
+      } catch (e) {
+        if (e.status === 401) {
+          // token expired mid-flow — re-auth once and retry.
+          RxEgyptAPI.logout();
+          if (await ensureAuth()) {
+            try { await placeOrder(); } catch (e2) { alert('Checkout failed: ' + (e2.message || 'error')); }
+          }
+        } else {
+          alert('Checkout failed: ' + (e.message || 'error'));
+        }
+      }
+    }
+
+    // auth -> consent (if needed) -> create order -> Rx or payment
+    async function placeOrder() {
+      if (!RxEgyptAPI.isAuthenticated()) {
+        if (!await ensureAuth()) return; // user cancelled
+      }
+      if (!await ensureConsent()) return; // user cancelled consent
       lastOrder = await RxEgyptAPI.createOrder(cart.map(i => ({ drug_id: i.drug_id, quantity: i.quantity })));
+      await refreshAuthStatus();
       if (lastOrder.requires_rx_verification) {
         document.getElementById('rxOverlay').classList.add('show');
       } else {
         alert(`Order #${lastOrder.id} placed. Total EGP ${lastOrder.total_egp.toFixed(2)}. Proceed to payment.`);
       }
     }
+
     function closeRx() { document.getElementById('rxOverlay').classList.remove('show'); }
-    function sendWhatsApp() {
-      const msg = encodeURIComponent(
-        `Experts Pharmacy — Rx confirmation\nOrder #${lastOrder.id}\nTotal: EGP ${lastOrder.total_egp.toFixed(2)}\nPlease confirm my prescription.`
-      );
-      window.open(`https://wa.me/${PHARMACY_WA}?text=${msg}`, '_blank');
+    async function sendWhatsApp() {
+      try {
+        const { whatsapp_url } = await RxEgyptAPI.rxWhatsApp(lastOrder.id);
+        window.open(whatsapp_url, '_blank');
+      } catch (e) {
+        alert('Could not generate WhatsApp link: ' + (e.message || 'error'));
+      }
       closeRx();
     }
   </script>
