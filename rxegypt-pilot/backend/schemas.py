@@ -20,6 +20,7 @@ class DrugOut(BaseModel):
     barcode: str
     price_egp: float
     rx: bool
+    rx_source: str
 
 
 class InventoryOut(BaseModel):

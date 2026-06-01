@@ -34,9 +34,10 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # then edit values
 
-# Create the schema (Alembic), then seed ~80 sample Egyptian drugs
+# Create the schema (Alembic), then load the drug catalogue
 alembic upgrade head
-python seed/seed_drugs.py
+python seed/build_egyptian_drugs.py   # fetch + verify the CC0 Egyptian dataset
+python seed/seed_drugs.py             # bulk-load 24,868 drugs
 
 uvicorn main:app --reload --port 8000
 # → http://localhost:8000/docs
@@ -48,6 +49,24 @@ uvicorn main:app --reload --port 8000
 cd backend
 pytest -q          # runs on an isolated in-memory SQLite DB
 ```
+
+## Drug data & provenance
+
+The catalogue is built from a **verified, citable open dataset** —
+[`karem505/egyptian-drug-database`](https://github.com/karem505/egyptian-drug-database)
+(24,868 medicines on the Egyptian market; bilingual trade names, composition,
+manufacturer, drug class, route, EGP price; **CC0-1.0**).
+
+`seed/build_egyptian_drugs.py` downloads it, verifies its **SHA-256**, maps it
+onto the `Drug` schema, and writes `seed/drugs_egypt.json.gz` plus
+`seed/PROVENANCE.md`. The build is reproducible and integrity-checked.
+
+> ⚠️ The source has **no prescription/OTC field**, so `rx` is **derived
+> heuristically** from `drug_class` — defaulting to *prescription-only* and
+> down-classifying to OTC only for an explicit allow-list (the legally safe
+> direction). Each row records `rx_source`. **All `rx` values must be reconciled
+> against the EDA register before go-live.** It is also community CC0 data, not
+> an official EDA feed, and has no barcodes yet. See `backend/seed/PROVENANCE.md`.
 
 ## Quick start — frontend
 

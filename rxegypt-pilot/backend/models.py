@@ -50,6 +50,9 @@ class Drug(Base):
     barcode: Mapped[str] = mapped_column(String(32), index=True, default="")  # EAN-13
     price_egp: Mapped[float] = mapped_column(Float, default=0.0)
     rx: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    # Provenance of the rx flag (e.g. "manual", or the dataset + "(heuristic)").
+    # Heuristic values must be reconciled against the EDA register before go-live.
+    rx_source: Mapped[str] = mapped_column(String(255), default="manual")
 
     inventory: Mapped["Inventory"] = relationship(
         back_populates="drug", uselist=False, cascade="all, delete-orphan"

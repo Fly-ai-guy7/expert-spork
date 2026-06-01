@@ -8,6 +8,9 @@ backend/.venv/
 *.db
 .pytest_cache/
 
+# Cached upstream source for the drug-seed build (regenerated on demand)
+backend/seed/.egyptian-drugs.source.json
+
 # OS / editor
 .DS_Store
 .idea/

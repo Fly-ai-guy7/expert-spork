@@ -36,8 +36,10 @@ rxegypt-pilot/
 │   │   ├── orders.py          ← orders + Rx gating + WhatsApp verify
 │   │   └── auth.py            ← JWT auth + PDPL consent
 │   ├── seed/
-│   │   ├── drugs_egypt.json   ← Egyptian drug seed data (~80 sample)
-│   │   └── seed_drugs.py      ← idempotent seeder
+│   │   ├── build_egyptian_drugs.py ← fetch+verify CC0 dataset → seed (provenance)
+│   │   ├── drugs_egypt.json.gz ← 24,868-drug Egyptian catalogue (built)
+│   │   ├── PROVENANCE.md       ← source, license, SHA-256, Rx derivation rules
+│   │   └── seed_drugs.py       ← bulk loader (--force to reload)
 │   ├── migrations/            ← Alembic (env.py + versions/)
 │   ├── alembic.ini
 │   ├── tests/                 ← pytest suite (isolated SQLite)
@@ -62,7 +64,7 @@ rxegypt-pilot/
 | API client (rxegypt-api.js) | ✅ Scaffolded | Demo mode + live backend switching |
 | FastAPI backend | ✅ Scaffolded | JWT auth, drugs, inventory, orders |
 | SQLAlchemy models | ✅ Scaffolded | Drug, Inventory, User, Order, OrderItem, Consent |
-| Drug seed DB | 🟡 Sample (80 drugs) | Expand toward 250 from EDA/market data |
+| Drug catalogue | ✅ Real data (24,868) | CC0 Egyptian dataset, SHA-256 verified; Rx flags heuristic — confirm vs EDA |
 | Rx drug gating | ✅ Scaffolded | Order → pending_rx_verification + WhatsApp + pharmacist verify |
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
 | Paymob payment integration | 🟡 Hooks only | Needs live Paymob credentials |
@@ -90,9 +92,11 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 
 ## PRIORITY NEXT TASKS
 
-1. **Paymob live integration** — swap hooks for live credentials + test.
-2. Expand **drug seed DB** from 80 toward 250 entries (verify Rx scheduling vs EDA).
-3. **Consent withdrawal + data deletion** (PDPL data-subject rights).
+1. **Reconcile Rx flags vs EDA register** — the imported `rx` values are
+   heuristic (see seed/PROVENANCE.md); confirm scheduling before go-live.
+2. **Paymob live integration** — swap hooks for live credentials + test.
+3. Add **barcodes + strengths** to the catalogue (EDA/GS1) — source lacks both.
+4. **Consent withdrawal + data deletion** (PDPL data-subject rights).
 4. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
 5. Frontend **live-mode wiring** for pharmacist inventory writes (POS → PUT /inventory).
 
