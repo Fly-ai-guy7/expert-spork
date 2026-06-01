@@ -37,6 +37,18 @@ Record explicit PDPL consent. Timestamped server-side.
 ```
 → `201` `ConsentOut`
 
+### PDPL data-subject rights *(all auth)*
+
+| Method | Path | Purpose | Response |
+|---|---|---|---|
+| `GET` | `/auth/consent` | Current consent decision (latest) | `{ granted, policy_version, updated_at }` |
+| `POST` | `/auth/consent/withdraw` | Withdraw consent (logs `granted=false`) | `201` `ConsentOut` |
+| `GET` | `/auth/export` | Data portability — user + consents + orders | `DataExport` |
+| `DELETE` | `/auth/account` | Erasure — anonymize PII, block login, retain de-identified orders | `200 { detail, user_id }` |
+
+After `DELETE /auth/account` the user's existing token and original credentials
+are rejected (`401`).
+
 ---
 
 ## Drugs — `/drugs`

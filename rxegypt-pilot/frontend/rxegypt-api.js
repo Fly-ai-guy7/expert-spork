@@ -206,10 +206,32 @@
       return http(`/orders/${orderId}/reject-rx`, { method: 'POST' });
     },
 
-    // --- consent (PDPL) ---
+    // --- consent + PDPL data-subject rights ---
     async recordConsent(payload) {
       if (DEMO) return { id: 1, ...payload, created_at: new Date().toISOString() };
       return http('/auth/consent', { method: 'POST', body: JSON.stringify(payload) });
+    },
+
+    async consentStatus() {
+      if (DEMO) return { granted: true, policy_version: '1.0', updated_at: new Date().toISOString() };
+      return http('/auth/consent');
+    },
+
+    async withdrawConsent() {
+      if (DEMO) return { id: 1, purpose: 'health_data_processing', granted: false, policy_version: '1.0', created_at: new Date().toISOString() };
+      return http('/auth/consent/withdraw', { method: 'POST' });
+    },
+
+    async exportMyData() {
+      if (DEMO) return { user: DEMO_USER, consents: [], orders: _lastDemoOrder ? [_lastDemoOrder] : [] };
+      return http('/auth/export');
+    },
+
+    async deleteMyAccount() {
+      if (DEMO) { clearToken(); return { detail: 'Account deleted (demo).', user_id: 0 }; }
+      const r = await http('/auth/account', { method: 'DELETE' });
+      clearToken(); // session is now invalid
+      return r;
     },
 
     // --- inventory ---

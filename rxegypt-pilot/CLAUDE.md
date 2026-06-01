@@ -76,9 +76,10 @@ rxegypt-pilot/
 | Rx drug gating | ✅ Scaffolded | Order → pending_rx_verification + WhatsApp + pharmacist verify |
 | Pharmacist Rx queue | ✅ Live-wired | `GET /orders/pending-rx` + approve/reject in POS UI |
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
+| PDPL data-subject rights | ✅ Built | Consent status/withdraw, data export, account erasure (anonymize) |
 | Paymob payment integration | 🟡 Hooks only | Needs live Paymob credentials |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 31 tests: Rx gating + queue, consent, auth, inventory, drugs, Rx derivation |
+| Backend tests (pytest) | ✅ Scaffolded | 38 tests: Rx gating + queue, consent + PDPL rights, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
@@ -94,7 +95,7 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 2. **Health Information Guide disclaimers** — bilingual (EN+AR) on every screen,
    no severity ratings, no Rx suggestions. ✅ scaffolded.
 3. **PDPL consent** — explicit consent before any data is stored, logged with
-   timestamp. ✅ scaffolded.
+   timestamp. ✅ scaffolded. Data-subject rights (withdraw / export / erasure) ✅ built.
 4. **AISE liability shield** — Platform Service Agreement signed before go-live
    (Michael Gamal action). 🔴 outstanding.
 
@@ -106,9 +107,8 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
    heuristic (see seed/PROVENANCE.md); confirm scheduling before go-live.
 2. **Paymob live integration** — swap hooks for live credentials + test.
 3. Add **barcodes + strengths** to the catalogue (EDA/GS1) — source lacks both.
-4. **Consent withdrawal + data deletion** (PDPL data-subject rights).
+4. **Payment flow** — wire `pending_payment` → Paymob (live creds) → `paid`/`fulfilled`.
 5. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
-6. **Payment flow** — wire `pending_payment` → Paymob (live creds) → `paid`/`fulfilled`.
 
 ---
 

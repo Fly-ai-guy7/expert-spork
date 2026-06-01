@@ -61,7 +61,7 @@ def get_current_user(
         raise credentials_exc from exc
 
     user = db.scalar(select(User).where(User.email == email))
-    if user is None:
+    if user is None or user.deleted_at is not None:
         raise credentials_exc
     return user
 

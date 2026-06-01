@@ -127,6 +127,22 @@
     </div>
   </div>
 
+  <!-- PDPL data-subject rights -->
+  <div class="overlay" id="privacyOverlay">
+    <div class="modal">
+      <h2>Your data &amp; privacy</h2>
+      <p style="font-size:.9rem;color:#5b665f">Under Egypt's PDPL (Law 151/2020) you can access, port, and erase your data.
+        / يمكنك الوصول إلى بياناتك ونقلها ومحوها.</p>
+      <div class="err" id="privacyMsg" style="color:var(--green-d)"></div>
+      <div class="actions" style="flex-direction:column; align-items:stretch; gap:8px">
+        <button class="btn btn-ghost" onclick="downloadMyData()">⬇️ Download my data (JSON)</button>
+        <button class="btn btn-ghost" onclick="withdrawConsent()">✋ Withdraw consent</button>
+        <button class="btn" style="background:#fdecea;color:#8a1d16" onclick="deleteAccount()">🗑️ Delete my account</button>
+        <button class="btn btn-primary" onclick="closePrivacy()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <footer>
     🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜<br/>
     RxEgypt Pilot · Experts Pharmacy Hurghada
@@ -149,10 +165,49 @@
       if (RxEgyptAPI.mode === 'demo' || !RxEgyptAPI.isAuthenticated()) { el.innerHTML = ''; return; }
       try {
         const u = await RxEgyptAPI.me();
-        el.innerHTML = `Signed in as ${u.email} <button onclick="doLogout()">Logout</button>`;
+        el.innerHTML = `Signed in as ${u.email} <button onclick="openPrivacy()">Privacy</button> <button onclick="doLogout()">Logout</button>`;
       } catch { el.innerHTML = ''; }
     }
     function doLogout() { RxEgyptAPI.logout(); refreshAuthStatus(); }
+
+    // --- PDPL data-subject rights ---
+    function openPrivacy() {
+      document.getElementById('privacyMsg').textContent = '';
+      document.getElementById('privacyOverlay').classList.add('show');
+    }
+    function closePrivacy() { document.getElementById('privacyOverlay').classList.remove('show'); }
+
+    async function downloadMyData() {
+      try {
+        const data = await RxEgyptAPI.exportMyData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'my-rxegypt-data.json'; a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('privacyMsg').textContent = 'Your data was downloaded.';
+      } catch (e) { document.getElementById('privacyMsg').textContent = 'Export failed: ' + (e.message || 'error'); }
+    }
+
+    async function withdrawConsent() {
+      try {
+        await RxEgyptAPI.withdrawConsent();
+        localStorage.removeItem(await consentKey()); // re-prompt on next checkout
+        document.getElementById('privacyMsg').textContent = 'Consent withdrawn. We will ask again before any new order.';
+      } catch (e) { document.getElementById('privacyMsg').textContent = 'Withdrawal failed: ' + (e.message || 'error'); }
+    }
+
+    async function deleteAccount() {
+      if (!confirm('Delete your account and anonymize your personal data? This cannot be undone.')) return;
+      try {
+        const key = await consentKey();
+        await RxEgyptAPI.deleteMyAccount();
+        localStorage.removeItem(key);
+        closePrivacy();
+        refreshAuthStatus();
+        alert('Your account was deleted and your personal data anonymized.');
+      } catch (e) { document.getElementById('privacyMsg').textContent = 'Deletion failed: ' + (e.message || 'error'); }
+    }
 
     // --- login / register modal (promise-based) ---
     let _authResolve = null;

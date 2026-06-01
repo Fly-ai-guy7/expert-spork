@@ -87,6 +87,11 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    # PDPL erasure: when set, the account is anonymized + deactivated (login and
+    # existing tokens are rejected). De-identified order records are retained.
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
 
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
     consents: Mapped[list["Consent"]] = relationship(back_populates="user")

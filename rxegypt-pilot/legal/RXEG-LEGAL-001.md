@@ -67,8 +67,11 @@ Republic of Egypt, piloted at Experts Pharmacy, Al Ahyaa, Red Sea Governorate.
 
 - [ ] Confirm EDA position on online OTC sale + delivery for the pilot.
 - [ ] Controlled-substance exclusion list finalized with pharmacist.
-- [ ] Consent-withdrawal + data-deletion workflow (PDPL data-subject rights).
-- [ ] Retention schedule signed off by Legal.
+- [x] Consent-withdrawal + data-deletion workflow (PDPL data-subject rights).
+      Built: `GET/POST /auth/consent`, `/auth/consent/withdraw`, `/auth/export`,
+      `DELETE /auth/account` (erasure = anonymize PII + block login; de-identified
+      order records retained). **Retention schedule still to be signed off.**
+- [ ] Retention schedule signed off by Legal (drives order/consent retention).
 - [ ] Platform Service Agreement executed.
 
 ---

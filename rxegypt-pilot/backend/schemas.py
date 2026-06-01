@@ -78,6 +78,14 @@ class ConsentOut(BaseModel):
     created_at: datetime
 
 
+class ConsentStatus(BaseModel):
+    """Latest consent decision for the current user (PDPL transparency)."""
+
+    granted: bool          # False if never granted or withdrawn
+    policy_version: str | None = None
+    updated_at: datetime | None = None
+
+
 # --- Orders ---
 class OrderItemIn(BaseModel):
     drug_id: int
@@ -129,3 +137,11 @@ class RxQueueOrder(BaseModel):
     total_egp: float
     created_at: datetime
     items: list[RxQueueItem]
+
+
+class DataExport(BaseModel):
+    """PDPL data-portability export of everything tied to the user."""
+
+    user: UserOut
+    consents: list[ConsentOut]
+    orders: list[OrderOut]
