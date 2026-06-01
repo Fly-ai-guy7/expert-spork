@@ -53,36 +53,63 @@ CACHE = SEED_DIR / ".egyptian-drugs.source.json"
 PROVENANCE = SEED_DIR / "PROVENANCE.md"
 
 # --- Rx derivation rules (substring match on UPPER-CASED drug_class) ---------
-# Deny-list wins over allow-list. Anything unmatched defaults to Rx (safe).
-RX_DENY = (
-    "ANTIBIOTIC", "ANTIBACTERIAL", "ANTIVIRAL", "ANTIRETROVIRAL", "ANTIFUNGAL",
-    "ANTINEOPLASTIC", "CHEMOTHERAP", "ONCOLOGY", "PSYCHIATRIC", "ANTIDEPRESS",
-    "ANTIPSYCHOTIC", "ANXIOLYTIC", "HYPNOTIC", "SEDATIVE", "OPIOID", "NARCOTIC",
-    "CONTROLLED", "HORMONE", "CORTICOSTEROID", "STEROID", "INSULIN",
-    "ANTIDIABETIC", "HYPOGLYCEMIC", "CARDIO", "ANTIHYPERTENS", "ANTIARRHYTH",
-    "ANTICOAGULANT", "ANTIPLATELET", "STATIN", "ANTIHYPERLIPID", "ANTIEPILEPTIC",
-    "ANTICONVULS", "IMMUNOSUPPRESS", "IMMUNO", "VACCINE", "THYROID",
-    "TUBERCULOSIS", "ANTI-PARKINSON", "PARKINSON", "GLAUCOMA", "DIURETIC",
-    "BRONCHODILATOR", "MUSCLE RELAXANT", "PROTON PUMP", "ANTI-COAGULANT",
-    "ANTIEMETIC", "ANTI-MIGRAINE", "ERECTILE", "CONTRACEPT", "FERTILITY",
+# The dataset has no Rx/OTC field, so we infer it from `drug_class`. The default
+# is prescription-only (the legally safe direction); a medicine is classified
+# OTC only if its class matches the non-prescription allow-list AND does not
+# match the hard prescription list (which always wins). This intentionally
+# over-gates: ambiguous classes (e.g. WEIGHT LOSS, SEXUAL TONIC, SLEEP AID,
+# leucovorin) stay Rx. Validated against the full dataset: zero antibiotic /
+# cardiovascular / antidiabetic / steroid leaks into OTC.
+HARD_RX = (
+    "ANTIBIOTIC", "ANTIBACTERIAL", "PENICILLIN", "CEPHALOSPORIN", "QUINOLONE",
+    "MACROLIDE", "AMINOGLYCOSIDE", "CARBAPENEM", "GLYCOPEPTIDE", "ANTI-VIRAL",
+    "ANTIVIRAL", "ANTIRETROVIRAL", "ANTIFUNGAL", "ANTI-FUNGAL", "ANTIPROTOZOAL",
+    "ANTHELMINTIC", "ANTIHELMINTH", "ANTINEOPLAST", "CHEMOTHERAP", "ONCOLOGY",
+    "GLUCOCORTICOID", "CORTICOSTEROID", "STEROID", "HORMONE", "ANDROGEN",
+    "ESTROGEN", "PROGESTERONE", "CONTRACEPT", "INFERTILITY", "INSULIN",
+    "ANTI-DIABETIC", "ANTIDIABETIC", "HYPOGLYCEMIC", "ANTI-HYPERTENSIVE",
+    "ANTIHYPERTENSIVE", "ANTIARRHYTH", "ANTICOAGULANT", "ANTI-COAGULANT",
+    "ANTIPLATLET", "ANTIPLATELET", "STATIN", "ANTIHYPERLIPID", "ANTI-ISCHEMIC",
+    "ANTI-EPILEPTIC", "ANTIEPILEPTIC", "ANTICONVULS", "PSYCHIATRIC",
+    "ANTIDEPRESS", "ANTIPSYCHOTIC", "ANXIOLYTIC", "HYPNOTIC", "SEDATIVE",
+    "OPIOID", "NARCOTIC", "CONTROLLED", "IMMUNOSUPPRESS", "IMMUNOGLOBULIN",
+    "VACCINE", "TUBERCULOSIS", "PARKINSON", "GLAUCOMA", "GLUCOMA", "ANTIGOUT",
+    "THYROID", "DIURETIC", "BRONCHODILATOR", "ASTHMA", "MUSCLE RELAXANT",
+    "PROTON PUMP", "PEPTIC ULCER", "ULCERATIVE COLITIS", "ANTIEMETIC", "5-HT3",
+    "ANTI-MIGRAINE", "ANTIMIGRAINE", "ERECTILE", "EJACULATION", "SEXUAL",
+    "WEIGHT LOSS", "ANTI-MUSCARINIC", "ANTISPASMODIC", "URINARY", "INCONTINENCE",
+    "PSORIASIS", "DOPAMINE", "CNS", "ANEMIA", "HEMATOPOIETIC", "RADIOGRAPHIC",
+    "CEREBRAL", "BLOOD CIRCULATION", "VASCULAR", "GENERAL ANESTHETIC",
+    "ANESTHETIC", "MYDRIATIC", "ATTENTION-DEFICIT", "NOOTROPIC",
+    "ANTICHOLINESTERASE", "ENZYME REPLACEMENT", "BLOOD-COAGULATION",
+    "HAEMOSTATIC", "NSAID", "ANTI-RHEUMATIC", "ANTI-INFLAMMATORY",
+    "FOLIC ACID DERIVATIVE", "FOLINIC", "OSTEOPOROSIS",
 )
-RX_ALLOW = (
-    "SKIN CARE", "HAIR CARE", "SUN BLOCK", "SUNBLOCK", "SOAP", "MASSAGE",
-    "COSMETIC", "MOISTURIZ", "SHAMPOO", "BABY CARE", "ORAL CARE", "DENTAL",
-    "MOUTH", "DEODORANT", "VITAMIN", "MULTIVITAMIN", "MINERAL", "SUPPLEMENT",
-    "CALCIUM", "OMEGA", "PROBIOTIC", "NUTRITION", "FORMULA", "ANTACID",
-    "FLATULENT", "LAXATIVE", "REHYDRATION", "COLD PRODUCTS", "COUGH",
-    "DECONGESTANT", "THROAT", "LOZENGE", "ANTISEPTIC", "DISINFECTANT", "WOUND",
-    "FIRST AID", "ANTI-HISTAMINE", "ANTIHISTAMINE", "ANTI-ALLERGY", "ANTIPYRETIC",
-    "EMOLLIENT", "MEDICAL DEVICE",
+OTC_ALLOW = (
+    # personal care / cosmetics
+    "SKIN CARE", "HAIR CARE", "MASSAGE", "SUN BLOCK", "SUNBLOCK", "WHITENING",
+    "MOISTURIZ", "ORAL CARE", "MOUTH WASH", "FIRMING", "EYE CONTOUR",
+    "SCAR THERAPY", "HEALING TOPICAL", "SOOTHING TOPICAL", "SOAP", "BABY CARE",
+    "DIAPER", "LUBRICANT", "CONTACT LENS", "VAGINAL WASH", "COSMETIC",
+    "SHAMPOO", "DEODORANT",
+    # nutrition / supplements
+    "VITAMIN", "SUPPLEMENT", "OMEGA", "ANTIOXIDANT", "IMMUNITY", "LIVER SUPPORT",
+    "MILK PRODUCT", "DRINKS", "SWEETENER",
+    # symptomatic OTC
+    "ANTACID", "ANTIFLATULENT", "ANTI-FLATULENT", "LAXATIVE", "COLD PRODUCT",
+    "COUGH", "DECONGESTANT", "SORE THROAT", "ANTIPYRETIC", "ANTISEPTIC",
+    "ANTI-HISTAMINE", "ANTIHISTAMINE", "ANTIDIARR", "ORS", "DIGESTIVE ENZYME",
+    "HEMORRHOID", "HAEMORRHOID", "MUCOLYTIC", "NASAL CONGESTION",
 )
 
 
 def derive_rx(drug_class: str) -> bool:
-    cls = (drug_class or "").upper()
-    if any(k in cls for k in RX_DENY):
+    cls = (drug_class or "").strip().upper()
+    if not cls:
         return True
-    if any(k in cls for k in RX_ALLOW):
+    if any(k in cls for k in HARD_RX):  # prescription list always wins
+        return True
+    if any(k in cls for k in OTC_ALLOW):
         return False
     return True  # unknown / unmatched -> prescription-only (safe default)
 
@@ -163,14 +190,21 @@ def write_provenance(n_total: int, n_rx: int, n_otc: int, sha: str) -> None:
 
 ## ⚠️ Rx derivation is HEURISTIC — confirm against EDA before go-live
 The source has **no** prescription/OTC indicator. We derive `rx` from
-`drug_class`:
-1. If the class matches a prescription **deny-list** keyword → `rx = true`.
-2. Else if it matches a non-prescription **allow-list** keyword → `rx = false`.
+`drug_class` (which is hierarchical, e.g. `ANTIBIOTIC.QUINOLONE`):
+1. If the class matches the **hard prescription list** → `rx = true`
+   (this always wins — covers antibiotics, antivirals, cardiovascular,
+   antidiabetics, steroids/hormones, psychiatric, oncology, etc.).
+2. Else if it matches the **OTC allow-list** → `rx = false`
+   (personal care, vitamins/supplements, and well-established symptomatic OTC
+   classes: cold/cough, antacids, antiseptics, antipyretics, antihistamines…).
 3. Otherwise → `rx = true` (unknown classes default to prescription-only).
 
-This deliberately **over-gates**: erring toward "prescription required" means an
-extra pharmacist check, never an unauthorized dispense. Every `rx` value carries
-`rx_source = "{f'egyptian-drug-database@sha256:{sha[:12]} (heuristic)'}"`.
+This deliberately **over-gates**: ambiguous classes (e.g. WEIGHT LOSS, SEXUAL
+TONIC, SLEEP AID, leucovorin) stay Rx. The rules were validated against the full
+dataset with **zero** antibiotic / cardiovascular / antidiabetic / steroid
+medicines leaking into OTC. Erring toward "prescription required" means an extra
+pharmacist check, never an unauthorized dispense. Every `rx` value carries
+`rx_source = "egyptian-drug-database@sha256:{sha[:12]} (heuristic)"`.
 The legal Rx schedule of record is the EDA register, not this dataset.
 
 _Regenerate with:_ `python seed/build_egyptian_drugs.py`

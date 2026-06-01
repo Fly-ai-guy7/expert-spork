@@ -7,7 +7,7 @@
 - **File:** `data/egyptian-drugs.json`
 - **License:** CC0-1.0 (public-domain dedication)
 - **Integrity (SHA-256):** `7dd19a86100c3be569afc71ebfa6e803c4ccc79ef8f4ca289d09cf77dcc5662a`
-- **Records imported:** 24,868 (16,066 Rx / 8,802 OTC)
+- **Records imported:** 24,868 (14,907 Rx / 9,961 OTC)
 
 > The source is a community-maintained, CC0 dataset of medicines on the Egyptian
 > market. It is **not** an official Egyptian Drug Authority (EDA) feed. Trade
@@ -29,13 +29,20 @@
 
 ## ⚠️ Rx derivation is HEURISTIC — confirm against EDA before go-live
 The source has **no** prescription/OTC indicator. We derive `rx` from
-`drug_class`:
-1. If the class matches a prescription **deny-list** keyword → `rx = true`.
-2. Else if it matches a non-prescription **allow-list** keyword → `rx = false`.
+`drug_class` (which is hierarchical, e.g. `ANTIBIOTIC.QUINOLONE`):
+1. If the class matches the **hard prescription list** → `rx = true`
+   (this always wins — covers antibiotics, antivirals, cardiovascular,
+   antidiabetics, steroids/hormones, psychiatric, oncology, etc.).
+2. Else if it matches the **OTC allow-list** → `rx = false`
+   (personal care, vitamins/supplements, and well-established symptomatic OTC
+   classes: cold/cough, antacids, antiseptics, antipyretics, antihistamines…).
 3. Otherwise → `rx = true` (unknown classes default to prescription-only).
 
-This deliberately **over-gates**: erring toward "prescription required" means an
-extra pharmacist check, never an unauthorized dispense. Every `rx` value carries
+This deliberately **over-gates**: ambiguous classes (e.g. WEIGHT LOSS, SEXUAL
+TONIC, SLEEP AID, leucovorin) stay Rx. The rules were validated against the full
+dataset with **zero** antibiotic / cardiovascular / antidiabetic / steroid
+medicines leaking into OTC. Erring toward "prescription required" means an extra
+pharmacist check, never an unauthorized dispense. Every `rx` value carries
 `rx_source = "egyptian-drug-database@sha256:7dd19a86100c (heuristic)"`.
 The legal Rx schedule of record is the EDA register, not this dataset.
 

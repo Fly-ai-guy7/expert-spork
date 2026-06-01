@@ -62,11 +62,14 @@ onto the `Drug` schema, and writes `seed/drugs_egypt.json.gz` plus
 `seed/PROVENANCE.md`. The build is reproducible and integrity-checked.
 
 > ⚠️ The source has **no prescription/OTC field**, so `rx` is **derived
-> heuristically** from `drug_class` — defaulting to *prescription-only* and
-> down-classifying to OTC only for an explicit allow-list (the legally safe
-> direction). Each row records `rx_source`. **All `rx` values must be reconciled
-> against the EDA register before go-live.** It is also community CC0 data, not
-> an official EDA feed, and has no barcodes yet. See `backend/seed/PROVENANCE.md`.
+> heuristically** from `drug_class` (~14.9k Rx / ~10k OTC). A hard prescription
+> list always wins; a medicine is OTC only if it matches a vetted allow-list and
+> no prescription token — anything ambiguous stays Rx (the legally safe
+> direction). Validated against the full dataset with **zero** antibiotic /
+> cardiovascular / antidiabetic / steroid leaks into OTC. Each row records
+> `rx_source`. **All `rx` values must still be reconciled against the EDA
+> register before go-live.** It is also community CC0 data, not an official EDA
+> feed, and has no barcodes yet. See `backend/seed/PROVENANCE.md`.
 
 ## Quick start — frontend
 

@@ -41,10 +41,24 @@ def test_known_otc_classes_are_not_rx():
         "SKIN CARE",
         "ANALGESIC.ANTIPYRETIC",
         "ANTI-HISTAMINE.SECOND-GENERATION",
+        # newly recovered from the previous "unknown -> Rx" bucket
+        "COUGH PRODUCTS",
+        "ANTISEPTIC",
+        "MUCOLYTIC",
+        "NASAL DECONGESTANT",
+        "OMEGA 3",
     ]:
         assert derive_rx(cls) is False, cls
 
 
-def test_deny_list_wins_over_allow_list():
-    # Contains both a vitamin (allow) and an antineoplastic (deny) -> must stay Rx.
+def test_hard_rx_list_always_wins():
+    # An OTC-ish token combined with a prescription token must stay Rx.
     assert derive_rx("ANTINEOPLASTIC WITH VITAMIN SUPPORT") is True
+    assert derive_rx("ANTI-HYPERTENSIVE.CALCIUM CHANNEL BLOCKER") is True
+    assert derive_rx("PENICILLINS.MONOCOMPONENT") is True
+
+
+def test_ambiguous_classes_stay_prescription():
+    # Deliberately over-gated: not confidently OTC -> Rx.
+    for cls in ["WEIGHT LOSS", "SEXUAL TONIC", "SLEEP AID", "FOLIC ACID DERIVATIVE"]:
+        assert derive_rx(cls) is True, cls
