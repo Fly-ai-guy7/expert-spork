@@ -31,6 +31,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install ruff==0.15.8
+      - name: Lint (ruff)
+        working-directory: rxegypt-pilot/backend
+        run: ruff check .
       - name: Run migrations (SQLite) + seed
         working-directory: rxegypt-pilot/backend
         env:

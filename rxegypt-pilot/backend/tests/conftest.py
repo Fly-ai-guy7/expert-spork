@@ -12,7 +12,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-import db as db_module
 import models  # noqa: F401  (registers tables on Base.metadata)
 from db import Base, get_db
 from main import app
