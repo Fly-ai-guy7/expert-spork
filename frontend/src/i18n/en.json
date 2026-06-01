@@ -10,6 +10,10 @@
     "new_case": "New Case",
     "statutes": "Statutes"
   },
+  "cases": {
+    "title": "Cases",
+    "no_cases": "No cases yet."
+  },
   "training": {
     "dashboard_title": "Training Dashboard",
     "start_case": "Start practice case",
@@ -64,6 +68,7 @@
     "grade": "Grade",
     "total": "Total score",
     "per_round": "Per-round breakdown",
+    "round": "Round",
     "missed_citations": "Missed statute citations",
     "evidence_gaps": "Evidence gaps to address",
     "weak_patterns": "Weak patterns to work on",

@@ -36,7 +36,7 @@ export function NewCasePage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold text-brand mb-4">{t("new_case.title")}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">{t("new_case.title")}</h1>
 
       <div className="flex gap-2 mb-6">
         <button

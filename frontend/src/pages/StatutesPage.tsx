@@ -26,7 +26,7 @@ export function StatutesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-brand mb-4">{t("statutes.title")}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">{t("statutes.title")}</h1>
 
       <input
         type="text"

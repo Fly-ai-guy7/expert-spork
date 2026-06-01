@@ -19,7 +19,7 @@ export function CoachingReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-brand">{t("coaching.title")}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{t("coaching.title")}</h1>
 
       <div className="bg-white border rounded-lg p-6 flex items-center gap-6">
         <div className="text-5xl font-bold text-brand">{report.grade || "—"}</div>
@@ -36,7 +36,9 @@ export function CoachingReportPage() {
         <ul className="space-y-3 text-sm">
           {(report.per_round || []).map((r) => (
             <li key={r.round_no} className="border-l-4 border-brand pl-3">
-              <div className="font-medium">Round {r.round_no} · {Math.round(r.overall)}/100</div>
+              <div className="font-medium">
+                {t("coaching.round")} {r.round_no} · {Math.round(r.overall)}/100
+              </div>
               <div className="text-xs text-slate-500 mt-1">
                 {(i18n.language === "ar" ? r.rationale_ar : r.rationale_en) || r.rationale_en}
               </div>
