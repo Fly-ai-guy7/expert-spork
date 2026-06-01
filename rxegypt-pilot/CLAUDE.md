@@ -18,13 +18,19 @@ Grant funding track: ITIDA PDP + ITAC Round 40 + UNDP Digital Health.
 rxegypt-pilot/
 ├── CLAUDE.md                  ← you are here
 ├── README.md
+├── docker-compose.yml         ← local full stack (db + backend + frontend)
 ├── frontend/
 │   ├── index.html             ← patient-facing app (Experts Pharmacy branded)
-│   ├── pharmacy-pos.html      ← pharmacist POS (EAN-13 barcode, stock)
+│   ├── pharmacy-pos.html      ← pharmacist POS (barcode, stock, Rx queue)
 │   ├── dawai-patient.html     ← bilingual AR/EN patient drug app + Health Info Guide
-│   └── rxegypt-api.js         ← shared API client (demo + live modes)
+│   ├── rxegypt-api.js         ← shared API client (demo + live modes)
+│   ├── config.js              ← demo ↔ live switch (backend URL)
+│   ├── Dockerfile             ← static server; injects config.js from env
+│   └── docker-entrypoint.sh
 ├── backend/
 │   ├── main.py                ← FastAPI entry point
+│   ├── Dockerfile             ← production backend image
+│   ├── fly.toml               ← Fly.io deploy (release: migrate + seed)
 │   ├── config.py              ← settings (env-driven)
 │   ├── db.py                  ← engine + session
 │   ├── models.py              ← SQLAlchemy models
@@ -74,6 +80,7 @@ rxegypt-pilot/
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
 | Backend tests (pytest) | ✅ Scaffolded | 31 tests: Rx gating + queue, consent, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
+| Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
 
 ---
@@ -101,7 +108,7 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 3. Add **barcodes + strengths** to the catalogue (EDA/GS1) — source lacks both.
 4. **Consent withdrawal + data deletion** (PDPL data-subject rights).
 5. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
-6. **Deployment config** — Dockerfile + fly.toml + docker-compose for Fly.io.
+6. **Payment flow** — wire `pending_payment` → Paymob (live creds) → `paid`/`fulfilled`.
 
 ---
 

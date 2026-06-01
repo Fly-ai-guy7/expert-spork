@@ -1,0 +1,54 @@
+# Local full-stack RxEgypt: PostgreSQL + FastAPI backend + static frontend.
+#
+#   docker compose up --build
+#   # backend  → http://localhost:8000/docs
+#   # frontend → http://localhost:3000/index.html   (live mode, points at backend)
+#
+# Create a pharmacist account for the POS after the stack is up:
+#   docker compose exec backend python seed/create_user.py \
+#       --email pharmacist@experts.eg --password secret123 --role pharmacist
+#
+# These values are for LOCAL DEV ONLY — never use them in production.
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: rxegypt
+      POSTGRES_PASSWORD: rxegypt
+      POSTGRES_DB: rxegypt
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rxegypt"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://rxegypt:rxegypt@db:5432/rxegypt
+      SECRET_KEY: dev-only-change-me
+      CORS_ORIGINS: http://localhost:3000
+      PHARMACIST_WHATSAPP: "+201001234567"
+      ENVIRONMENT: development
+    # Migrate + idempotent seed, then serve.
+    command: sh -c "alembic upgrade head && python seed/seed_drugs.py && uvicorn main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      # Browser reaches the backend on the host-published port.
+      RXEGYPT_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

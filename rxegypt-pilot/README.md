@@ -106,15 +106,43 @@ sessions don't collide.
 - **Health Information Guide** — general info only, bilingual disclaimers, no
   diagnosis / severity / Rx suggestions
 - **Pharmacy POS** — barcode sale entry + stock updates
+- **Rx verification queue** — pharmacist approves/rejects gated orders
 - **Inventory** — low-stock report, pharmacist-only writes
+
+## Run the full stack locally (Docker Compose)
+
+```bash
+docker compose up --build
+# backend  → http://localhost:8000/docs
+# frontend → http://localhost:3000/index.html   (live mode, wired to the backend)
+
+# Create a pharmacist account for the POS:
+docker compose exec backend python seed/create_user.py \
+    --email pharmacist@experts.eg --password secret123 --role pharmacist
+```
+
+Compose brings up PostgreSQL + the FastAPI backend (which runs migrations and
+seeds the catalogue on start) + a static frontend server. The frontend container
+generates `config.js` from `RXEGYPT_API_URL`, so it points at the backend with no
+source edits. Values in `docker-compose.yml` are **dev-only**.
 
 ## Deploy (Fly.io)
 
+The backend ships with a `Dockerfile` and `fly.toml` (release command runs
+`alembic upgrade head` + the idempotent seed):
+
 ```bash
-fly launch --name rxegypt-pilot
-fly secrets set DATABASE_URL="..." SECRET_KEY="..." PAYMOB_API_KEY="..."
+cd backend
+fly launch --copy-config --name rxegypt-pilot      # uses the bundled fly.toml
+fly postgres create && fly postgres attach          # provisions DATABASE_URL
+fly secrets set SECRET_KEY="..." PAYMOB_API_KEY="..." \
+    PHARMACIST_WHATSAPP="+20XXXXXXXXXX" CORS_ORIGINS="https://<your-frontend>"
 fly deploy
 ```
+
+The frontend is static — host it on Cloudflare Pages / any static host, or build
+its image (`frontend/Dockerfile`) with `RXEGYPT_API_URL` set to the deployed API.
+Set the backend `CORS_ORIGINS` to the frontend's origin.
 
 ---
 🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜
