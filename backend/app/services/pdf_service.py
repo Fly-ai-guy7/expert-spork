@@ -8,6 +8,17 @@ from app.i18n import Lang
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "reports" / "templates"
 STYLES = Path(__file__).resolve().parent.parent / "reports" / "styles.css"
 
+PARTY_ROLE_LABELS_EN = {
+    "PLAINTIFF": "Plaintiff",
+    "DEFENDANT": "Defendant",
+    "THIRD_PARTY": "Third Party",
+}
+PARTY_ROLE_LABELS_AR = {
+    "PLAINTIFF": "المدعي",
+    "DEFENDANT": "المدعى عليه",
+    "THIRD_PARTY": "طرف ثالث",
+}
+
 _env = Environment(
     loader=FileSystemLoader(str(TEMPLATES_DIR)),
     autoescape=select_autoescape(["html", "j2"]),
@@ -20,6 +31,8 @@ def render_html(template_name: str, context: dict) -> str:
         **context,
         "disclaimer_en": DISCLAIMER_EN,
         "disclaimer_ar": DISCLAIMER_AR,
+        "party_role_labels_en": PARTY_ROLE_LABELS_EN,
+        "party_role_labels_ar": PARTY_ROLE_LABELS_AR,
     }
     return template.render(**context)
 

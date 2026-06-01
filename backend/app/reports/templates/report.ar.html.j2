@@ -22,7 +22,7 @@
 <h3>الأطراف</h3>
 <ul>
   {% for p in case.parties %}
-  <li><span class="k">{{ p.role }}:</span> {{ p.name_ar or p.name_en or "—" }}</li>
+  <li><span class="k">{{ party_role_labels_ar.get(p.role, p.role) }}:</span> {{ p.name_ar or p.name_en or "—" }}</li>
   {% endfor %}
 </ul>
 
