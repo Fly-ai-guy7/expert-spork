@@ -56,7 +56,8 @@
     "download_pdf": "Download Ruling PDF",
     "view_coaching": "View Coaching Report",
     "trainee": "Trainee",
-    "untitled": "(untitled)"
+    "untitled": "(untitled)",
+    "citations_placeholder": "Citations (comma-separated, e.g. 82/2002:113, 131/1948:163)"
   },
   "statutes": {
     "title": "Egyptian Statute Corpus",
@@ -77,6 +78,7 @@
   "actions": {
     "submit": "Submit",
     "cancel": "Cancel",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "toggle_language": "Toggle language"
   }
 }

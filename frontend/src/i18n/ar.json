@@ -56,7 +56,8 @@
     "download_pdf": "تحميل ملف الحكم PDF",
     "view_coaching": "عرض تقرير التدريب",
     "trainee": "متدرب",
-    "untitled": "(بدون عنوان)"
+    "untitled": "(بدون عنوان)",
+    "citations_placeholder": "الاستشهادات (مفصولة بفاصلة، مثل 82/2002:113، 131/1948:163)"
   },
   "statutes": {
     "title": "مجموعة التشريعات المصرية",
@@ -77,6 +78,7 @@
   "actions": {
     "submit": "إرسال",
     "cancel": "إلغاء",
-    "loading": "جارٍ التحميل…"
+    "loading": "جارٍ التحميل…",
+    "toggle_language": "تبديل اللغة"
   }
 }

@@ -18,7 +18,8 @@ export function DebateRoundCard({ argument }: { argument: ArgumentRecord }) {
     >
       <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
         <span className="font-medium">
-          {t(`case.${argument.agent.toLowerCase()}`, argument.agent)} · Round {argument.round_no}
+          {t(`case.${argument.agent.toLowerCase()}`, argument.agent)} · {t("coaching.round")}{" "}
+          {argument.round_no}
         </span>
         <span className="flex gap-2">
           {argument.llm_used && <span className="text-slate-400">{argument.llm_used}</span>}

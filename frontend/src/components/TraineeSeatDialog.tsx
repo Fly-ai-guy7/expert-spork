@@ -17,8 +17,15 @@ export function TraineeSeatDialog({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
-        <h2 className="text-lg font-semibold text-brand mb-2">{t("case.your_turn")}</h2>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="trainee-seat-title"
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6"
+      >
+        <h2 id="trainee-seat-title" className="text-lg font-semibold text-brand mb-2">
+          {t("case.your_turn")}
+        </h2>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -30,7 +37,7 @@ export function TraineeSeatDialog({
           type="text"
           value={citations}
           onChange={(e) => setCitations(e.target.value)}
-          placeholder="Citations (comma-separated, e.g. 82/2002:113, 131/1948:163)"
+          placeholder={t("case.citations_placeholder")}
           className="mt-2 w-full rounded-md border p-2 text-sm"
         />
         <div className="mt-4 flex justify-end gap-2">
