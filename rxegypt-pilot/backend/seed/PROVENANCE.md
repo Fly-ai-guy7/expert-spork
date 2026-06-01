@@ -7,7 +7,11 @@
 - **File:** `data/egyptian-drugs.json`
 - **License:** CC0-1.0 (public-domain dedication)
 - **Integrity (SHA-256):** `7dd19a86100c3be569afc71ebfa6e803c4ccc79ef8f4ca289d09cf77dcc5662a`
-- **Records imported:** 24,868 (14,907 Rx / 9,961 OTC)
+- **Records imported:** 24,868 (14,907 Rx / 9,961 OTC; 311 controlled)
+
+> `controlled` flags narcotics/psychotropics matched by class or active
+> ingredient (heuristic — reconcile against the EDA schedule). LEGAL: controlled
+> substances are **never** orderable online; `POST /orders` rejects them.
 
 > The source is a community-maintained, CC0 dataset of medicines on the Egyptian
 > market. It is **not** an official Egyptian Drug Authority (EDA) feed. Trade

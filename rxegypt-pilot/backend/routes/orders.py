@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 import payments
 from config import get_settings
 from db import get_db
-from models import Drug, Inventory, Order, OrderItem, OrderStatus, User
+from models import Consent, Drug, Inventory, Order, OrderItem, OrderStatus, User
 from schemas import OrderCreate, OrderOut, RxQueueItem, RxQueueOrder
 from security import get_current_user, require_pharmacist
 
@@ -44,6 +44,20 @@ def create_order(
     if not payload.items:
         raise HTTPException(status_code=400, detail="Order is empty")
 
+    # PDPL (Law 151/2020): no health/order data may be processed without a
+    # granted consent on record. The frontend modal is not sufficient on its own.
+    latest_consent = db.scalar(
+        select(Consent)
+        .where(Consent.user_id == user.id)
+        .order_by(Consent.created_at.desc(), Consent.id.desc())
+        .limit(1)
+    )
+    if latest_consent is None or not latest_consent.granted:
+        raise HTTPException(
+            status_code=403,
+            detail="Data-processing consent is required before placing an order.",
+        )
+
     order = Order(user_id=user.id, status=OrderStatus.CART)
     total = 0.0
     requires_rx = False
@@ -53,6 +67,16 @@ def create_order(
         if not drug:
             raise HTTPException(
                 status_code=404, detail=f"Drug {line.drug_id} not found"
+            )
+        # LEGAL (RXEG-LEGAL-001 §3.1): controlled substances are never orderable
+        # online — they require in-person dispensing.
+        if drug.controlled:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"{drug.name_en} is a controlled substance and cannot be "
+                    "ordered online. Please visit the pharmacy in person."
+                ),
             )
         if drug.rx:
             requires_rx = True

@@ -96,7 +96,9 @@ Create an order.
 **Rx gating:** if any item has `rx: true`, the order status is
 `pending_rx_verification` and cannot advance to payment until verified.
 Otherwise status is `pending_payment`.
-→ `201` `OrderOut`
+**Legal guards:** requires a granted PDPL `Consent` on record (else `403`);
+rejects any `controlled: true` item (else `400` — in-pharmacy only).
+→ `201` `OrderOut` · `403` no consent · `400` controlled item / empty
 
 ### `GET /orders/pending-rx`  *(pharmacist/admin)*
 Verification queue: orders in `pending_rx_verification`, oldest first, enriched

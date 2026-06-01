@@ -20,6 +20,7 @@ class DrugOut(BaseModel):
     barcode: str
     price_egp: float
     rx: bool
+    controlled: bool
     rx_source: str
 
 

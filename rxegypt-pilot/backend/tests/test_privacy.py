@@ -5,8 +5,12 @@ def _auth(token):
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_consent_status_defaults_to_not_granted(client, patient_token):
-    r = client.get("/api/v1/auth/consent", headers=_auth(patient_token))
+def test_consent_status_defaults_to_not_granted(client):
+    # a fresh account that has never consented
+    client.post("/api/v1/auth/register", json={"email": "fresh@x.com", "password": "password1"})
+    token = client.post("/api/v1/auth/login",
+                        data={"username": "fresh@x.com", "password": "password1"}).json()["access_token"]
+    r = client.get("/api/v1/auth/consent", headers=_auth(token))
     assert r.status_code == 200 and r.json()["granted"] is False
 
 

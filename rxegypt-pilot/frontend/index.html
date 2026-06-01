@@ -373,7 +373,9 @@
           </div>
           <div style="text-align:right">
             <div class="price">EGP ${d.price_egp.toFixed(2)}</div>
-            <button class="add" onclick='addToCart(${JSON.stringify(d)})'>Add</button>
+            ${d.controlled
+              ? '<div class="meta" style="color:var(--rx)">🔒 In-pharmacy only</div>'
+              : `<button class="add" onclick='addToCart(${JSON.stringify(d)})'>Add</button>`}
           </div>
         </div>`).join('') || '<p>No results.</p>';
     }

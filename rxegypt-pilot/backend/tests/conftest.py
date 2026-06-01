@@ -62,7 +62,11 @@ def patient_token(client):
                 json={"email": "pat@x.com", "password": "password1"})
     r = client.post("/api/v1/auth/login",
                     data={"username": "pat@x.com", "password": "password1"})
-    return r.json()["access_token"]
+    token = r.json()["access_token"]
+    # Grant PDPL consent so order-flow tests reflect a real, consented patient.
+    client.post("/api/v1/auth/consent", json={"granted": True},
+                headers={"Authorization": f"Bearer {token}"})
+    return token
 
 
 @pytest.fixture()

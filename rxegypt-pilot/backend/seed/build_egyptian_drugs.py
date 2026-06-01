@@ -114,6 +114,25 @@ def derive_rx(drug_class: str) -> bool:
     return True  # unknown / unmatched -> prescription-only (safe default)
 
 
+# Controlled/scheduled substances — matched on drug_class OR active ingredient
+# (e.g. Tramadol is an ingredient, not a class). HEURISTIC: must be reconciled
+# against the EDA controlled-substances schedule before go-live. LEGAL: these are
+# never orderable online (order creation rejects them).
+CONTROLLED = (
+    "OPIOID", "OPIATE", "NARCOTIC", "CONTROLLED", "TRAMADOL", "CODEINE",
+    "MORPHINE", "FENTANYL", "OXYCODONE", "PETHIDINE", "METHADONE", "OPIUM",
+    "BUPRENORPHINE", "TAPENTADOL", "BENZODIAZEPINE", "DIAZEPAM", "ALPRAZOLAM",
+    "CLONAZEPAM", "LORAZEPAM", "BROMAZEPAM", "MIDAZOLAM", "ZOLPIDEM",
+    "BARBITURATE", "PHENOBARBITAL", "AMPHETAMINE", "METHYLPHENIDATE",
+    "PREGABALIN", "KETAMINE", "CANNABIS",
+)
+
+
+def derive_controlled(drug_class: str, scientific: str) -> bool:
+    blob = f"{drug_class or ''} {scientific or ''}".upper()
+    return any(k in blob for k in CONTROLLED)
+
+
 def normalize_route(route: str) -> str:
     r = (route or "").strip().upper()
     return {
@@ -153,12 +172,13 @@ def transform(records: list[dict]) -> list[dict]:
             "barcode": "",   # not provided by source; populate from EDA/GS1 later
             "price_egp": round(price, 2),
             "rx": derive_rx(cls),
+            "controlled": derive_controlled(cls, r.get("scientific_name", "")),
             "rx_source": rx_tag,
         })
     return out
 
 
-def write_provenance(n_total: int, n_rx: int, n_otc: int, sha: str) -> None:
+def write_provenance(n_total: int, n_rx: int, n_otc: int, n_controlled: int, sha: str) -> None:
     PROVENANCE.write_text(f"""# Drug seed data — provenance
 
 **Generated:** {date.today().isoformat()} · by `seed/build_egyptian_drugs.py`
@@ -168,7 +188,11 @@ def write_provenance(n_total: int, n_rx: int, n_otc: int, sha: str) -> None:
 - **File:** `data/egyptian-drugs.json`
 - **License:** {SOURCE_LICENSE} (public-domain dedication)
 - **Integrity (SHA-256):** `{sha}`
-- **Records imported:** {n_total:,} ({n_rx:,} Rx / {n_otc:,} OTC)
+- **Records imported:** {n_total:,} ({n_rx:,} Rx / {n_otc:,} OTC; {n_controlled:,} controlled)
+
+> `controlled` flags narcotics/psychotropics matched by class or active
+> ingredient (heuristic — reconcile against the EDA schedule). LEGAL: controlled
+> substances are **never** orderable online; `POST /orders` rejects them.
 
 > The source is a community-maintained, CC0 dataset of medicines on the Egyptian
 > market. It is **not** an official Egyptian Drug Authority (EDA) feed. Trade
@@ -236,12 +260,14 @@ def main() -> None:
     drugs = transform(records)
     n_rx = sum(d["rx"] for d in drugs)
     n_otc = len(drugs) - n_rx
+    n_controlled = sum(d["controlled"] for d in drugs)
 
     payload = json.dumps(drugs, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     with gzip.open(OUT_JSON, "wb") as fh:
         fh.write(payload)
-    write_provenance(len(drugs), n_rx, n_otc, sha)
-    print(f"Wrote {OUT_JSON.name}: {len(drugs):,} drugs ({n_rx:,} Rx / {n_otc:,} OTC)")
+    write_provenance(len(drugs), n_rx, n_otc, n_controlled, sha)
+    print(f"Wrote {OUT_JSON.name}: {len(drugs):,} drugs "
+          f"({n_rx:,} Rx / {n_otc:,} OTC; {n_controlled:,} controlled)")
     print(f"Wrote {PROVENANCE.name}")
 
 

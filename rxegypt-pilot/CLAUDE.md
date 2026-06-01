@@ -83,7 +83,7 @@ rxegypt-pilot/
 | PDPL data-subject rights | ✅ Built | Consent status/withdraw, data export, account erasure (anonymize) |
 | Payment flow (Paymob) | 🟡 Built + mock | Full lifecycle (pay→paid→fulfilled) works in MOCK mode; live 3-step + HMAC callback wired, needs credentials to test |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 54 tests: Rx + fulfillment queues, payments + stock decrement, my-orders, PDPL rights, auth, inventory, drugs, Rx derivation |
+| Backend tests (pytest) | ✅ Scaffolded | 63 tests: Rx + fulfillment queues, payments + stock, order compliance (consent/controlled), PDPL rights, auth, inventory, drugs, Rx derivation, config guard |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
 | CI (GitHub Actions) | ✅ Built | `.github/workflows/rxegypt-ci.yml` — pytest + JS unit tests, path-scoped to rxegypt-pilot/ |
@@ -98,10 +98,13 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 
 1. **Rx drug gating** — `rx: true` drugs not orderable without pharmacist
    verification (WhatsApp confirmation flow). ✅ scaffolded — review before go-live.
+   **Controlled substances** (`controlled: true`) are blocked from online orders
+   server-side ✅ (heuristic flag — reconcile against EDA schedule).
 2. **Health Information Guide disclaimers** — bilingual (EN+AR) on every screen,
    no severity ratings, no Rx suggestions. ✅ scaffolded.
 3. **PDPL consent** — explicit consent before any data is stored, logged with
-   timestamp. ✅ scaffolded. Data-subject rights (withdraw / export / erasure) ✅ built.
+   timestamp. ✅ scaffolded + **enforced server-side** (orders require a granted
+   consent). Data-subject rights (withdraw / export / erasure) ✅ built.
 4. **AISE liability shield** — Platform Service Agreement signed before go-live
    (Michael Gamal action). 🔴 outstanding.
 
