@@ -106,3 +106,26 @@ class OrderOut(BaseModel):
     total_egp: float
     items: list[OrderItemOut]
     created_at: datetime
+
+
+class RxQueueItem(BaseModel):
+    """An item line enriched with the drug name, for the pharmacist queue."""
+
+    drug_id: int
+    name_en: str
+    name_ar: str
+    rx: bool
+    quantity: int
+    unit_price_egp: float
+
+
+class RxQueueOrder(BaseModel):
+    """An order awaiting Rx verification, with patient + drug detail for the queue."""
+
+    id: int
+    patient_email: str
+    patient_name: str
+    patient_phone: str
+    total_egp: float
+    created_at: datetime
+    items: list[RxQueueItem]

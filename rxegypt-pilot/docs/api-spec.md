@@ -81,6 +81,17 @@ Create an order.
 Otherwise status is `pending_payment`.
 → `201` `OrderOut`
 
+### `GET /orders/pending-rx`  *(pharmacist/admin)*
+Verification queue: orders in `pending_rx_verification`, oldest first, enriched
+with patient contact and drug names.
+→ `200` `RxQueueOrder[]`
+```json
+[ { "id": 12, "patient_email": "...", "patient_name": "...", "patient_phone": "...",
+    "total_egp": 96.0, "created_at": "...",
+    "items": [ { "drug_id": 2, "name_en": "Augmentin", "name_ar": "...", "rx": true,
+                 "quantity": 1, "unit_price_egp": 96.0 } ] } ]
+```
+
 ### `GET /orders/{order_id}`  *(auth — owner or staff)*
 → `OrderOut` | `404`
 
@@ -90,7 +101,11 @@ Returns a `wa.me` link for the patient to confirm an Rx order with the pharmacy.
 
 ### `POST /orders/{order_id}/verify-rx`  *(pharmacist/admin)*
 Pharmacist verifies the prescription; order → `pending_payment`.
-→ `200` `OrderOut`
+→ `200` `OrderOut` · `400` if not awaiting verification
+
+### `POST /orders/{order_id}/reject-rx`  *(pharmacist/admin)*
+Pharmacist declines the prescription; order → `cancelled`.
+→ `200` `OrderOut` · `400` if not awaiting verification
 
 ---
 

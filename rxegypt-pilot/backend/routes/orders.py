@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from config import get_settings
 from db import get_db
 from models import Drug, Order, OrderItem, OrderStatus, User
-from schemas import OrderCreate, OrderOut
+from schemas import OrderCreate, OrderOut, RxQueueItem, RxQueueOrder
 from security import get_current_user, require_pharmacist
 
 settings = get_settings()
@@ -63,6 +63,52 @@ def create_order(
     db.commit()
     db.refresh(order)
     return order
+
+
+# NOTE: this literal route must be declared BEFORE "/{order_id}" so the path
+# "/orders/pending-rx" is not captured by the int order_id parameter.
+@router.get("/pending-rx", response_model=list[RxQueueOrder])
+def pending_rx_queue(
+    _: User = Depends(require_pharmacist),
+    db: Session = Depends(get_db),
+):
+    """Pharmacist queue: orders awaiting Rx verification, oldest first.
+
+    Enriched with patient contact + drug names so the pharmacist can review and
+    confirm the prescription. This closes the Rx-gating loop — without it,
+    gated orders would never surface to a pharmacist.
+    """
+    orders = db.scalars(
+        select(Order)
+        .where(Order.status == OrderStatus.PENDING_RX_VERIFICATION)
+        .order_by(Order.created_at.asc())
+    ).all()
+
+    queue = []
+    for order in orders:
+        items = [
+            RxQueueItem(
+                drug_id=item.drug_id,
+                name_en=item.drug.name_en if item.drug else "",
+                name_ar=item.drug.name_ar if item.drug else "",
+                rx=item.drug.rx if item.drug else False,
+                quantity=item.quantity,
+                unit_price_egp=item.unit_price_egp,
+            )
+            for item in order.items
+        ]
+        queue.append(
+            RxQueueOrder(
+                id=order.id,
+                patient_email=order.user.email if order.user else "",
+                patient_name=order.user.full_name if order.user else "",
+                patient_phone=order.user.phone if order.user else "",
+                total_egp=order.total_egp,
+                created_at=order.created_at,
+                items=items,
+            )
+        )
+    return queue
 
 
 @router.get("/{order_id}", response_model=OrderOut)
@@ -115,6 +161,27 @@ def verify_rx(
         )
     order.rx_verified_by = pharmacist.email
     order.status = OrderStatus.PENDING_PAYMENT
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+@router.post("/{order_id}/reject-rx", response_model=OrderOut)
+def reject_rx(
+    order_id: int,
+    pharmacist: User = Depends(require_pharmacist),
+    db: Session = Depends(get_db),
+):
+    """Pharmacist declines the prescription; the order is cancelled."""
+    order = db.get(Order, order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != OrderStatus.PENDING_RX_VERIFICATION:
+        raise HTTPException(
+            status_code=400, detail="Order is not awaiting Rx verification"
+        )
+    order.rx_verified_by = pharmacist.email
+    order.status = OrderStatus.CANCELLED
     db.commit()
     db.refresh(order)
     return order

@@ -25,6 +25,13 @@
     .stock-row .ok { color:var(--green-d); font-size:.8rem; }
     .stock-row .bad { color:var(--rx); font-size:.8rem; }
     .low { color:var(--rx); font-weight:600; }
+    .qcard { border:1px solid #e4e8e4; border-radius:8px; padding:12px; margin-bottom:10px; }
+    .qcard .head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .qcard .who { font-size:.85rem; color:#5b665f; }
+    .qcard ul { margin:8px 0; padding-left:18px; font-size:.9rem; }
+    .qcard .acts { display:flex; gap:8px; }
+    .qcard .approve { background:var(--green); color:#fff; border:0; border-radius:6px; padding:7px 14px; cursor:pointer; }
+    .qcard .reject { background:#fff; color:var(--rx); border:1px solid var(--rx); border-radius:6px; padding:7px 14px; cursor:pointer; }
     header .auth-status { font-size:.8rem; opacity:.9; }
     header .auth-status button { background:#fff; color:var(--green-d); border:0; border-radius:6px; padding:5px 10px; cursor:pointer; margin-left:8px; }
     /* Modal */
@@ -86,6 +93,16 @@
     </div>
   </div>
 
+  <div style="max-width:1100px;margin:0 auto;padding:0 16px 16px">
+    <div class="panel">
+      <h2>Rx Verification Queue
+        <button onclick="loadRxQueue()" style="float:right;padding:6px 12px;background:var(--green);color:#fff;border:0;border-radius:6px;cursor:pointer">Refresh</button>
+      </h2>
+      <p style="font-size:.85rem;color:#667">Orders awaiting prescription verification. Approve to release for payment, or reject to cancel.</p>
+      <div id="rxQueue"><p style="color:#889">Sign in as a pharmacist to load the queue.</p></div>
+    </div>
+  </div>
+
   <footer>
     🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜ · RxEgypt POS · Experts Pharmacy Hurghada
   </footer>
@@ -101,7 +118,7 @@
     window.addEventListener('DOMContentLoaded', initAuth);
 
     async function initAuth() {
-      if (RxEgyptAPI.mode === 'demo') { setStatus('demo pharmacist'); return; }
+      if (RxEgyptAPI.mode === 'demo') { setStatus('demo pharmacist'); loadRxQueue(); return; }
       if (!RxEgyptAPI.isAuthenticated()) { openLogin(); return; }
       try {
         const u = await RxEgyptAPI.me();
@@ -111,6 +128,7 @@
           return;
         }
         setStatus(u.email);
+        loadRxQueue();
       } catch { openLogin(); }
     }
 
@@ -140,8 +158,50 @@
         }
         document.getElementById('authOverlay').classList.remove('show');
         setStatus(u.email);
+        loadRxQueue();
       } catch (e) {
         err.textContent = e.message || 'Sign in failed.';
+      }
+    }
+
+    // --- Rx verification queue ---
+    async function loadRxQueue() {
+      const el = document.getElementById('rxQueue');
+      let orders;
+      try {
+        orders = await RxEgyptAPI.pendingRxOrders();
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as a pharmacist to load the queue.</p>'; return; }
+        el.innerHTML = `<p class="bad">Could not load queue: ${e.message || 'error'}</p>`; return;
+      }
+      if (!orders.length) { el.innerHTML = '<p style="color:#889">No orders awaiting verification. 🎉</p>'; return; }
+      el.innerHTML = orders.map(o => `
+        <div class="qcard" id="q-${o.id}">
+          <div class="head">
+            <div>
+              <strong>Order #${o.id}</strong> · EGP ${o.total_egp.toFixed(2)}
+              <div class="who">${o.patient_email}${o.patient_phone ? ' · ' + o.patient_phone : ''} · ${new Date(o.created_at).toLocaleString()}</div>
+            </div>
+            <div class="acts">
+              <button class="approve" onclick="approveRx(${o.id})">Approve</button>
+              <button class="reject" onclick="rejectRx(${o.id})">Reject</button>
+            </div>
+          </div>
+          <ul>${o.items.map(i => `<li>${i.quantity}× ${i.name_en} ${i.rx ? '<span class="rx-badge">Rx</span>' : ''}</li>`).join('')}</ul>
+        </div>`).join('');
+    }
+
+    async function approveRx(id) { await actOnRx(id, () => RxEgyptAPI.verifyRx(id), 'approved → pending payment'); }
+    async function rejectRx(id)  { await actOnRx(id, () => RxEgyptAPI.rejectRx(id), 'rejected → cancelled'); }
+
+    async function actOnRx(id, fn, label) {
+      const card = document.getElementById('q-' + id);
+      try {
+        await fn();
+        if (card) card.outerHTML = `<div class="qcard"><strong>Order #${id}</strong> — ${label}.</div>`;
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { openLogin('Pharmacist sign-in required.'); return; }
+        alert('Action failed: ' + (e.message || 'error'));
       }
     }
 

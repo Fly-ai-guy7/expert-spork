@@ -179,9 +179,31 @@
       return http(`/orders/${orderId}/rx-whatsapp`);
     },
 
+    async pendingRxOrders() {
+      if (DEMO) {
+        return _lastDemoOrder && _lastDemoOrder.requires_rx_verification
+          ? [{
+              id: _lastDemoOrder.id, patient_email: 'demo@local', patient_name: 'Demo User',
+              patient_phone: '', total_egp: _lastDemoOrder.total_egp,
+              created_at: _lastDemoOrder.created_at,
+              items: (_lastDemoOrder.items || []).map((l) => {
+                const d = DEMO_DRUGS.find((x) => x.id === l.drug_id) || {};
+                return { drug_id: l.drug_id, name_en: d.name_en || '', name_ar: d.name_ar || '', rx: !!d.rx, quantity: l.quantity, unit_price_egp: l.unit_price_egp };
+              })
+            }]
+          : [];
+      }
+      return http('/orders/pending-rx');
+    },
+
     async verifyRx(orderId) {
-      if (DEMO) return { id: orderId, status: 'pending_payment', requires_rx_verification: true, rx_verified_by: 'demo-pharmacist', items: [], total_egp: 0 };
+      if (DEMO) { if (_lastDemoOrder && _lastDemoOrder.id === orderId) _lastDemoOrder.status = 'pending_payment'; return { id: orderId, status: 'pending_payment', requires_rx_verification: true, rx_verified_by: 'demo-pharmacist', items: [], total_egp: 0 }; }
       return http(`/orders/${orderId}/verify-rx`, { method: 'POST' });
+    },
+
+    async rejectRx(orderId) {
+      if (DEMO) { if (_lastDemoOrder && _lastDemoOrder.id === orderId) _lastDemoOrder.status = 'cancelled'; return { id: orderId, status: 'cancelled', requires_rx_verification: true, rx_verified_by: 'demo-pharmacist', items: [], total_egp: 0 }; }
+      return http(`/orders/${orderId}/reject-rx`, { method: 'POST' });
     },
 
     // --- consent (PDPL) ---

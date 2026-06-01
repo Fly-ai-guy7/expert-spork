@@ -68,10 +68,11 @@ rxegypt-pilot/
 | SQLAlchemy models | ✅ Scaffolded | Drug, Inventory, User, Order, OrderItem, Consent |
 | Drug catalogue | ✅ Real data (24,868) | CC0 Egyptian dataset, SHA-256 verified; Rx flags heuristic — confirm vs EDA |
 | Rx drug gating | ✅ Scaffolded | Order → pending_rx_verification + WhatsApp + pharmacist verify |
+| Pharmacist Rx queue | ✅ Live-wired | `GET /orders/pending-rx` + approve/reject in POS UI |
 | PDPL consent flow | ✅ Scaffolded | Bilingual modal; logged to `consents` with timestamp |
 | Paymob payment integration | 🟡 Hooks only | Needs live Paymob credentials |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 25 tests: Rx gating, consent, auth, inventory, drugs, Rx derivation |
+| Backend tests (pytest) | ✅ Scaffolded | 31 tests: Rx gating + queue, consent, auth, inventory, drugs, Rx derivation |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
 
@@ -100,7 +101,7 @@ See `legal/RXEG-LEGAL-001.md` for the authoritative list. Summary:
 3. Add **barcodes + strengths** to the catalogue (EDA/GS1) — source lacks both.
 4. **Consent withdrawal + data deletion** (PDPL data-subject rights).
 5. **EDA Track & Trace** prep — GS1 barcode serialization groundwork.
-6. **Pharmacist Rx-verification queue** UI (list `pending_rx_verification` + approve).
+6. **Deployment config** — Dockerfile + fly.toml + docker-compose for Fly.io.
 
 ---
 
