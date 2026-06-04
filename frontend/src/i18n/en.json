@@ -12,7 +12,8 @@
   },
   "cases": {
     "title": "Cases",
-    "no_cases": "No cases yet."
+    "no_cases": "No cases yet.",
+    "create_first": "Create your first case"
   },
   "training": {
     "dashboard_title": "Training Dashboard",
@@ -25,6 +26,7 @@
     "recent_sessions": "Recent sessions",
     "grade": "Grade",
     "no_sessions": "No training sessions yet.",
+    "no_sessions_hint": "Pick your filters above and start your first practice case.",
     "case_label": "Case",
     "open": "Open"
   },

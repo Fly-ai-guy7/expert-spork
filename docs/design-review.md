@@ -52,28 +52,37 @@ Honest gaps the skill's checklist would flag:
    but does nothing to nudge action. Should suggest "Start a case →".
 7. **No dark mode.** Likely fine to defer, but worth naming.
 
-## Refine (Next 3 Targets, Ordered by Value/Effort)
+## Refine (Targets — Status)
 
-### 1. Global focus styles (high value, low effort)
+### 1. Global focus styles ✓ Done
 
-Add `focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2`
-to the shared `cn()` button/link patterns, or set a Tailwind base layer
-rule. One commit covers every interactive element.
+Added a `@layer base` rule in `frontend/src/index.css` that applies
+`outline-none ring-2 ring-brand ring-offset-2` to every focused
+button / link / input / select / textarea / role=button / tabindex
+element. Keyboard focus is now visible across the whole app without
+touching individual components.
 
-### 2. PipelineTimeline mobile variant (medium value, low effort)
+### 2. PipelineTimeline mobile variant ✓ Done
 
-Below `md:`, switch from horizontal pills to a vertical numbered list
-with the active step highlighted. Same component, two layouts via a
-breakpoint.
+`PipelineTimeline.tsx` now stacks vertically with a monospace step
+number below `md:` and renders as horizontal pills at `md:` and up.
+The active step gets bold weight on desktop for stronger emphasis.
 
-### 3. Empty-state nudges (medium value, low effort)
+### 3. Empty-state nudges ✓ Done
 
-Replace each "no rows" sentence with a small CTA. On the training
-dashboard, the empty session list should offer the same "Start case"
-button. On the case list, link to `/cases/new`.
+- TrainingDashboard: empty session list now renders as a centered card
+  with a hint ("Pick your filters above and start your first practice
+  case.") instead of a single grey line.
+- CaseListPage: empty state now includes a brand-colored
+  "Create your first case" link to `/cases/new`.
 
-The remaining items (focus trap, debate reading order, dark mode) are
-larger and should be separate workstreams.
+## Remaining (Separate Workstreams)
+
+- Dialog focus trap + Escape-to-close (ARIA is correct; keyboard UX is
+  incomplete).
+- Debate reading order on CaseDetail (chronological flow vs. current
+  parallel-column layout).
+- Dark mode.
 
 ## How to Run the Loop Again
 

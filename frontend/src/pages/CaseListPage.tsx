@@ -44,7 +44,15 @@ export function CaseListPage() {
           </Link>
         ))}
         {(!data || data.length === 0) && (
-          <div className="px-4 py-6 text-center text-slate-500 text-sm">{t("cases.no_cases")}</div>
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm font-medium text-slate-700">{t("cases.no_cases")}</p>
+            <Link
+              to="/cases/new"
+              className="mt-2 inline-block text-sm font-medium text-brand hover:underline"
+            >
+              {t("cases.create_first")}
+            </Link>
+          </div>
         )}
       </div>
     </div>

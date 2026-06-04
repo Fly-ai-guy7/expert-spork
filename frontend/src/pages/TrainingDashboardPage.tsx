@@ -125,7 +125,10 @@ export function TrainingDashboardPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-slate-500">{t("training.no_sessions")}</p>
+          <div className="bg-white rounded-lg border px-6 py-8 text-center">
+            <p className="text-sm font-medium text-slate-700">{t("training.no_sessions")}</p>
+            <p className="mt-1 text-xs text-slate-500">{t("training.no_sessions_hint")}</p>
+          </div>
         )}
       </section>
     </div>

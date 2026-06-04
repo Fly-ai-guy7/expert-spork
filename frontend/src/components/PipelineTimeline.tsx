@@ -16,20 +16,21 @@ export function PipelineTimeline({ status }: { status: CaseStatusPayload | undef
   const { t } = useTranslation();
   const completedIdx = computeStage(status);
   return (
-    <ol className="flex gap-2 flex-wrap text-xs">
+    <ol className="flex flex-col gap-1 text-xs md:flex-row md:flex-wrap md:gap-2">
       {STAGE_KEYS.map((k, i) => {
         const state = i < completedIdx ? "done" : i === completedIdx ? "active" : "pending";
         return (
           <li
             key={k}
             className={cn(
-              "px-3 py-2 rounded-md border",
+              "flex items-center gap-2 rounded-md border px-3 py-2",
               state === "done" && "bg-emerald-50 border-emerald-300 text-emerald-900",
-              state === "active" && "bg-amber-50 border-amber-300 text-amber-900",
+              state === "active" && "bg-amber-50 border-amber-300 text-amber-900 md:font-semibold",
               state === "pending" && "bg-slate-50 border-slate-200 text-slate-500"
             )}
           >
-            {t(k)}
+            <span className="font-mono opacity-60 md:hidden">{i + 1}.</span>
+            <span>{t(k)}</span>
           </li>
         );
       })}

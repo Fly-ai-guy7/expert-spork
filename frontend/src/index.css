@@ -9,3 +9,15 @@ html[dir="rtl"] body {
 body {
   @apply bg-slate-50 text-slate-900;
 }
+
+@layer base {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-2;
+  }
+}
