@@ -10,6 +10,12 @@ export default {
           100: "#e8eef9",
           900: "#0a173a",
         },
+        role: {
+          prosecution: "#11214d",
+          defense: "#f43f5e",
+          judicial: "#10b981",
+          trainee: "#f59e0b",
+        },
       },
       fontFamily: {
         sans: ['"Inter"', "system-ui", "sans-serif"],

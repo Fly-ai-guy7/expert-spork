@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html[dir="rtl"] body {
-  font-family: "Noto Naskh Arabic", "Amiri", system-ui, sans-serif;
+  @apply font-arabic;
 }
 
 body {

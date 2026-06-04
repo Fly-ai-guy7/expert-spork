@@ -10,10 +10,10 @@ export function DebateRoundCard({ argument }: { argument: ArgumentRecord }) {
     <div
       className={cn(
         "rounded-md border p-3 my-2 bg-white",
-        argument.agent === "PROSECUTION" && "border-l-4 border-l-brand",
-        argument.agent === "DEFENSE" && "border-l-4 border-l-rose-500",
-        argument.agent === "JUDICIAL" && "border-l-4 border-l-emerald-500",
-        argument.agent === "TRAINEE" && "border-l-4 border-l-amber-500"
+        argument.agent === "PROSECUTION" && "border-l-4 border-l-role-prosecution",
+        argument.agent === "DEFENSE" && "border-l-4 border-l-role-defense",
+        argument.agent === "JUDICIAL" && "border-l-4 border-l-role-judicial",
+        argument.agent === "TRAINEE" && "border-l-4 border-l-role-trainee"
       )}
     >
       <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
