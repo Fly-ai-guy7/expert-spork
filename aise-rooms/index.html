@@ -236,6 +236,9 @@
   <div class="pct" id="loader-pct">Loading room… 0%</div>
 </div>
 
+<!-- Optional per-deployment white-label override (see brand.js / demos/). Runs before the module. -->
+<script src="brand.js"></script>
+
 <!-- Three.js r163 -->
 <script type="importmap">
 {
@@ -268,6 +271,12 @@ const AISE_CONFIG = {
   footerText:   'Powered by AISE Rooms',
   useGLB:       false,               // procedural proxies by default; flip on when GLB CDN is reachable
 };
+
+// White-label override: brand.js (per deployment) may set window.AISE_BRAND_OVERRIDE
+// with any subset of the fields above. This keeps ONE shared index.html.
+if (window.AISE_BRAND_OVERRIDE && typeof window.AISE_BRAND_OVERRIDE === 'object') {
+  Object.assign(AISE_CONFIG, window.AISE_BRAND_OVERRIDE);
+}
 
 // Apply brand skin to CSS + chrome
 (function applyBrand() {
@@ -451,7 +460,7 @@ gltfLoader.setDRACOLoader(dracoLoader);
    STATE
    ===================================================================== */
 let W = 5, D = 5, H = 2.8;
-let currentRoom = 'living';
+let currentRoom = AISE_CONFIG.rooms[0] || 'living';
 let viewMode = '3d';
 // placed furniture instances: { uid, catId, mesh, x, z, rotY, retailerIndex }
 let placed = [];
@@ -1260,7 +1269,7 @@ function highlightRoomTab() {
 /* =====================================================================
    SETUP MODAL
    ===================================================================== */
-let setupType = 'living';
+let setupType = AISE_CONFIG.rooms[0] || 'living';
 function buildTypeChips() {
   const wrap = document.getElementById('type-chips');
   wrap.innerHTML = '';
@@ -1373,7 +1382,7 @@ async function boot() {
     const saved = loadSaved();
     if (saved) { await restoreFromState(saved); loaded = true; }
   }
-  if (!loaded) { await loadPreset('living'); }
+  if (!loaded) { await loadPreset(AISE_CONFIG.rooms[0] || 'living'); }
   tick();
 
   setView('3d');
