@@ -11,6 +11,7 @@ from app.auth.deps import current_org_id_dep, current_user
 from app.db import get_db
 from app.disclaimer import disclaimer_block
 from app.i18n import Lang
+from app.limiter import generate_limit, limiter, run_limit
 from app.models import (
     Case,
     CaseStatus,
@@ -69,7 +70,9 @@ def create_case(
 
 
 @router.post("/generate", response_model=CaseOut, status_code=201)
+@limiter.limit(generate_limit)
 async def generate_case(
+    request: Request,
     payload: GenerateCaseIn,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
@@ -161,10 +164,11 @@ def cancel_case(
 
 
 @router.post("/{case_id}/run")
+@limiter.limit(run_limit)
 def run_case(
+    request: Request,
     case_id: uuid.UUID,
     payload: RunIn,
-    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),

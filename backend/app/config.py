@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     # Security
     rate_limit_enabled: bool = True
     rate_limit_default: str = "120/minute"
+    # Tighter limits on the LLM-spending endpoints.
+    rate_limit_run: str = "10/minute"
+    rate_limit_generate: str = "5/minute"
 
     @property
     def celery_eager(self) -> bool:

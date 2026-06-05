@@ -79,6 +79,74 @@ def test_rate_limit_disabled_passthrough():
         engine.dispose()
 
 
+# --- per-route limits on LLM-spending endpoints ------------------------------
+
+def _register(client):
+    r = client.post("/api/v1/auth/register", json={
+        "email": "rl@x.com", "password": "12345678", "organization_name": "RLOrg",
+    })
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+def test_run_endpoint_has_tighter_per_route_limit():
+    """The per-route limit fires before the route handler, so hitting /run
+    on a bogus case_id is enough to observe it — we don't need to actually
+    spin up the pipeline. Pin to 2/min so we can observe it in 3 calls."""
+    client, engine = _build_client(
+        rate_limit_enabled=True,
+        rate_limit_default="1000/minute",  # generous, so the default never trips
+        rate_limit_run="2/minute",
+    )
+    try:
+        token = _register(client)
+        h = {"Authorization": f"Bearer {token}"}
+        fake = "00000000-0000-0000-0000-000000000099"
+        # First two return 404 (case missing) but still count toward the limit.
+        assert client.post(f"/api/v1/cases/{fake}/run", json={"max_rounds": 1}, headers=h).status_code == 404
+        assert client.post(f"/api/v1/cases/{fake}/run", json={"max_rounds": 1}, headers=h).status_code == 404
+        # Third trips the per-route ceiling
+        assert client.post(f"/api/v1/cases/{fake}/run", json={"max_rounds": 1}, headers=h).status_code == 429
+    finally:
+        settings.rate_limit_default = "120/minute"
+        settings.rate_limit_run = "10/minute"
+        engine.dispose()
+
+
+def test_generate_endpoint_has_tighter_per_route_limit(monkeypatch):
+    """/generate hits the LLM, which would 500 in the test env. We stub the
+    generator so the first call succeeds and the second trips the limit."""
+    import app.routers.cases as cases_router
+    from app.models import Case as CaseModel
+
+    async def _fake_generate(db, **kwargs):
+        c = CaseModel(title_en="stub", language_primary="en", area_of_law="IP")
+        db.add(c)
+        db.commit()
+        db.refresh(c)
+        return c
+
+    monkeypatch.setattr(cases_router.case_generator, "generate_case", _fake_generate)
+
+    client, engine = _build_client(
+        rate_limit_enabled=True,
+        rate_limit_default="1000/minute",
+        rate_limit_generate="1/minute",
+    )
+    try:
+        token = _register(client)
+        h = {"Authorization": f"Bearer {token}"}
+        body = {"area_of_law": "IP", "difficulty": 2, "language": "en"}
+        first = client.post("/api/v1/cases/generate", json=body, headers=h)
+        assert first.status_code == 201
+        second = client.post("/api/v1/cases/generate", json=body, headers=h)
+        assert second.status_code == 429
+    finally:
+        settings.rate_limit_default = "120/minute"
+        settings.rate_limit_generate = "5/minute"
+        engine.dispose()
+
+
 # --- input sanitisation ------------------------------------------------------
 
 def test_sanitize_strips_control_chars():
