@@ -53,6 +53,7 @@ PROTECTED: list[tuple[str, str, dict | None, str]] = [
     ("POST", "/api/v1/cases/generate", {}, ""),
     ("GET", f"/api/v1/cases/{DUMMY_UUID}", None, ""),
     ("POST", f"/api/v1/cases/{DUMMY_UUID}/run", {}, ""),
+    ("POST", f"/api/v1/cases/{DUMMY_UUID}/cancel", {}, ""),
     ("POST", f"/api/v1/cases/{DUMMY_UUID}/run-training", {}, ""),
     ("GET", f"/api/v1/cases/{DUMMY_UUID}/status", None, ""),
     ("GET", f"/api/v1/cases/{DUMMY_UUID}/report", None, ""),

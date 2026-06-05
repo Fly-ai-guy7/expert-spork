@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -14,6 +14,7 @@ class CaseStatus(str, enum.Enum):
     PAUSED_HIL = "PAUSED_HIL"
     COMPLETE = "COMPLETE"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class CaseSource(str, enum.Enum):
@@ -52,6 +53,7 @@ class Case(Base, TimestampMixin):
     area_of_law: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     max_rounds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
 
     # Specialist agent outputs
     procedural_analysis: Mapped[dict | None] = mapped_column(JsonCol(), nullable=True)

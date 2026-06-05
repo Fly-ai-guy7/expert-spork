@@ -206,6 +206,14 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
     case = _load_case(db, case_id)
     org_id = case.org_id
 
+    # Cooperative cancellation: someone may have hit POST /cases/{id}/cancel
+    # while this job was queued. Bail before doing any LLM work.
+    if case.cancel_requested:
+        case.status = CaseStatus.CANCELLED
+        db.commit()
+        _publish_event(case_id, {"status": "failed", "reason": "cancelled"})
+        return {"case_id": str(case_id), "status": "CANCELLED", "reason": "cancelled"}
+
     # Cost governance: refuse to start if the org has met its monthly token
     # budget. Runs without a tenant (org_id is None) are never gated.
     from app.services import usage_recorder
@@ -302,6 +310,10 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
 
     # 2. Debate loop — argument-level idempotent
     for round_no in range(1, max_rounds + 1):
+        if _check_cancelled(db, case_id):
+            usage_recorder.flush(db, org_id=org_id, case_id=case_id)
+            _publish_event(case_id, {"status": "failed", "reason": "cancelled", "stage": f"round_{round_no}"})
+            return {"case_id": str(case_id), "status": "CANCELLED", "reason": "cancelled"}
         idx = (round_no - 1) % len(PROSECUTION_LLM_BY_ROUND)
         prosecution_llm = PROSECUTION_LLM_BY_ROUND[idx]
         defense_llm = DEFENSE_LLM_BY_ROUND[idx]
@@ -455,6 +467,18 @@ def _publish_event(case_id: uuid.UUID, payload: dict) -> None:
         event_bus.publish(case_id, payload)
     except Exception:  # noqa: BLE001 — events must never break the pipeline
         pass
+
+
+def _check_cancelled(db: Session, case_id: uuid.UUID) -> bool:
+    """Re-read the case + flip status to CANCELLED if a cancel request landed.
+    Returns True when the pipeline should halt."""
+    db.expire_all()
+    case = db.get(Case, case_id)
+    if case and case.cancel_requested:
+        case.status = CaseStatus.CANCELLED
+        db.commit()
+        return True
+    return False
 
 
 def _observe_pipeline_duration(seconds: float) -> None:

@@ -137,6 +137,29 @@ def get_case(
     return case
 
 
+@router.post("/{case_id}/cancel")
+def cancel_case(
+    case_id: uuid.UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict:
+    """Request cooperative cancellation. The running worker checks this flag
+    at each stage boundary and halts; an already-terminal case is a no-op."""
+    case = _load_case(db, case_id)
+    if case.status in (CaseStatus.COMPLETE, CaseStatus.CANCELLED):
+        return {"case_id": str(case_id), "status": case.status.value, "cancel_requested": case.cancel_requested}
+    if not case.cancel_requested:
+        case.cancel_requested = True
+        db.commit()
+        audit.record(
+            db, action="CASE_CANCEL", resource_type="case", resource_id=case_id,
+            actor=user, request=request,
+        )
+        event_bus.publish(case_id, {"status": "running", "stage": "cancel_requested"})
+    return {"case_id": str(case_id), "status": case.status.value, "cancel_requested": True}
+
+
 @router.post("/{case_id}/run")
 def run_case(
     case_id: uuid.UUID,
