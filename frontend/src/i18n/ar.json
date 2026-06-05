@@ -39,9 +39,11 @@
     "prosecution": "الادعاء",
     "defense": "الدفاع",
     "scoring": "التقييم",
-    "judicial": "التحليل القضائي",
+    "judicial": "الهيئة القضائية",
     "ruling": "الحكم",
     "outcome": "النتيجة",
+    "plaintiff_prob": "احتمالية نجاح المدعي",
+    "override": "تم تطبيق التجاوز",
     "run": "تشغيل المحاكاة",
     "run_training": "تشغيل كتدريب",
     "your_turn": "دورك — متدرب",
@@ -49,6 +51,23 @@
     "argument_placeholder": "اكتب دفعك هنا، مستشهداً بالتشريعات بصيغة short_code (مثل 82/2002:113)…",
     "download_pdf": "تحميل ملف الحكم PDF",
     "view_coaching": "عرض تقرير التدريب"
+  },
+  "counsel": {
+    "title": "مستشار استراتيجي",
+    "get_advice": "اطلب استشارة",
+    "suggested_citations": "استشهادات مقترحة",
+    "strengths": "نقاط قوة للتأكيد عليها",
+    "risks": "نقاط ضعف سيهاجمها الخصم",
+    "missing": "حجج لم تطرحها بعد"
+  },
+  "council": {
+    "panel_of": "هيئة من {{n}}",
+    "vote_summary": "(المدعي–المدعى عليه)",
+    "member_verdicts": "أحكام أعضاء الهيئة",
+    "for_plaintiff": "لصالح المدعي",
+    "for_defendant": "لصالح المدعى عليه",
+    "override_flagged": "تم رفع تجاوز",
+    "dissent": "الرأي المخالف"
   },
   "statutes": {
     "title": "مجموعة التشريعات المصرية",
