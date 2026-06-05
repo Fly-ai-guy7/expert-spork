@@ -49,7 +49,11 @@ def search_articles(
 
 
 @router.get("/{statute_id}", response_model=StatuteDetail)
-def get_statute(statute_id: uuid.UUID, db: Session = Depends(get_db)) -> Statute:
+def get_statute(
+    statute_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(current_user),
+) -> Statute:
     s = db.execute(
         select(Statute).options(selectinload(Statute.articles)).where(Statute.id == statute_id)
     ).scalar_one_or_none()
