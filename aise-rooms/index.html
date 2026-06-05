@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>AISE Rooms — Interior Design Tool</title>
 <meta name="description" content="Browser-based 3D room designer with Egypt-market cost estimates. No app, no account." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230058A3'/%3E%3Cpath d='M7 18 16 9l9 9v6h-6v-5h-6v5H7z' fill='%23FFDA1A'/%3E%3C/svg%3E" />
 <!-- pako (URL share compression) + jsPDF (PDF export) via CDN, attach to window -->
 <script defer src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -479,10 +480,10 @@ function buildRoomShell(w, d, h) {
   const wallMat = new THREE.MeshStandardMaterial({ color: 0xf0ebe0, roughness: 1, side: THREE.DoubleSide });
   const wallH = h;
   const walls = [
-    { x:0,        z:-d/2, rotY:0,           len:w }, // back
-    { x:0,        z: d/2, rotY:Math.PI,     len:w }, // front
-    { x:-w/2,     z:0,    rotY:Math.PI/2,   len:d }, // left
-    { x: w/2,     z:0,    rotY:-Math.PI/2,  len:d }, // right
+    { x:0,    z:-d/2, rotY:0,          len:w, axis:'z', sign:-1 }, // back
+    { x:0,    z: d/2, rotY:Math.PI,    len:w, axis:'z', sign: 1 }, // front
+    { x:-w/2, z:0,    rotY:Math.PI/2,  len:d, axis:'x', sign:-1 }, // left
+    { x: w/2, z:0,    rotY:-Math.PI/2, len:d, axis:'x', sign: 1 }, // right
   ];
   walls.forEach((wl, i) => {
     const geo = new THREE.PlaneGeometry(wl.len, wallH);
@@ -491,6 +492,8 @@ function buildRoomShell(w, d, h) {
     m.rotation.y = wl.rotY;
     m.receiveShadow = true;
     m.userData.isWall = true;
+    m.userData.cullAxis = wl.axis;
+    m.userData.cullSign = wl.sign;
     roomGroup.add(m);
     wallMeshes.push(m);
   });
@@ -802,8 +805,11 @@ function setView(mode) {
 }
 function applyView() {
   const top = viewMode === 'plan';
-  // transparent ceiling + walls in plan view so you can see in from above
-  if (ceilingMesh) { ceilingMesh.material.opacity = top ? 0 : 1; ceilingMesh.visible = !top; }
+  // Ceiling is never drawn opaque — it would occlude the room from any
+  // raised/overhead angle. (The "transparent ceiling" of Plan view = no ceiling.)
+  if (ceilingMesh) ceilingMesh.visible = false;
+  // In 3D, walls are opaque but near walls are culled each frame (dollhouse view).
+  // In Plan, all walls render faint so the footprint stays readable.
   wallMeshes.forEach(m => { m.material.transparent = true; m.material.opacity = top ? 0.12 : 1; });
   if (top) {
     const r = Math.max(W, D);
@@ -1327,9 +1333,20 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+// Dollhouse wall culling: hide the walls sitting between the camera and the
+// room centre so you can always see inside in 3D. Plan view shows all walls.
+function updateWallCulling() {
+  if (viewMode !== '3d') { wallMeshes.forEach(m => m.visible = true); return; }
+  wallMeshes.forEach(m => {
+    const camAxis = m.userData.cullAxis === 'x' ? camera.position.x : camera.position.z;
+    m.visible = !(m.userData.cullSign * camAxis > 0);
+  });
+}
+
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+  updateWallCulling();
   renderer.render(scene, camera);
 }
 
@@ -1367,6 +1384,22 @@ async function boot() {
     document.getElementById('loader').classList.add('hide');
     if (!loaded) openSetup(); // first-load configuration prompt
   }, 350);
+}
+
+// Gated debug hooks (only with ?debug=1) — used for automated verification.
+if (new URLSearchParams(location.search).get('debug') === '1') {
+  window.AISE_DEBUG = {
+    state: buildRoomState,
+    count: () => placed.length,
+    // project a placed item's world position to viewport pixel coords
+    screenOf: (i) => {
+      const p = placed[i]; if (!p) return null;
+      const v = new THREE.Vector3(p.mesh.position.x, 0.3, p.mesh.position.z).project(camera);
+      const r = renderer.domElement.getBoundingClientRect();
+      return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height };
+    },
+    exportPDF, setView, shareURL: getShareURL,
+  };
 }
 boot();
 </script>
