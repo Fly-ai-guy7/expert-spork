@@ -57,6 +57,18 @@ export function useRunCase() {
   });
 }
 
+export function useCancelCase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      (await api.post(`/api/v1/cases/${id}/cancel`, {})).data,
+    onSuccess: (_data, id) => {
+      qc.invalidateQueries({ queryKey: ["case", id] });
+      qc.invalidateQueries({ queryKey: ["case-status", id] });
+    },
+  });
+}
+
 export function useRunTraining() {
   return useMutation({
     mutationFn: async (args: { case_id: string; trainee_role: "PROSECUTION" | "DEFENSE"; user_id: string; difficulty: number }) =>

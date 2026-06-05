@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { useCase, useCaseStatus, useRunCase } from "@/api/hooks";
+import { useCancelCase, useCase, useCaseStatus, useRunCase } from "@/api/hooks";
 import { useCaseEvents } from "@/api/useCaseEvents";
 import { api } from "@/api/client";
 import { PipelineTimeline } from "@/components/PipelineTimeline";
@@ -17,6 +17,7 @@ export function CaseDetailPage() {
   const { data: status, refetch } = useCaseStatus(id, 10_000);
   useCaseEvents(id);
   const runCase = useRunCase();
+  const cancelCase = useCancelCase();
 
   if (!caseData || !id) return <p>{t("actions.loading")}</p>;
 
@@ -47,6 +48,20 @@ export function CaseDetailPage() {
             onClick={() => runCase.mutate(id)}
           >
             {t("case.run")}
+          </button>
+        </div>
+      )}
+      {(caseData.status === "RUNNING" || caseData.status === "PAUSED_HIL") && (
+        <div className="flex gap-2">
+          <button
+            data-testid="cancel-case"
+            className="rounded-md border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+            disabled={cancelCase.isPending || caseData.cancel_requested}
+            onClick={() => {
+              if (window.confirm(t("case.cancel_confirm"))) cancelCase.mutate(id);
+            }}
+          >
+            {caseData.cancel_requested ? t("case.cancelling") : t("case.cancel")}
           </button>
         </div>
       )}

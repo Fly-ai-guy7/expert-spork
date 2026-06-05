@@ -1,4 +1,4 @@
-export type CaseStatus = "DRAFT" | "RUNNING" | "PAUSED_HIL" | "COMPLETE" | "FAILED";
+export type CaseStatus = "DRAFT" | "RUNNING" | "PAUSED_HIL" | "COMPLETE" | "FAILED" | "CANCELLED";
 export type CaseSource = "USER_AUTHORED" | "AI_GENERATED";
 export type AgentRole = "PROSECUTION" | "DEFENSE" | "JUDICIAL" | "TRAINEE";
 export type TraineeRole = "PROSECUTION" | "DEFENSE";
@@ -26,6 +26,7 @@ export interface CaseDetail extends CaseSummary {
   summary_en: string | null;
   summary_ar: string | null;
   language_primary: string;
+  cancel_requested?: boolean;
   parties: Party[];
   facts: { id: string; text_en: string | null; text_ar: string | null; disputed: boolean; order_index: number }[];
   evidence: { id: string; kind: string; title_en: string | null; title_ar: string | null; missing: boolean }[];

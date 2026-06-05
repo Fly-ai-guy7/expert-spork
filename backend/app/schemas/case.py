@@ -71,6 +71,7 @@ class CaseOut(BaseModel):
     source: CaseSource
     difficulty: int | None
     area_of_law: str | None
+    cancel_requested: bool = False
     created_at: datetime
     parties: list[PartyOut]
     facts: list[FactOut]
