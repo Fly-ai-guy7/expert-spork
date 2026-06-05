@@ -7,15 +7,17 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app import pagination
+from app.auth import api_keys as api_keys_svc
 from app.auth.deps import current_org_id_dep, require_role
 from app.db import get_db
-from app.models import AuditEvent, LlmUsage, Organization, Role, User
-from app.services import usage_recorder
+from app.models import ApiKey, AuditEvent, LlmUsage, Organization, Role, User
+from app.services import audit, usage_recorder
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -125,3 +127,81 @@ def audit_log(
             else None
         ),
     }
+
+
+# --- API keys ---------------------------------------------------------------
+
+class ApiKeyCreateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class ApiKeyOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    prefix: str
+    last_used_at: str | None
+    expires_at: str | None
+    revoked_at: str | None
+    created_at: str
+
+
+class ApiKeyCreateOut(ApiKeyOut):
+    raw_token: str  # surfaced exactly once
+
+
+def _serialize_key(k: ApiKey) -> dict:
+    return {
+        "id": str(k.id),
+        "name": k.name,
+        "prefix": k.prefix,
+        "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
+        "expires_at": k.expires_at.isoformat() if k.expires_at else None,
+        "revoked_at": k.revoked_at.isoformat() if k.revoked_at else None,
+        "created_at": k.created_at.isoformat(),
+    }
+
+
+@router.post("/api-keys", status_code=201)
+def create_api_key(
+    payload: ApiKeyCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(Role.ADMIN)),
+    org_id: uuid.UUID = Depends(current_org_id_dep),
+) -> dict:
+    """Mint a new API key for the caller's org. `raw_token` is returned ONCE;
+    only its hash is persisted."""
+    row, raw = api_keys_svc.issue(db, org_id=org_id, name=payload.name, created_by_user_id=user.id)
+    audit.record(
+        db, action="API_KEY_CREATE", resource_type="api_key", resource_id=row.id,
+        after={"name": row.name, "prefix": row.prefix}, actor=user, request=request,
+    )
+    return {**_serialize_key(row), "raw_token": raw}
+
+
+@router.get("/api-keys")
+def list_api_keys(
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_role(Role.ADMIN)),
+    org_id: uuid.UUID = Depends(current_org_id_dep),
+) -> dict:
+    rows = db.execute(
+        select(ApiKey).where(ApiKey.org_id == org_id).order_by(ApiKey.created_at.desc())
+    ).scalars().all()
+    return {"items": [_serialize_key(r) for r in rows]}
+
+
+@router.delete("/api-keys/{key_id}", status_code=204)
+def revoke_api_key(
+    key_id: uuid.UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(Role.ADMIN)),
+    org_id: uuid.UUID = Depends(current_org_id_dep),
+) -> None:
+    if not api_keys_svc.revoke(db, key_id=key_id, org_id=org_id):
+        raise HTTPException(404, "API key not found")
+    audit.record(
+        db, action="API_KEY_REVOKE", resource_type="api_key", resource_id=key_id,
+        actor=user, request=request,
+    )

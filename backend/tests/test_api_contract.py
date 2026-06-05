@@ -80,12 +80,18 @@ PROTECTED: list[tuple[str, str, dict | None, str]] = [
     ("GET", "/api/v1/training/sessions", None, ""),
     ("GET", "/api/v1/admin/usage", None, ""),
     ("GET", "/api/v1/admin/audit", None, ""),
+    ("POST", "/api/v1/admin/api-keys", {"name": "k"}, ""),
+    ("GET", "/api/v1/admin/api-keys", None, ""),
+    ("DELETE", f"/api/v1/admin/api-keys/{DUMMY_UUID}", None, ""),
 ]
 
 # Endpoints that require INSTRUCTOR or ADMIN. A TRAINEE should get 403.
 ROLE_GATED: list[tuple[str, str, dict | None, str]] = [
     ("GET", "/api/v1/admin/usage", None, ""),
     ("GET", "/api/v1/admin/audit", None, ""),
+    ("POST", "/api/v1/admin/api-keys", {"name": "k"}, ""),
+    ("GET", "/api/v1/admin/api-keys", None, ""),
+    ("DELETE", f"/api/v1/admin/api-keys/{DUMMY_UUID}", None, ""),
     ("GET", "/api/v1/training/cohort", None, ""),
 ]
 
@@ -131,6 +137,8 @@ def _call(client_obj: TestClient, method: str, path: str, body, query: str, head
         return client_obj.get(url, headers=headers)
     if method == "POST":
         return client_obj.post(url, json=body, headers=headers)
+    if method == "DELETE":
+        return client_obj.delete(url, headers=headers)
     raise NotImplementedError(method)
 
 

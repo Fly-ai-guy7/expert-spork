@@ -1,3 +1,4 @@
+from app.models.api_key import ApiKey
 from app.models.argument import Argument
 from app.models.audit_event import AuditEvent
 from app.models.base import TimestampMixin
@@ -20,6 +21,7 @@ from app.models.training import TraineeRole, TrainingSession
 from app.models.user import User
 
 __all__ = [
+    "ApiKey",
     "Argument",
     "AuditEvent",
     "Case",
