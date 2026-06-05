@@ -12,6 +12,7 @@ from app.models.membership import Membership, Role
 from app.models.organization import Organization
 from app.models.outcome import Outcome
 from app.models.party import Party, PartyKind, PartyRole
+from app.models.refresh_token import RefreshToken
 from app.models.ruling import Ruling
 from app.models.score import Score
 from app.models.statute import Statute, StatuteArticle
@@ -38,6 +39,7 @@ __all__ = [
     "Membership",
     "Organization",
     "Outcome",
+    "RefreshToken",
     "Party",
     "PartyKind",
     "PartyRole",

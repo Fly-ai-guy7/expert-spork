@@ -36,9 +36,14 @@ PUBLIC = {
     ("GET", "/metrics"),
     ("POST", "/api/v1/auth/register"),
     ("POST", "/api/v1/auth/login"),
+    # The refresh token IS the credential — no bearer required.
+    ("POST", "/api/v1/auth/refresh"),
+    ("POST", "/api/v1/auth/logout"),
     # Legacy (/api/...) mirrors — also public for the bootstrap pair.
     ("POST", "/api/auth/register"),
     ("POST", "/api/auth/login"),
+    ("POST", "/api/auth/refresh"),
+    ("POST", "/api/auth/logout"),
 }
 
 # Every protected endpoint. body/query are the minimum needed to clear

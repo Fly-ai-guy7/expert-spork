@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
     jwt_ttl_minutes: int = 60 * 24
+    refresh_ttl_days: int = 30
 
     claude_opus_model: str = "claude-opus-4-7"
     claude_sonnet_model: str = "claude-sonnet-4-6"

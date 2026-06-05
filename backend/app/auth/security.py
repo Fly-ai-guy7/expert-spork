@@ -29,13 +29,16 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def issue_token(user_id: uuid.UUID, org_id: uuid.UUID | None, role: str | None) -> str:
-    """Issue a signed JWT containing user_id + active org + role."""
+    """Issue a signed JWT containing user_id + active org + role. Each token
+    gets a unique `jti` so a same-second refresh doesn't yield byte-identical
+    tokens (matters for revocation lists, audit, and replay reasoning)."""
     secret = settings.jwt_secret or "dev-insecure-do-not-use-in-prod"
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": str(user_id),
         "org_id": str(org_id) if org_id else None,
         "role": role,
+        "jti": uuid.uuid4().hex,
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(minutes=settings.jwt_ttl_minutes)).timestamp()),
     }
