@@ -6,9 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal, get_db
-from app.models import HilCheckpoint, HilStatus
-from app.schemas.simulation import HilActionIn, TraineeSubmissionIn
-from app.services import orchestrator
+from app.models import HilCheckpoint, HilStage, HilStatus
+from app.schemas.simulation import CounselRequestIn, HilActionIn, TraineeSubmissionIn
+from app.services import counsel_service, orchestrator
 
 router = APIRouter(prefix="/api/hil", tags=["hil"])
 
@@ -75,6 +75,19 @@ async def submit_trainee(
         _submit_in_background, cp_id, payload.content_en, payload.content_ar, payload.citations
     )
     return {"id": str(cp.id), "status": "RESUMING"}
+
+
+@router.post("/{cp_id}/counsel")
+async def counsel(
+    cp_id: uuid.UUID, payload: CounselRequestIn, db: Session = Depends(get_db)
+) -> dict:
+    cp = _get(db, cp_id)
+    if cp.stage != HilStage.TRAINEE_TURN:
+        raise HTTPException(409, "Counsel is only available at a TRAINEE_TURN checkpoint")
+    side = (cp.modified_payload or {}).get("side", "DEFENSE")
+    return await counsel_service.generate_counsel(
+        db, cp.case_id, side, payload.content_en, payload.content_ar, payload.citations
+    )
 
 
 def _get(db: Session, cp_id: uuid.UUID) -> HilCheckpoint:

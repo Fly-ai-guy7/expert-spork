@@ -40,14 +40,22 @@ Builds the plaintiff argument grounded in the provided statute corpus. Cites by 
 Builds the defendant argument: procedural defenses (jurisdiction, standing, limitation),
 substantive defenses, and counterclaims.
 
-### 4. JudicialAgent — `claude-opus-4-7`
+### 4. JudicialCouncilAgent — panel of `claude-opus-4-7` + `claude-sonnet-4-6` + `deepseek-chat`
 
-After both sides argue, the judicial agent:
-- Assigns `plaintiff_success_prob` (0–100)
-- Identifies critical evidence gaps
-- References Court of Cassation doctrine conceptually
-- Issues a reasoned ruling in both languages
-- Holds **override authority** — can flag a critical legal-fundamentals error
+After both sides argue, a **panel of judges** rules. Each member is a `JudicialAgent`
+bound to a different LLM, run concurrently. The council then aggregates:
+- `plaintiff_success_prob` = mean across members
+- a **majority verdict** with a recorded vote tally (`council_vote`); a tie resolves
+  for the defendant (the plaintiff carries — and has not met — the burden of proof)
+- **dissents** — non-majority members' reasoning, persisted on the ruling and in
+  `council_verdicts`
+- merged (deduped) critical evidence gaps and precedent references
+- **override authority** — applied when a strict majority of members flag a critical
+  legal-fundamentals error
+
+Each member's verdict is persisted to `council_verdicts` (one row per member) so analysis
+can correlate outcomes with which model sat on the panel. The single-model `JudicialAgent`
+remains the council's building block and can still be used directly.
 
 ### 5. ScoringAgent — `claude-sonnet-4-6`
 
@@ -59,7 +67,19 @@ Evaluates one argument on four dimensions (0–100):
 
 Plus a weighted `overall`. Sonnet is intentionally chosen as the cheap evaluator.
 
-### 6. HIL / Trainee — no LLM
+### 6. AdvisoryCounselAgent — `claude-sonnet-4-6`
+
+A private mentor for the trainee, invoked **on demand** (not part of the automatic
+pipeline). Given the case, the debate so far, and the trainee's draft, it returns
+strategic guidance, suggested statute citations, strengths to press, risks the opponent
+will attack, and arguments not yet made. It coaches — it never writes the argument or
+argues the case itself.
+
+Exposed at `POST /api/hil/{cp_id}/counsel` (only valid at a `TRAINEE_TURN` checkpoint),
+backed by `services/counsel_service.py`. The response is advisory only and does not mutate
+the simulation, so a trainee can call it repeatedly before submitting.
+
+### 7. HIL / Trainee — no LLM
 
 Pure DB-gated checkpoints (`models/hil.py`). When training mode is active and a debate round's
 side matches the trainee's role, the orchestrator creates a `TRAINEE_TURN` checkpoint and the

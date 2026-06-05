@@ -79,3 +79,55 @@ export interface TrainingSessionRecord {
   started_at: string | null;
   completed_at: string | null;
 }
+
+export type CouncilVote = "FOR_PLAINTIFF" | "FOR_DEFENDANT";
+
+export interface CouncilVerdictRecord {
+  member_llm: string;
+  verdict: CouncilVote;
+  plaintiff_success_prob: number;
+  override_flagged: boolean;
+  reasoning_en: string | null;
+  reasoning_ar: string | null;
+}
+
+export interface RulingPayload {
+  plaintiff_success_prob: number | null;
+  text_en: string | null;
+  text_ar: string | null;
+  critical_evidence_gaps: string[];
+  precedent_refs: string[];
+  override_applied: boolean;
+  council_size: number | null;
+  council_vote: { for_plaintiff: number; for_defendant: number } | null;
+  dissent_en: string | null;
+  dissent_ar: string | null;
+  council_verdicts: CouncilVerdictRecord[];
+}
+
+export interface CaseReportPayload {
+  disclaimer: { en: string; ar: string };
+  case: { id: string; title_en: string | null; title_ar: string | null };
+  ruling: RulingPayload | null;
+  outcome: {
+    projected_prob: number | null;
+    risk_score: number | null;
+    pretrial_resolution_en: string | null;
+    pretrial_resolution_ar: string | null;
+  } | null;
+}
+
+export interface CounselAdvice {
+  strategy_en: string | null;
+  strategy_ar: string | null;
+  suggested_citations: string[];
+  strengths: string[];
+  risks: string[];
+  missing_arguments: string[];
+}
+
+export interface CounselResponse {
+  disclaimer: { en: string; ar: string };
+  advice: CounselAdvice;
+  llm_used: string;
+}

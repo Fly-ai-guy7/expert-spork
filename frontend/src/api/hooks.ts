@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
   CaseDetail,
+  CaseReportPayload,
   CaseStatusPayload,
   CaseSummary,
+  CounselResponse,
   TrainingSessionRecord,
 } from "./types";
 
@@ -75,6 +77,30 @@ export function useSubmitTrainee() {
         content_en: args.content_en,
         citations: args.citations,
       })).data,
+  });
+}
+
+export function useCounsel() {
+  return useMutation({
+    mutationFn: async (args: {
+      checkpoint_id: string;
+      content_en: string;
+      citations: string[];
+    }) =>
+      (
+        await api.post<CounselResponse>(`/api/hil/${args.checkpoint_id}/counsel`, {
+          content_en: args.content_en,
+          citations: args.citations,
+        })
+      ).data,
+  });
+}
+
+export function useCaseReport(id: string | undefined) {
+  return useQuery({
+    queryKey: ["case-report", id],
+    queryFn: async () => (await api.get<CaseReportPayload>(`/api/cases/${id}/report`)).data,
+    enabled: !!id,
   });
 }
 

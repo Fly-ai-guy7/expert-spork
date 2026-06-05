@@ -66,7 +66,23 @@
 {% if ruling %}
 <div class="kv"><span class="k">Plaintiff success probability:</span> {{ "%.0f"|format(ruling.plaintiff_success_prob or 0) }}%</div>
 <div class="kv"><span class="k">Override applied:</span> {{ "Yes" if ruling.override_applied else "No" }}</div>
+{% if ruling.council_size and ruling.council_size > 1 %}
+<div class="kv"><span class="k">Judicial council:</span> {{ ruling.council_size }} members — {{ (ruling.council_vote or {}).get("for_plaintiff", 0) }} for plaintiff / {{ (ruling.council_vote or {}).get("for_defendant", 0) }} for defendant</div>
+{% endif %}
 <p>{{ ruling.text_en or ruling.text_ar or "" }}</p>
+
+{% if ruling.council_verdicts %}
+<h3>Council Verdicts</h3>
+<ul class="gaps">
+  {% for v in ruling.council_verdicts %}
+  <li><strong>{{ v.member_llm }}</strong> — {{ v.verdict.replace("_", " ").title() }} ({{ "%.0f"|format(v.plaintiff_success_prob or 0) }}%){% if v.override_flagged %} · override flagged{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if ruling.dissent_en %}
+<h3>Dissent</h3>
+<p>{{ ruling.dissent_en }}</p>
+{% endif %}
 
 <h3>Critical Evidence Gaps</h3>
 <ul class="gaps">

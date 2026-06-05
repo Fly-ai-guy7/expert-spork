@@ -3,9 +3,11 @@ import uuid
 import pytest
 
 from app.agents import (
+    AdvisoryCounselAgent,
     DefenseAgent,
     EvidenceMigrationAgent,
     JudicialAgent,
+    JudicialCouncilAgent,
     ProsecutionAgent,
     ScoringAgent,
 )
@@ -53,3 +55,22 @@ async def test_scoring(mock_llm, ctx):
     out = await ScoringAgent().run(ctx)
     for k in ("factual", "provable", "unbiased", "legal_law_based", "overall"):
         assert 0 <= out.raw[k] <= 100
+
+
+async def test_judicial_council(mock_llm, ctx):
+    out = await JudicialCouncilAgent(members=["claude-opus", "claude-sonnet", "deepseek"]).run(ctx)
+    raw = out.raw
+    assert raw["council_size"] == 3
+    assert len(raw["panel"]) == 3
+    assert 0 <= raw["plaintiff_success_prob"] <= 100
+    vote = raw["council_vote"]
+    assert vote["for_plaintiff"] + vote["for_defendant"] == 3
+    assert raw["majority_verdict"] in ("FOR_PLAINTIFF", "FOR_DEFENDANT")
+    assert out.content_en
+
+
+async def test_advisory_counsel(mock_llm, ctx):
+    ctx.extra = {"trainee_role": "DEFENSE", "draft": "Prior use since 2019.", "citations": ["82/2002:115"]}
+    out = await AdvisoryCounselAgent().run(ctx)
+    assert out.raw.get("suggested_citations") is not None
+    assert out.content_en or out.content_ar

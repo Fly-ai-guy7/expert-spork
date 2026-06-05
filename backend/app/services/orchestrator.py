@@ -9,7 +9,7 @@ from app.agents import (
     AgentContext,
     DefenseAgent,
     EvidenceMigrationAgent,
-    JudicialAgent,
+    JudicialCouncilAgent,
     ProsecutionAgent,
     ScoringAgent,
 )
@@ -20,6 +20,7 @@ from app.models import (
     Argument,
     Case,
     CaseStatus,
+    CouncilVerdict,
     DebateRound,
     Evidence,
     EvidenceKind,
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 PROSECUTION_LLM_BY_ROUND = ["claude-opus", "deepseek", "claude-opus"]
 DEFENSE_LLM_BY_ROUND = ["deepseek", "claude-opus", "deepseek"]
+JUDICIAL_COUNCIL_LLMS = ["claude-opus", "claude-sonnet", "deepseek"]
 
 
 def _case_snapshot(case: Case) -> dict:
@@ -261,11 +263,12 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         round_row.status = "COMPLETE"
         db.commit()
 
-    # 3. Judicial Reasoning — idempotent
+    # 3. Judicial Council — idempotent. A panel of LLMs each render a verdict,
+    #    aggregated into a majority ruling with recorded dissents.
     case = _load_case(db, case_id)
     if case.ruling is None:
         ctx = ctx_base.model_copy(update={"prior_arguments": _build_prior(case)})
-        j_out = await JudicialAgent().run(ctx)
+        j_out = await JudicialCouncilAgent(members=JUDICIAL_COUNCIL_LLMS).run(ctx)
         j = j_out.raw
         ruling = Ruling(
             case_id=case_id,
@@ -275,8 +278,26 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
             text_en=j.get("ruling_en"),
             text_ar=j.get("ruling_ar"),
             override_applied=bool(j.get("override_applied", False)),
+            council_size=int(j.get("council_size", 1)),
+            council_vote=j.get("council_vote"),
+            dissent_en=j.get("dissent_en"),
+            dissent_ar=j.get("dissent_ar"),
         )
         db.add(ruling)
+        db.commit()
+        db.refresh(ruling)
+        for member in j.get("panel", []):
+            db.add(CouncilVerdict(
+                ruling_id=ruling.id,
+                case_id=case_id,
+                member_llm=member.get("member_llm", "unknown"),
+                llm_used=member.get("llm_used"),
+                plaintiff_success_prob=float(member.get("plaintiff_success_prob", 50)),
+                verdict=member.get("verdict", "FOR_DEFENDANT"),
+                override_flagged=bool(member.get("override_flagged", False)),
+                reasoning_en=member.get("ruling_en"),
+                reasoning_ar=member.get("ruling_ar"),
+            ))
         db.commit()
         case = _load_case(db, case_id)
 

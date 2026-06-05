@@ -39,9 +39,11 @@
     "prosecution": "Prosecution",
     "defense": "Defense",
     "scoring": "Scoring",
-    "judicial": "Judicial Reasoning",
+    "judicial": "Judicial Council",
     "ruling": "Ruling",
     "outcome": "Outcome",
+    "plaintiff_prob": "Plaintiff success probability",
+    "override": "override applied",
     "run": "Run Simulation",
     "run_training": "Run as Training",
     "your_turn": "Your turn — Trainee",
@@ -49,6 +51,23 @@
     "argument_placeholder": "Write your argument here, citing statutes by short_code (e.g. 82/2002:113)…",
     "download_pdf": "Download Ruling PDF",
     "view_coaching": "View Coaching Report"
+  },
+  "counsel": {
+    "title": "Advisory Counsel",
+    "get_advice": "Get counsel",
+    "suggested_citations": "Suggested citations",
+    "strengths": "Strengths to press",
+    "risks": "Risks the opponent will attack",
+    "missing": "Arguments you have not yet made"
+  },
+  "council": {
+    "panel_of": "Panel of {{n}}",
+    "vote_summary": "(plaintiff–defendant)",
+    "member_verdicts": "Council verdicts",
+    "for_plaintiff": "for plaintiff",
+    "for_defendant": "for defendant",
+    "override_flagged": "override flagged",
+    "dissent": "Dissent"
   },
   "statutes": {
     "title": "Egyptian Statute Corpus",

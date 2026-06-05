@@ -45,3 +45,5 @@ postgres-data/
 # Frontend build
 frontend/dist/
 frontend/.turbo/
+frontend/package-lock.json
+*.tsbuildinfo

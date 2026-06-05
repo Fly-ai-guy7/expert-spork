@@ -18,7 +18,7 @@ POST /api/cases/{id}/run (or /run-training)
         │     ├── (TRAINEE_TURN checkpoint if training mode)
         │     └── DefenseAgent → Argument + Score
         │     ↻ swap LLMs between rounds
-        ├── 3. JudicialAgent → Ruling row
+        ├── 3. JudicialCouncilAgent → Ruling row + CouncilVerdict rows (one per member)
         │     → HilCheckpoint(PRE_RULING)
         ├── 4. Judicial override (rerun on weakest argument)
         ├── 5. Outcome row
@@ -40,7 +40,9 @@ and resume cleanly.
 | Evidence Migration LLM | `agents/evidence_migration.py` |
 | Prosecution Agent | `agents/prosecution.py` |
 | Defense Agent | `agents/defense.py` |
-| Judicial Reasoning Agent | `agents/judicial.py` |
+| Judicial Council (multi-LLM panel) | `agents/judicial_council.py` (members are `agents/judicial.py`) |
+| Council member verdicts | `models/council.py` (`council_verdicts`), `services/orchestrator.py` step 3 |
+| Advisory Counsel (trainee mentor) | `agents/advisory_counsel.py`, `services/counsel_service.py`, `POST /api/hil/{cp_id}/counsel` |
 | Scoring Layer | `agents/scoring.py` |
 | HIL / Trainee Seat | `routers/hil.py`, `services/orchestrator.py` (TRAINEE_TURN handling) |
 | Cross-LLM Debate | `services/orchestrator.py` (PROSECUTION_LLM_BY_ROUND / DEFENSE_LLM_BY_ROUND) |
@@ -68,7 +70,7 @@ cases ──< parties
        ──< arguments              (also via debate_round_id)
        ──< hil_checkpoints
        ──< training_sessions
-       ──── ruling (1:1)
+       ──── ruling (1:1) ──< council_verdicts
        ──── outcome (1:1)
 statutes ──< statute_articles
 ```
