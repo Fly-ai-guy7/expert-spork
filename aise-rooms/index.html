@@ -402,10 +402,15 @@ function priceFor(catId, retailerIndex) {
   const c = CAT_BY_ID[catId]; if (!c) return 0;
   return Math.round(c.base * RETAILER_MULT[retailerIndex] / 50) * 50;
 }
+// Numeric EGP → configured currency (single source of truth for displayed prices)
+function toCurrency(egp, currency = AISE_CONFIG.currency) {
+  if (currency === 'EUR') return Math.round(egp / AISE_CONFIG.eurRate);
+  if (currency === 'USD') return Math.round(egp / (AISE_CONFIG.eurRate * 0.92));
+  return egp; // EGP
+}
 function fmtMoney(egp) {
-  if (AISE_CONFIG.currency === 'EUR') return '€' + Math.round(egp / AISE_CONFIG.eurRate).toLocaleString();
-  if (AISE_CONFIG.currency === 'USD') return '$' + Math.round(egp / (AISE_CONFIG.eurRate*0.92)).toLocaleString();
-  return 'EGP ' + egp.toLocaleString();
+  const sym = { EGP: 'EGP ', USD: '$', EUR: '€' }[AISE_CONFIG.currency] || (AISE_CONFIG.currency + ' ');
+  return sym + toCurrency(egp).toLocaleString();
 }
 const fmtEUR = egp => '€' + Math.round(egp / AISE_CONFIG.eurRate).toLocaleString();
 
@@ -736,13 +741,24 @@ function fitToBox(model, c) {
 /* =====================================================================
    PLACE / REMOVE FURNITURE
    ===================================================================== */
-function clampX(x){ return Math.max(-W/2+0.4, Math.min(W/2-0.4, x)); }
-function clampZ(z){ return Math.max(-D/2+0.4, Math.min(D/2-0.4, z)); }
+// Clamp an item's centre so its whole (rotated) footprint stays inside the
+// room — not just its centre. Half-extents account for yaw rotation; items
+// larger than the room on an axis are centred on that axis.
+function footprintHalf(c, rotY) {
+  const ca = Math.abs(Math.cos(rotY)), sa = Math.abs(Math.sin(rotY));
+  return { hx: (ca * c.w + sa * c.d) / 2, hz: (sa * c.w + ca * c.d) / 2 };
+}
+function clampToRoom(c, x, z, rotY) {
+  const { hx, hz } = footprintHalf(c, rotY);
+  const limX = Math.max(0, W / 2 - hx), limZ = Math.max(0, D / 2 - hz);
+  return { x: Math.max(-limX, Math.min(limX, x)), z: Math.max(-limZ, Math.min(limZ, z)) };
+}
 
 async function placeItem(catId, x, z, rotY = 0, retailerIndex = 0, uid = null) {
   const c = CAT_BY_ID[catId]; if (!c) return null;
   const mesh = await buildFurnitureMesh(c);
-  mesh.position.set(clampX(x), 0, clampZ(z));
+  const cl = clampToRoom(c, x, z, rotY);
+  mesh.position.set(cl.x, 0, cl.z);
   mesh.rotation.y = rotY;
   const id = uid || ('u' + (uidSeq++));
   mesh.userData.fid = id;
@@ -790,8 +806,9 @@ async function rebuildDimensions(w, d, h) {
   W = w; D = d; H = h;
   buildRoomShell(W, D, H);
   placed.forEach(p => {
-    p.mesh.position.x = clampX(p.x); p.mesh.position.z = clampZ(p.z);
-    p.x = p.mesh.position.x; p.z = p.mesh.position.z;
+    const cl = clampToRoom(CAT_BY_ID[p.catId], p.x, p.z, p.rotY);
+    p.mesh.position.x = cl.x; p.mesh.position.z = cl.z;
+    p.x = cl.x; p.z = cl.z;
   });
   frameCamera();
   draw2DPlan(); renderBOM(); scheduleSave();
@@ -880,10 +897,11 @@ renderer.domElement.addEventListener('pointermove', e => {
   const target = new THREE.Vector3();
   if (!raycaster.ray.intersectPlane(dragPlane, target)) return;
   target.sub(dragOffset);
-  // grid snap (0.1m) + clamp to room
+  // grid snap (0.1m) + footprint-aware clamp to room
   let nx = Math.round(target.x * 10) / 10;
   let nz = Math.round(target.z * 10) / 10;
-  nx = clampX(nx); nz = clampZ(nz);
+  const cl = clampToRoom(CAT_BY_ID[dragItem.catId], nx, nz, dragItem.rotY);
+  nx = cl.x; nz = cl.z;
   dragItem.mesh.position.x = nx; dragItem.mesh.position.z = nz;
   dragItem.x = nx; dragItem.z = nz;
   dragMoved = true;
@@ -911,6 +929,10 @@ renderer.domElement.addEventListener('dblclick', e => {
   if (!inst) return;
   inst.rotY = (inst.rotY + Math.PI/8) % (Math.PI*2);
   inst.mesh.rotation.y = inst.rotY;
+  // rotation changes the footprint — re-clamp so it can't poke through a wall
+  const cl = clampToRoom(CAT_BY_ID[inst.catId], inst.x, inst.z, inst.rotY);
+  inst.x = cl.x; inst.z = cl.z;
+  inst.mesh.position.x = cl.x; inst.mesh.position.z = cl.z;
   draw2DPlan(); scheduleSave();
   toast('Rotated — double-tap to keep turning');
 });
@@ -1076,14 +1098,19 @@ function renderBOM() {
    CSV EXPORT
    ===================================================================== */
 function exportCSV() {
-  let rows = [['Item','Dimensions (m)','Retailer','Price EGP','Price EUR']];
+  // Primary price column = the configured brand currency (matches on-screen BOM).
+  // Secondary = EGP reference, or EUR when the brand currency is already EGP.
+  const cur = AISE_CONFIG.currency;
+  const secLabel = cur === 'EGP' ? 'Price EUR' : 'Price EGP';
+  const sec = egp => cur === 'EGP' ? Math.round(egp / AISE_CONFIG.eurRate) : egp;
+  let rows = [['Item','Dimensions (m)','Retailer', `Price ${cur}`, secLabel]];
   placed.forEach(p => {
     const c = CAT_BY_ID[p.catId];
     const egp = priceFor(p.catId, p.retailerIndex);
-    rows.push([c.name, `${c.w}x${c.d}x${c.h}`, RETAILERS[p.retailerIndex], egp, Math.round(egp/AISE_CONFIG.eurRate)]);
+    rows.push([c.name, `${c.w}x${c.d}x${c.h}`, RETAILERS[p.retailerIndex], toCurrency(egp), sec(egp)]);
   });
   const total = placed.reduce((s,p)=>s+priceFor(p.catId,p.retailerIndex),0);
-  rows.push(['TOTAL','','', total, Math.round(total/AISE_CONFIG.eurRate)]);
+  rows.push(['TOTAL','','', toCurrency(total), sec(total)]);
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   download(new Blob([csv],{type:'text/csv'}), `AISE-Room-${currentRoom}.csv`);
   toast('CSV exported');
@@ -1208,11 +1235,15 @@ async function exportPDF() {
   pdf.addPage();
   pdf.setFillColor(pr, pg, pb); pdf.rect(0, 0, 210, 18, 'F');
   pdf.setTextColor(255,255,255); pdf.setFontSize(14); pdf.text('Bill of Materials', 14, 12);
+  // Price columns follow the configured brand currency (matches the BOM/CSV).
+  const cur = AISE_CONFIG.currency;
+  const secLabel = cur === 'EGP' ? 'EUR' : 'EGP';
+  const sec = egp => cur === 'EGP' ? Math.round(egp / AISE_CONFIG.eurRate) : egp;
   let y = 30;
   pdf.setTextColor(29,34,40); pdf.setFontSize(10);
   pdf.setFillColor(240,242,245); pdf.rect(10, y-6, 190, 8, 'F');
   pdf.text('Item', 12, y); pdf.text('Retailer', 90, y);
-  pdf.text('EGP', 150, y, { align:'right' }); pdf.text('EUR', 196, y, { align:'right' });
+  pdf.text(cur, 150, y, { align:'right' }); pdf.text(secLabel, 196, y, { align:'right' });
   y += 8;
   let total = 0;
   placed.forEach(p => {
@@ -1222,8 +1253,8 @@ async function exportPDF() {
     pdf.text(c.name, 12, y);
     pdf.setTextColor(107,116,128); pdf.text(RETAILERS[p.retailerIndex], 90, y);
     pdf.setTextColor(29,34,40);
-    pdf.text(egp.toLocaleString(), 150, y, { align:'right' });
-    pdf.text(Math.round(egp/AISE_CONFIG.eurRate).toLocaleString(), 196, y, { align:'right' });
+    pdf.text(toCurrency(egp).toLocaleString(), 150, y, { align:'right' });
+    pdf.text(sec(egp).toLocaleString(), 196, y, { align:'right' });
     pdf.setDrawColor(228,231,236); pdf.line(10, y+2, 200, y+2);
     y += 8;
   });
@@ -1231,8 +1262,8 @@ async function exportPDF() {
   pdf.setFillColor(pr, pg, pb); pdf.rect(10, y-6, 190, 10, 'F');
   pdf.setTextColor(255,255,255); pdf.setFontSize(12);
   pdf.text('TOTAL', 12, y+1);
-  pdf.text('EGP ' + total.toLocaleString(), 150, y+1, { align:'right' });
-  pdf.text('€' + Math.round(total/AISE_CONFIG.eurRate).toLocaleString(), 196, y+1, { align:'right' });
+  pdf.text(cur + ' ' + toCurrency(total).toLocaleString(), 150, y+1, { align:'right' });
+  pdf.text(secLabel + ' ' + sec(total).toLocaleString(), 196, y+1, { align:'right' });
 
   // footer
   pdf.setTextColor(150,150,150); pdf.setFontSize(9);
@@ -1407,7 +1438,8 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
       const r = renderer.domElement.getBoundingClientRect();
       return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height };
     },
-    exportPDF, setView, shareURL: getShareURL,
+    exportPDF, exportCSV, setView, shareURL: getShareURL,
+    clamp: (catId, x, z, rotY = 0) => clampToRoom(CAT_BY_ID[catId], x, z, rotY),
   };
 }
 boot();
