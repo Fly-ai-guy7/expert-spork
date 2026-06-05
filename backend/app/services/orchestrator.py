@@ -255,6 +255,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.docket = out.raw
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "court_clerk_complete")
 
     # 1. Evidence Migration — idempotent: skip if facts exist
     if not case.facts:
@@ -284,6 +285,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case = _load_case(db, case_id)
         snapshot = _case_snapshot(case)
         ctx_base = ctx_base.model_copy(update={"case_snapshot": snapshot})
+        _publish_stage(case_id, "evidence_migration_complete")
 
     # 1b. Procedural Specialist — idempotent
     if case.procedural_analysis is None:
@@ -291,6 +293,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.procedural_analysis = out.raw
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "procedural_specialist_complete")
 
     # 1c. Expert Witness — only if there are disputed facts. Idempotent.
     if case.expert_testimony is None:
@@ -304,6 +307,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
             case.expert_testimony = out.raw
             db.commit()
             case = _load_case(db, case_id)
+            _publish_stage(case_id, "expert_witness_complete")
 
     scorer = ScoringAgent()
     training = _active_training(case)
@@ -357,6 +361,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
 
         round_row.status = "COMPLETE"
         db.commit()
+        _publish_stage(case_id, f"round_{round_no}_complete", round_no=round_no)
 
     # 2b. Precedent Researcher — idempotent, runs before Judicial
     case = _load_case(db, case_id)
@@ -366,6 +371,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.precedent_analysis = out.raw
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "precedent_researcher_complete")
 
     # 3. Judicial Reasoning — idempotent
     if case.ruling is None:
@@ -384,6 +390,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         db.add(ruling)
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "judicial_complete")
 
     # 3b. Damages Calculator — idempotent, runs after Ruling
     if case.damages_estimate is None and case.ruling is not None:
@@ -397,6 +404,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.damages_estimate = out.raw
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "damages_complete")
 
     # 3c. Mediator — settlement proposal, runs after Damages
     if case.mediation_proposal is None and case.ruling is not None:
@@ -410,6 +418,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.mediation_proposal = out.raw
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "mediator_complete")
 
     # 4. Outcome — idempotent
     if case.outcome is None and case.ruling is not None:
@@ -428,6 +437,7 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         )
         db.add(outcome)
         db.commit()
+        _publish_stage(case_id, "outcome_complete")
 
     # 4b. Cassation Panel — appellate review, runs after Outcome
     if case.cassation_review is None and case.ruling is not None:
@@ -445,11 +455,13 @@ async def run_simulation(db: Session, case_id: uuid.UUID, max_rounds: int | None
         case.cassation_review = out.raw
         db.commit()
         case = _load_case(db, case_id)
+        _publish_stage(case_id, "cassation_complete")
 
     # 5. Coaching (training only)
     if training and training.coaching_report is None:
         from app.services.coaching_service import generate_coaching_report
         generate_coaching_report(db, training.id)
+        _publish_stage(case_id, "coaching_complete")
 
     case = _load_case(db, case_id)
     case.status = CaseStatus.COMPLETE
@@ -467,6 +479,12 @@ def _publish_event(case_id: uuid.UUID, payload: dict) -> None:
         event_bus.publish(case_id, payload)
     except Exception:  # noqa: BLE001 — events must never break the pipeline
         pass
+
+
+def _publish_stage(case_id: uuid.UUID, stage: str, **extra) -> None:
+    """Non-terminal stage event. Status stays 'running' so SSE subscribers
+    keep listening; the stage name lets the SPA highlight progress."""
+    _publish_event(case_id, {"status": "running", "stage": stage, **extra})
 
 
 def _check_cancelled(db: Session, case_id: uuid.UUID) -> bool:
