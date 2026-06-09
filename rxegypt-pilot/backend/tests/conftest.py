@@ -77,3 +77,13 @@ def pharmacist_token(client, session):
     r = client.post("/api/v1/auth/login",
                     data={"username": "ph@x.com", "password": "password1"})
     return r.json()["access_token"]
+
+
+@pytest.fixture()
+def admin_token(client, session):
+    session.add(User(email="admin@x.com", hashed_password=hash_password("password1"),
+                     role="admin"))
+    session.commit()
+    r = client.post("/api/v1/auth/login",
+                    data={"username": "admin@x.com", "password": "password1"})
+    return r.json()["access_token"]

@@ -161,6 +161,17 @@ Paymob processed-transaction server callback. HMAC-SHA512 verified via the
 
 ---
 
+## Audit — `/audit`
+
+### `GET /audit?action=&limit=`  *(admin)*
+Append-only trail of sensitive actions, newest first. Optional `action` filter,
+`limit` ≤ 500. Recorded actions include `rx_verified`, `rx_rejected`,
+`order_fulfilled`, `inventory_set`, `consent_granted`, `consent_withdrawn`,
+`account_erased`.
+→ `200` `AuditOut[]` `{ id, actor_email, action, target, detail, created_at }`
+
+---
+
 ## Order status lifecycle
 
 ```

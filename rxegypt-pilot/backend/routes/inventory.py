@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import audit
 from db import get_db
 from models import Drug, Inventory, User
 from schemas import InventoryOut, InventoryUpdate, LowStockItem
@@ -45,7 +46,7 @@ def update_inventory(
     drug_id: int,
     payload: InventoryUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_pharmacist),
+    pharmacist: User = Depends(require_pharmacist),
 ):
     if not db.get(Drug, drug_id):
         raise HTTPException(status_code=404, detail="Drug not found")
@@ -56,6 +57,8 @@ def update_inventory(
     inv.quantity = payload.quantity
     if payload.reorder_level is not None:
         inv.reorder_level = payload.reorder_level
+    audit.record(db, pharmacist.email, "inventory_set", f"drug:{drug_id}",
+                 detail=f"qty={payload.quantity}")
     db.commit()
     db.refresh(inv)
     return inv

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import audit
 import payments
 from config import get_settings
 from db import get_db
@@ -208,6 +209,7 @@ def verify_rx(
         )
     order.rx_verified_by = pharmacist.email
     order.status = OrderStatus.PENDING_PAYMENT
+    audit.record(db, pharmacist.email, "rx_verified", f"order:{order.id}")
     db.commit()
     db.refresh(order)
     return order
@@ -241,7 +243,7 @@ def pay_order(
 @router.post("/{order_id}/fulfill", response_model=OrderOut)
 def fulfill_order(
     order_id: int,
-    _: User = Depends(require_pharmacist),
+    pharmacist: User = Depends(require_pharmacist),
     db: Session = Depends(get_db),
 ):
     """Pharmacist marks a paid order as fulfilled (handed to the patient)."""
@@ -260,6 +262,7 @@ def fulfill_order(
             inv.quantity = max(0, inv.quantity - item.quantity)
 
     order.status = OrderStatus.FULFILLED
+    audit.record(db, pharmacist.email, "order_fulfilled", f"order:{order.id}")
     db.commit()
     db.refresh(order)
     return order
@@ -281,6 +284,7 @@ def reject_rx(
         )
     order.rx_verified_by = pharmacist.email
     order.status = OrderStatus.CANCELLED
+    audit.record(db, pharmacist.email, "rx_rejected", f"order:{order.id}")
     db.commit()
     db.refresh(order)
     return order

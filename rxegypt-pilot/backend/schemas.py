@@ -163,3 +163,14 @@ class MockPayment(BaseModel):
 
     order_id: int
     success: bool = True
+
+
+class AuditOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    actor_email: str
+    action: str
+    target: str
+    detail: str
+    created_at: datetime

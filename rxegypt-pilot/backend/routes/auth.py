@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import audit
 from db import get_db
 from models import Consent, Order, User
 from schemas import (
@@ -85,6 +86,9 @@ def record_consent(
         detail=payload.detail,
     )
     db.add(consent)
+    audit.record(db, user.email,
+                 "consent_granted" if payload.granted else "consent_set",
+                 f"user:{user.id}", detail=payload.purpose)
     db.commit()
     db.refresh(consent)
     return consent
@@ -130,6 +134,7 @@ def withdraw_consent(
         detail="Consent withdrawn by data subject.",
     )
     db.add(consent)
+    audit.record(db, user.email, "consent_withdrawn", f"user:{user.id}")
     db.commit()
     db.refresh(consent)
     return consent
@@ -175,5 +180,6 @@ def delete_my_account(
     user.phone = ""
     user.hashed_password = hash_password(secrets.token_urlsafe(32))  # unusable
     user.deleted_at = datetime.now(timezone.utc)
+    audit.record(db, user.email, "account_erased", f"user:{user.id}")
     db.commit()
     return {"detail": "Account deleted and personal data anonymized.", "user_id": user.id}

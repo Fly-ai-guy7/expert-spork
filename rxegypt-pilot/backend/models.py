@@ -151,3 +151,19 @@ class Consent(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="consents")
+
+
+class AuditLog(Base):
+    """Append-only record of sensitive actions (PDPL accountability + pharmacy
+    traceability): who did what, to which target, and when."""
+
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_email: Mapped[str] = mapped_column(String(255), default="", index=True)
+    action: Mapped[str] = mapped_column(String(64), index=True)  # e.g. rx_verified
+    target: Mapped[str] = mapped_column(String(128), default="")  # e.g. order:12
+    detail: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
