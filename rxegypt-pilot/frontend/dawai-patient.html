@@ -116,6 +116,7 @@
           <h3>${lang==='ar'?d.name_ar:d.name_en} ${d.rx?'<span class="rx-badge">Rx</span>':'<span class="otc-badge">OTC</span>'}</h3>
           <div class="meta">${d.generic} · ${d.strength} · ${d.form} · EGP ${d.price_egp.toFixed(2)}</div>
           ${d.rx ? `<div class="meta" style="color:var(--rx)">${lang==='ar'?'يتطلب وصفة طبية':'Requires a prescription'}</div>` : ''}
+          ${d.controlled ? `<div class="meta" style="color:var(--rx)">${lang==='ar'?'🔒 مادة خاضعة للرقابة — تُصرف من الصيدلية فقط':'🔒 Controlled — in-pharmacy only'}</div>` : ''}
         </div>`).join('') || `<p>${lang==='ar'?'لا توجد نتائج':'No results.'}</p>`;
     }
 
