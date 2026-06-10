@@ -45,3 +45,20 @@ def test_audit_newest_first(client, pharmacist_token, admin_token):
     assert len(entries) >= 2
     # newest first
     assert entries[0]["id"] > entries[1]["id"]
+
+
+def test_admin_metrics_requires_admin(client, patient_token):
+    assert client.get("/api/v1/admin/metrics").status_code == 401
+    assert client.get("/api/v1/admin/metrics", headers=_auth(patient_token)).status_code == 403
+
+
+def test_admin_metrics_counts_orders(client, patient_token, admin_token):
+    client.post("/api/v1/orders", json={"items": [{"drug_id": 1, "quantity": 1}]},
+                headers=_auth(patient_token))  # OTC -> pending_payment
+    client.post("/api/v1/orders", json={"items": [{"drug_id": 2, "quantity": 1}]},
+                headers=_auth(patient_token))  # Rx -> pending_rx_verification
+    m = client.get("/api/v1/admin/metrics", headers=_auth(admin_token)).json()
+    assert m["total_orders"] == 2
+    assert m["orders_by_status"]["pending_payment"] == 1
+    assert m["orders_by_status"]["pending_rx_verification"] == 1
+    assert m["active_patients"] >= 1

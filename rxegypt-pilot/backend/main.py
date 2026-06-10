@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
-from routes import audit, auth, drugs, inventory, orders, payments
+from routes import admin, audit, auth, drugs, inventory, orders, payments
 
 settings = get_settings()
 
@@ -30,5 +30,5 @@ def health():
     return {"status": "ok", "service": "rxegypt-pilot", "env": settings.environment}
 
 
-for module in (auth, drugs, inventory, orders, payments, audit):
+for module in (auth, drugs, inventory, orders, payments, audit, admin):
     app.include_router(module.router, prefix=settings.api_prefix)

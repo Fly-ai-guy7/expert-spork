@@ -292,6 +292,25 @@
         return { drug_id: drugId, quantity: payload.quantity, reorder_level: payload.reorder_level ?? 5, updated_at: new Date().toISOString() };
       }
       return http(`/inventory/${drugId}`, { method: 'PUT', body: JSON.stringify(payload) });
+    },
+
+    // --- admin oversight ---
+    async adminMetrics() {
+      if (DEMO) {
+        return { orders_by_status: { pending_payment: 2, paid: 1, fulfilled: 3 }, total_orders: 6, active_patients: 4, low_stock_items: 1 };
+      }
+      return http('/admin/metrics');
+    },
+
+    async auditLog(action = '', limit = 100) {
+      if (DEMO) {
+        return [{ id: 2, actor_email: 'ph@demo', action: 'order_fulfilled', target: 'order:2', detail: '', created_at: new Date().toISOString() },
+                { id: 1, actor_email: 'pat@demo', action: 'consent_granted', target: 'user:1', detail: 'health_data_processing', created_at: new Date().toISOString() }];
+      }
+      const p = new URLSearchParams();
+      if (action) p.set('action', action);
+      p.set('limit', String(limit));
+      return http(`/audit?${p.toString()}`);
     }
   };
 

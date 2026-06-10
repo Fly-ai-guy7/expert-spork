@@ -172,6 +172,14 @@ Append-only trail of sensitive actions, newest first. Optional `action` filter,
 
 ---
 
+## Admin — `/admin`
+
+### `GET /admin/metrics`  *(admin)*
+Headline oversight numbers for the admin dashboard.
+→ `200` `{ orders_by_status: {<status>: count}, total_orders, active_patients, low_stock_items }`
+
+---
+
 ## Order status lifecycle
 
 ```

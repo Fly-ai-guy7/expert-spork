@@ -24,6 +24,7 @@ rxegypt-pilot/
 │   ├── pharmacy-pos.html      ← pharmacist POS (barcode, stock, Rx queue)
 │   ├── dawai-patient.html     ← bilingual AR/EN patient drug app + Health Info Guide
 │   ├── rxegypt-api.js         ← shared API client (demo + live modes)
+│   ├── admin.html             ← admin oversight (metrics + audit trail viewer)
 │   ├── config.js              ← demo ↔ live switch (backend URL)
 │   ├── Dockerfile             ← static server; injects config.js from env
 │   └── docker-entrypoint.sh
@@ -83,12 +84,13 @@ rxegypt-pilot/
 | PDPL data-subject rights | ✅ Built | Consent status/withdraw, data export, account erasure (anonymize) |
 | Payment flow (Paymob) | 🟡 Built + mock | Full lifecycle (pay→paid→fulfilled) works in MOCK mode; live 3-step + HMAC callback wired, needs credentials to test |
 | Alembic migrations | ✅ Scaffolded | `alembic upgrade head` (initial schema) |
-| Backend tests (pytest) | ✅ Scaffolded | 68 tests: Rx + fulfillment queues, payments + stock, order compliance, audit trail, PDPL rights, auth, inventory, drugs, Rx derivation, config guard |
+| Backend tests (pytest) | ✅ Scaffolded | 70 tests: Rx + fulfillment queues, payments + stock, order compliance, audit + admin metrics, PDPL rights, auth, inventory, drugs, Rx derivation, config guard |
 | EDA Track & Trace integration | 🔴 Not started | Phase 2 |
 | Deployment (Docker + Fly.io) | ✅ Built | backend Dockerfile + fly.toml; docker-compose for local full stack |
 | CI (GitHub Actions) | ✅ Built | `.github/workflows/rxegypt-ci.yml` — pytest + JS unit tests, path-scoped to rxegypt-pilot/ |
 | Prod safety guard | ✅ Built | App refuses to boot in production with the dev/weak SECRET_KEY |
 | Audit trail | ✅ Built | `audit_logs` + admin `GET /audit`; records Rx verify/reject, fulfill, inventory, consent, erasure |
+| Admin dashboard | ✅ Built | `GET /admin/metrics` + `admin.html` (order/patient/low-stock metrics + audit viewer) |
 | UHI (Universal Health Insurance) API | 🔴 Not started | Phase 3 |
 
 ---
