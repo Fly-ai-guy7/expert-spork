@@ -1,0 +1,34 @@
+{
+  "trust_signals": [
+    "Breakfast included",
+    "No prepayment needed",
+    "No credit card needed"
+  ],
+  "booking": {
+    "prepayment_required": false,
+    "credit_card_required": false,
+    "breakfast_included": true,
+    "summary": "Reserve with no prepayment and no credit card needed. Breakfast is included with every room. Final pricing is confirmed directly with the property."
+  },
+  "check_in_out": {
+    "check_in_from": "14:00",
+    "check_out_until": "11:00",
+    "note": "Flexible check-in and check-out can be arranged in advance via WhatsApp."
+  },
+  "cancellation": {
+    "policy": "Free cancellation is available on most stays. Please confirm your specific dates with the property. Because no prepayment is taken, cancelling is simple and penalty-free in most cases.",
+    "free_cancellation": true
+  },
+  "children_and_extra_beds": {
+    "children_welcome": true,
+    "note": "Children are welcome. Extra bed arrangements depend on the room and can be requested when enquiring."
+  },
+  "pricing": {
+    "note": "Listed room prices are reference rates per night and are subject to taxes. Tour prices are per person unless otherwise noted. Final prices are confirmed with the property at the time of booking.",
+    "taxes_note": "Reference room prices are quoted plus taxes."
+  },
+  "payment": {
+    "methods": "Payment is arranged directly with the property. No card is required to reserve.",
+    "currencies_note": "Rooms are referenced in GBP; tours are referenced in USD."
+  }
+}

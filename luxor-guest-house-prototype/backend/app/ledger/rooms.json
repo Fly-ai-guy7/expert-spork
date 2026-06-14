@@ -1,0 +1,111 @@
+[
+  {
+    "id": "studio-apartment",
+    "name": "Studio Apartment",
+    "size_m2": 25,
+    "capacity_adults": 2,
+    "beds": "1 large double bed",
+    "amenities": [
+      "Free WiFi",
+      "Wake-up service",
+      "Clothes rack",
+      "Garden view",
+      "Landmark view",
+      "City view",
+      "River view",
+      "Pool with a view",
+      "Breakfast included"
+    ],
+    "reference_price": 14,
+    "currency": "GBP",
+    "price_note": "plus taxes",
+    "breakfast_included": true
+  },
+  {
+    "id": "one-bedroom-river-view",
+    "name": "One Bedroom Apartment with River View",
+    "size_m2": 60,
+    "capacity_adults": 2,
+    "beds": "1 double bed",
+    "amenities": [
+      "Free WiFi",
+      "Wake-up service",
+      "Clothes rack",
+      "Balcony",
+      "Garden view",
+      "Pool view",
+      "Landmark view",
+      "City view",
+      "Breakfast included"
+    ],
+    "reference_price": 20,
+    "currency": "GBP",
+    "price_note": "plus taxes",
+    "breakfast_included": true
+  },
+  {
+    "id": "two-bedroom-apartment",
+    "name": "Two-Bedroom Apartment",
+    "size_m2": 80,
+    "capacity_adults": 4,
+    "beds": "Bedroom 1: 1 double bed; Bedroom 2: 2 single beds",
+    "amenities": [
+      "Free WiFi",
+      "Wake-up service",
+      "Clothes rack",
+      "Balcony",
+      "Pool view",
+      "Air conditioning",
+      "Private bathroom",
+      "Breakfast included"
+    ],
+    "reference_price": 30,
+    "currency": "GBP",
+    "price_note": "plus taxes",
+    "breakfast_included": true
+  },
+  {
+    "id": "two-bedroom-river-view",
+    "name": "Two-Bedroom Apartment with River View",
+    "size_m2": 90,
+    "capacity_adults": 4,
+    "beds": "Bedroom 1: 1 double bed; Bedroom 2: 2 single beds",
+    "amenities": [
+      "Free WiFi",
+      "Wake-up service",
+      "Clothes rack",
+      "Balcony",
+      "Garden view",
+      "Pool view",
+      "Landmark view",
+      "City view",
+      "Breakfast included"
+    ],
+    "reference_price": 29,
+    "currency": "GBP",
+    "price_note": "plus taxes",
+    "breakfast_included": true
+  },
+  {
+    "id": "two-bedroom-variant",
+    "name": "Two-Bedroom Apartment Variant",
+    "size_m2": 90,
+    "capacity_adults": 4,
+    "beds": "Bedroom 1: 2 single beds; Bedroom 2: 1 large double bed",
+    "amenities": [
+      "Free WiFi",
+      "Wake-up service",
+      "Clothes rack",
+      "Garden view",
+      "Pool view",
+      "Landmark view",
+      "City view",
+      "Pool with a view",
+      "Breakfast included"
+    ],
+    "reference_price": 27,
+    "currency": "GBP",
+    "price_note": "plus taxes",
+    "breakfast_included": true
+  }
+]

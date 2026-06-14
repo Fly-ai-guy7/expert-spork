@@ -1,0 +1,15 @@
+{
+  "generated": "2026-06-14",
+  "purpose": "Documents assumptions made while building the Luxor Guest House deployable MVP so they can be reviewed and replaced with confirmed data before go-live.",
+  "assumptions": [
+    "The email address info@luxorguesthouse.local is a placeholder and uses a non-routable .local TLD. Replace it with a real, deliverable mailbox before production.",
+    "Room reference prices are quoted in GBP 'plus taxes' as supplied and are treated as per-night reference rates, not final quotes.",
+    "Tour prices are quoted in USD and treated as per person unless the source noted otherwise (e.g. Aswan Philae trip noted 'one person').",
+    "Tours marked 'price on request' are stored with price = null and a price_on_request flag; the UI shows 'Price on request'.",
+    "Check-in (from 14:00) and check-out (until 11:00) times are reasonable defaults and were not supplied; confirm with the property.",
+    "The cancellation policy text is inferred from the 'no prepayment / no credit card' trust signals and should be verified.",
+    "The booking enquiry flow records leads only; it does not take payment or guarantee availability. Availability and final pricing are confirmed by the property via WhatsApp.",
+    "The concierge is a deterministic, keyword-based assistant over the local ledger data (rooms, tours, policies, FAQ, contacts). It does not call any external LLM.",
+    "Booking.com rating (9.0) and review count (470) are point-in-time values supplied by the operator and may change."
+  ]
+}

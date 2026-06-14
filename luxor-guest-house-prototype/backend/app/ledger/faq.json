@@ -1,0 +1,62 @@
+[
+  {
+    "id": "breakfast",
+    "question": "Is breakfast included?",
+    "answer": "Yes. Breakfast is included with every room at Luxor Guest House.",
+    "tags": ["breakfast", "food", "included"]
+  },
+  {
+    "id": "prepayment",
+    "question": "Do I need to pay in advance?",
+    "answer": "No prepayment is needed and no credit card is required to reserve. You arrange payment directly with the property.",
+    "tags": ["payment", "prepayment", "credit card", "deposit"]
+  },
+  {
+    "id": "location",
+    "question": "Where is the guest house located?",
+    "answer": "Luxor Guest House is on the West Bank, Albairat, Alramla, West Bank, 85111 Luxor, Egypt, close to the famous West Bank monuments.",
+    "tags": ["location", "address", "where", "west bank"]
+  },
+  {
+    "id": "wifi",
+    "question": "Is there WiFi?",
+    "answer": "Yes, free WiFi is available in all of our rooms and apartments.",
+    "tags": ["wifi", "internet"]
+  },
+  {
+    "id": "check-in",
+    "question": "What are the check-in and check-out times?",
+    "answer": "Check-in is from 14:00 and check-out is until 11:00. Flexible timing can be arranged in advance via WhatsApp.",
+    "tags": ["check-in", "check-out", "times", "arrival"]
+  },
+  {
+    "id": "river-view",
+    "question": "Do you have rooms with a river view?",
+    "answer": "Yes. The Studio Apartment, the One Bedroom Apartment with River View, and the Two-Bedroom Apartment with River View all offer river or Nile views.",
+    "tags": ["river view", "nile", "view"]
+  },
+  {
+    "id": "tours",
+    "question": "Can you arrange tours?",
+    "answer": "Yes, our concierge can arrange a wide range of West Bank, East Bank, Aswan, Cairo and desert tours, plus hot air balloon and felucca experiences. Message us on WhatsApp to plan your itinerary.",
+    "tags": ["tours", "excursions", "trips", "activities"]
+  },
+  {
+    "id": "airport-transfer",
+    "question": "Can you help with airport transfer?",
+    "answer": "Yes, transfers can be arranged. Please contact Ahmed on WhatsApp with your arrival details and we will organise it for you.",
+    "tags": ["airport", "transfer", "pickup", "taxi"]
+  },
+  {
+    "id": "cancellation",
+    "question": "What is your cancellation policy?",
+    "answer": "Free cancellation is available on most stays, and because no prepayment is taken there is no penalty in most cases. Please confirm your specific dates with the property.",
+    "tags": ["cancellation", "cancel", "refund"]
+  },
+  {
+    "id": "family",
+    "question": "Do you have rooms for families?",
+    "answer": "Yes. Our Two-Bedroom apartments sleep up to 4 adults and are ideal for families, with combinations of double and single beds.",
+    "tags": ["family", "children", "kids", "group"]
+  }
+]
