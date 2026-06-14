@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RxEgypt — Admin</title>
+  <style>
+    :root { --green:#1f7a4d; --green-d:#14573a; --rx:#b3261e; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background:#eef1ee; color:#1c2421; }
+    header { background:var(--green-d); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    header .auth-status { font-size:.8rem; opacity:.9; }
+    header .auth-status button { background:#fff; color:var(--green-d); border:0; border-radius:6px; padding:5px 10px; cursor:pointer; margin-left:8px; }
+    .wrap { max-width:1000px; margin:0 auto; padding:16px; }
+    .cards { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+    .card { background:#fff; border-radius:10px; padding:16px 20px; box-shadow:0 1px 3px rgba(0,0,0,.08); flex:1; min-width:150px; }
+    .card .n { font-size:1.8rem; font-weight:700; color:var(--green-d); }
+    .card .l { font-size:.82rem; color:#667; margin-top:4px; }
+    .panel { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .panel h2 { margin:0 0 12px; font-size:1.05rem; color:var(--green-d); }
+    table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    th,td { text-align:left; padding:8px; border-bottom:1px solid #eef0ed; }
+    .statuses { font-size:.85rem; color:#445; margin-top:6px; }
+    .tag { display:inline-block; background:#e6f2eb; color:var(--green-d); border-radius:5px; padding:2px 8px; margin:2px; font-size:.78rem; }
+    select, input { padding:8px; border:1px solid #cfd6d1; border-radius:7px; }
+    /* modal */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; }
+    .overlay.show { display:flex; }
+    .modal { background:#fff; border-radius:12px; max-width:400px; width:100%; padding:24px; }
+    .modal .field { display:block; width:100%; padding:11px; margin:8px 0; border:1px solid #cfd6d1; border-radius:8px; }
+    .modal .err { color:var(--rx); font-size:.85rem; min-height:1.1em; }
+    .btn-primary { background:var(--green); color:#fff; border:0; border-radius:8px; padding:10px 18px; cursor:pointer; }
+    footer { text-align:center; padding:14px; color:#6b756e; font-size:.75rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>🌿 RxEgypt — Admin Oversight</strong>
+    <span class="auth-status" id="authStatus"><span id="mode" style="opacity:.8"></span></span>
+  </header>
+
+  <div class="overlay" id="authOverlay">
+    <div class="modal">
+      <h2>Admin sign in</h2>
+      <div class="err" id="authErr"></div>
+      <input class="field" id="authEmail" type="email" placeholder="Email" autocomplete="username" />
+      <input class="field" id="authPassword" type="password" placeholder="Password"
+             autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()" />
+      <div style="text-align:right"><button class="btn-primary" onclick="submitAuth()">Sign in</button></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="cards" id="cards"></div>
+    <div class="panel">
+      <h2>Audit trail
+        <span style="float:right">
+          <select id="actionFilter" onchange="loadAudit()">
+            <option value="">All actions</option>
+            <option value="rx_verified">rx_verified</option>
+            <option value="rx_rejected">rx_rejected</option>
+            <option value="order_fulfilled">order_fulfilled</option>
+            <option value="inventory_set">inventory_set</option>
+            <option value="consent_granted">consent_granted</option>
+            <option value="consent_withdrawn">consent_withdrawn</option>
+            <option value="account_erased">account_erased</option>
+          </select>
+        </span>
+      </h2>
+      <div id="auditTable"><p style="color:#889">Sign in as an admin to view.</p></div>
+    </div>
+  </div>
+
+  <footer>🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜ · RxEgypt Admin</footer>
+
+  <script>window.RXEGYPT_TOKEN_KEY = 'rxegypt_token_admin';</script>
+  <script src="config.js"></script>
+  <script src="rxegypt-api.js"></script>
+  <script>
+    document.getElementById('mode').textContent = 'mode: ' + RxEgyptAPI.mode;
+    window.addEventListener('DOMContentLoaded', initAuth);
+
+    async function initAuth() {
+      if (RxEgyptAPI.mode === 'demo') { setStatus('demo admin'); load(); return; }
+      if (!RxEgyptAPI.isAuthenticated()) { openLogin(); return; }
+      try {
+        const u = await RxEgyptAPI.me();
+        if (u.role !== 'admin') { RxEgyptAPI.logout(); openLogin('This account is not an admin account.'); return; }
+        setStatus(u.email); load();
+      } catch { openLogin(); }
+    }
+    function setStatus(label) {
+      document.getElementById('authStatus').innerHTML =
+        `mode: ${RxEgyptAPI.mode} · ${label} <button onclick="doLogout()">Logout</button>`;
+    }
+    function doLogout() { RxEgyptAPI.logout(); location.reload(); }
+    function openLogin(msg) { document.getElementById('authErr').textContent = msg || ''; document.getElementById('authOverlay').classList.add('show'); }
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const err = document.getElementById('authErr');
+      try {
+        await RxEgyptAPI.login(email, password);
+        const u = await RxEgyptAPI.me();
+        if (u.role !== 'admin') { RxEgyptAPI.logout(); err.textContent = 'This account is not an admin account.'; return; }
+        document.getElementById('authOverlay').classList.remove('show');
+        setStatus(u.email); load();
+      } catch (e) { err.textContent = e.message || 'Sign in failed.'; }
+    }
+
+    function load() { loadMetrics(); loadAudit(); }
+
+    async function loadMetrics() {
+      try {
+        const m = await RxEgyptAPI.adminMetrics();
+        const statuses = Object.entries(m.orders_by_status || {})
+          .map(([s, n]) => `<span class="tag">${s}: ${n}</span>`).join('') || '<span class="tag">none</span>';
+        document.getElementById('cards').innerHTML = `
+          <div class="card"><div class="n">${m.total_orders}</div><div class="l">Total orders</div><div class="statuses">${statuses}</div></div>
+          <div class="card"><div class="n">${m.active_patients}</div><div class="l">Active patients</div></div>
+          <div class="card"><div class="n">${m.low_stock_items}</div><div class="l">Low-stock items</div></div>`;
+      } catch (e) { if (e.status === 403 || e.status === 401) openLogin('Admin sign-in required.'); }
+    }
+
+    async function loadAudit() {
+      const el = document.getElementById('auditTable');
+      try {
+        const rows = await RxEgyptAPI.auditLog(document.getElementById('actionFilter').value);
+        if (!rows.length) { el.innerHTML = '<p style="color:#889">No matching entries.</p>'; return; }
+        el.innerHTML = '<table><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead><tbody>' +
+          rows.map(r => `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${r.actor_email}</td><td>${r.action}</td><td>${r.target}</td><td>${r.detail || ''}</td></tr>`).join('') +
+          '</tbody></table>';
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as an admin to view.</p>'; openLogin('Admin sign-in required.'); }
+        else el.innerHTML = `<p style="color:var(--rx)">Could not load: ${e.message || 'error'}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

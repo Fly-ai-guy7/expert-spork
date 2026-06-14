@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Experts Pharmacy — POS</title>
+  <style>
+    :root { --green:#1f7a4d; --green-d:#14573a; --rx:#b3261e; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background:#eef1ee; color:#1c2421; }
+    header { background:var(--green-d); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .grid { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; padding:16px; max-width:1100px; margin:0 auto; }
+    .panel { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .panel h2 { margin:0 0 12px; font-size:1.05rem; color:var(--green-d); }
+    .scan { display:flex; gap:8px; }
+    .scan input { flex:1; padding:12px; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .scan button { padding:12px 16px; background:var(--green); color:#fff; border:0; border-radius:8px; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th,td { text-align:left; padding:8px; border-bottom:1px solid #eef0ed; }
+    .rx-badge { background:var(--rx); color:#fff; font-size:.65rem; padding:2px 6px; border-radius:4px; }
+    .qty { width:60px; padding:6px; border:1px solid #cfd6d1; border-radius:6px; }
+    .total { text-align:right; font-size:1.3rem; font-weight:700; margin-top:12px; }
+    .stock-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .stock-row input { width:80px; padding:6px; border:1px solid #cfd6d1; border-radius:6px; }
+    .stock-row .ok { color:var(--green-d); font-size:.8rem; }
+    .stock-row .bad { color:var(--rx); font-size:.8rem; }
+    .low { color:var(--rx); font-weight:600; }
+    .qcard { border:1px solid #e4e8e4; border-radius:8px; padding:12px; margin-bottom:10px; }
+    .qcard .head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .qcard .who { font-size:.85rem; color:#5b665f; }
+    .qcard ul { margin:8px 0; padding-left:18px; font-size:.9rem; }
+    .qcard .acts { display:flex; gap:8px; }
+    .qcard .approve { background:var(--green); color:#fff; border:0; border-radius:6px; padding:7px 14px; cursor:pointer; }
+    .qcard .reject { background:#fff; color:var(--rx); border:1px solid var(--rx); border-radius:6px; padding:7px 14px; cursor:pointer; }
+    header .auth-status { font-size:.8rem; opacity:.9; }
+    header .auth-status button { background:#fff; color:var(--green-d); border:0; border-radius:6px; padding:5px 10px; cursor:pointer; margin-left:8px; }
+    /* Modal */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+    .overlay.show { display:flex; }
+    .modal { background:#fff; border-radius:12px; max-width:420px; width:100%; padding:24px; }
+    .modal h2 { margin:0 0 12px; color:var(--green-d); }
+    .modal .field { display:block; width:100%; padding:11px; margin:8px 0; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .modal .err { color:var(--rx); font-size:.85rem; min-height:1.1em; margin:4px 0; }
+    .modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .btn { padding:10px 18px; border-radius:8px; border:0; cursor:pointer; }
+    .btn-primary { background:var(--green); color:#fff; }
+    footer { text-align:center; padding:14px; color:#6b756e; font-size:.75rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>🌿 Experts Pharmacy Hurghada — Point of Sale</strong>
+    <span class="auth-status" id="authStatus"><span id="mode" style="opacity:.8"></span></span>
+  </header>
+
+  <!-- Pharmacist login modal -->
+  <div class="overlay" id="authOverlay">
+    <div class="modal">
+      <h2>Pharmacist sign in</h2>
+      <p style="font-size:.85rem;color:#5b665f">Stock changes require a pharmacist account.</p>
+      <div class="err" id="authErr"></div>
+      <input class="field" id="authEmail" type="email" placeholder="Email" autocomplete="username" />
+      <input class="field" id="authPassword" type="password" placeholder="Password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')submitAuth()" />
+      <div class="actions">
+        <button class="btn btn-primary" onclick="submitAuth()">Sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Sale — EAN-13 Barcode Scan</h2>
+      <div class="scan">
+        <input id="barcode" placeholder="Scan or type barcode…" onkeydown="if(event.key==='Enter')scan()" autofocus />
+        <button onclick="scan()">Add</button>
+      </div>
+      <table id="saleTable">
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="total">Total: EGP <span id="saleTotal">0.00</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Quick Stock Update</h2>
+      <p style="font-size:.85rem;color:#667">Look up a drug, set new quantity. (Live mode requires pharmacist login.)</p>
+      <div class="scan" style="margin-bottom:12px">
+        <input id="stockSearch" placeholder="Search drug…" onkeydown="if(event.key==='Enter')stockSearch()" />
+        <button onclick="stockSearch()">Find</button>
+      </div>
+      <div id="stockResults"></div>
+    </div>
+  </div>
+
+  <div style="max-width:1100px;margin:0 auto;padding:0 16px 16px">
+    <div class="panel">
+      <h2>Rx Verification Queue
+        <button onclick="loadRxQueue()" style="float:right;padding:6px 12px;background:var(--green);color:#fff;border:0;border-radius:6px;cursor:pointer">Refresh</button>
+      </h2>
+      <p style="font-size:.85rem;color:#667">Orders awaiting prescription verification. Approve to release for payment, or reject to cancel.</p>
+      <div id="rxQueue"><p style="color:#889">Sign in as a pharmacist to load the queue.</p></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Fulfillment Queue
+        <button onclick="loadFulfillQueue()" style="float:right;padding:6px 12px;background:var(--green);color:#fff;border:0;border-radius:6px;cursor:pointer">Refresh</button>
+      </h2>
+      <p style="font-size:.85rem;color:#667">Paid orders ready to hand to the patient. Mark fulfilled on collection.</p>
+      <div id="fulfillQueue"><p style="color:#889">Sign in as a pharmacist to load the queue.</p></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Low Stock
+        <button onclick="loadLowStock()" style="float:right;padding:6px 12px;background:var(--green);color:#fff;border:0;border-radius:6px;cursor:pointer">Refresh</button>
+      </h2>
+      <p style="font-size:.85rem;color:#667">Items at or below their reorder level — restock these.</p>
+      <div id="lowStock"><p style="color:#889">—</p></div>
+    </div>
+  </div>
+
+  <footer>
+    🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜ · RxEgypt POS · Experts Pharmacy Hurghada
+  </footer>
+
+  <!-- Use a pharmacist-scoped token so POS and patient sessions don't collide. -->
+  <script>window.RXEGYPT_TOKEN_KEY = 'rxegypt_token_pharmacist';</script>
+  <script src="config.js"></script>
+  <script src="rxegypt-api.js"></script>
+  <script>
+    const sale = [];
+    document.getElementById('mode').textContent = 'mode: ' + RxEgyptAPI.mode;
+
+    window.addEventListener('DOMContentLoaded', initAuth);
+
+    async function initAuth() {
+      if (RxEgyptAPI.mode === 'demo') { setStatus('demo pharmacist'); refreshQueues(); return; }
+      if (!RxEgyptAPI.isAuthenticated()) { openLogin(); return; }
+      try {
+        const u = await RxEgyptAPI.me();
+        if (!['pharmacist', 'admin'].includes(u.role)) {
+          RxEgyptAPI.logout();
+          openLogin('This account is not a pharmacist account.');
+          return;
+        }
+        setStatus(u.email);
+        refreshQueues();
+      } catch { openLogin(); }
+    }
+
+    function setStatus(label) {
+      document.getElementById('authStatus').innerHTML =
+        `mode: ${RxEgyptAPI.mode} · ${label} <button onclick="doLogout()">Logout</button>`;
+    }
+    function doLogout() { RxEgyptAPI.logout(); location.reload(); }
+
+    function openLogin(msg) {
+      document.getElementById('authErr').textContent = msg || '';
+      document.getElementById('authOverlay').classList.add('show');
+    }
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const err = document.getElementById('authErr');
+      err.textContent = '';
+      if (!email || !password) { err.textContent = 'Email and password required.'; return; }
+      try {
+        await RxEgyptAPI.login(email, password);
+        const u = await RxEgyptAPI.me();
+        if (!['pharmacist', 'admin'].includes(u.role)) {
+          RxEgyptAPI.logout();
+          err.textContent = 'This account is not a pharmacist account.';
+          return;
+        }
+        document.getElementById('authOverlay').classList.remove('show');
+        setStatus(u.email);
+        refreshQueues();
+      } catch (e) {
+        err.textContent = e.message || 'Sign in failed.';
+      }
+    }
+
+    function refreshQueues() { loadRxQueue(); loadFulfillQueue(); loadLowStock(); }
+
+    async function loadLowStock() {
+      const el = document.getElementById('lowStock');
+      let items;
+      try {
+        items = await RxEgyptAPI.lowStock();
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as a pharmacist to view low stock.</p>'; return; }
+        el.innerHTML = `<p class="bad">Could not load: ${e.message || 'error'}</p>`; return;
+      }
+      if (!items.length) { el.innerHTML = '<p style="color:#889">Nothing below reorder level. 👍</p>'; return; }
+      el.innerHTML = '<table><thead><tr><th>Drug</th><th>Qty</th><th>Reorder ≤</th></tr></thead><tbody>' +
+        items.map(i => `<tr><td>${i.name_en}</td><td class="low">${i.quantity}</td><td>${i.reorder_level}</td></tr>`).join('') +
+        '</tbody></table>';
+    }
+
+    // --- Rx verification queue ---
+    async function loadRxQueue() {
+      const el = document.getElementById('rxQueue');
+      let orders;
+      try {
+        orders = await RxEgyptAPI.pendingRxOrders();
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as a pharmacist to load the queue.</p>'; return; }
+        el.innerHTML = `<p class="bad">Could not load queue: ${e.message || 'error'}</p>`; return;
+      }
+      if (!orders.length) { el.innerHTML = '<p style="color:#889">No orders awaiting verification. 🎉</p>'; return; }
+      el.innerHTML = orders.map(o => `
+        <div class="qcard" id="q-${o.id}">
+          <div class="head">
+            <div>
+              <strong>Order #${o.id}</strong> · EGP ${o.total_egp.toFixed(2)}
+              <div class="who">${o.patient_email}${o.patient_phone ? ' · ' + o.patient_phone : ''} · ${new Date(o.created_at).toLocaleString()}</div>
+            </div>
+            <div class="acts">
+              <button class="approve" onclick="approveRx(${o.id})">Approve</button>
+              <button class="reject" onclick="rejectRx(${o.id})">Reject</button>
+            </div>
+          </div>
+          <ul>${o.items.map(i => `<li>${i.quantity}× ${i.name_en} ${i.rx ? '<span class="rx-badge">Rx</span>' : ''}</li>`).join('')}</ul>
+        </div>`).join('');
+    }
+
+    async function approveRx(id) { await actOnRx(id, () => RxEgyptAPI.verifyRx(id), 'approved → pending payment'); }
+    async function rejectRx(id)  { await actOnRx(id, () => RxEgyptAPI.rejectRx(id), 'rejected → cancelled'); }
+
+    async function actOnRx(id, fn, label) {
+      const card = document.getElementById('q-' + id);
+      try {
+        await fn();
+        if (card) card.outerHTML = `<div class="qcard"><strong>Order #${id}</strong> — ${label}.</div>`;
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { openLogin('Pharmacist sign-in required.'); return; }
+        alert('Action failed: ' + (e.message || 'error'));
+      }
+    }
+
+    // --- fulfillment queue (paid orders) ---
+    async function loadFulfillQueue() {
+      const el = document.getElementById('fulfillQueue');
+      let orders;
+      try {
+        orders = await RxEgyptAPI.paidOrders();
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { el.innerHTML = '<p style="color:#889">Sign in as a pharmacist to load the queue.</p>'; return; }
+        el.innerHTML = `<p class="bad">Could not load queue: ${e.message || 'error'}</p>`; return;
+      }
+      if (!orders.length) { el.innerHTML = '<p style="color:#889">No paid orders awaiting fulfillment.</p>'; return; }
+      el.innerHTML = orders.map(o => `
+        <div class="qcard" id="f-${o.id}">
+          <div class="head">
+            <div>
+              <strong>Order #${o.id}</strong> · EGP ${o.total_egp.toFixed(2)}
+              <div class="who">${o.patient_email}${o.patient_phone ? ' · ' + o.patient_phone : ''} · ${new Date(o.created_at).toLocaleString()}</div>
+            </div>
+            <div class="acts">
+              <button class="approve" onclick="fulfill(${o.id})">Mark fulfilled</button>
+            </div>
+          </div>
+          <ul>${o.items.map(i => `<li>${i.quantity}× ${i.name_en} ${i.rx ? '<span class="rx-badge">Rx</span>' : ''}</li>`).join('')}</ul>
+        </div>`).join('');
+    }
+
+    async function fulfill(id) {
+      const card = document.getElementById('f-' + id);
+      try {
+        await RxEgyptAPI.fulfillOrder(id);
+        if (card) card.outerHTML = `<div class="qcard"><strong>Order #${id}</strong> — fulfilled. ✓</div>`;
+      } catch (e) {
+        if (e.status === 403 || e.status === 401) { openLogin('Pharmacist sign-in required.'); return; }
+        alert('Fulfill failed: ' + (e.message || 'error'));
+      }
+    }
+
+    async function scan() {
+      const input = document.getElementById('barcode');
+      const code = input.value.trim();
+      if (!code) return;
+      try {
+        const d = await RxEgyptAPI.lookupBarcode(code);
+        const ex = sale.find(i => i.id === d.id);
+        if (ex) ex.qty++; else sale.push({ ...d, qty: 1 });
+        renderSale();
+      } catch (e) {
+        alert('Barcode not found: ' + code);
+      }
+      input.value = '';
+      input.focus();
+    }
+
+    function renderSale() {
+      const tb = document.querySelector('#saleTable tbody');
+      tb.innerHTML = sale.map(i => `
+        <tr>
+          <td>${i.name_en} ${i.rx ? '<span class="rx-badge">Rx</span>' : ''}<br><small>${i.name_ar}</small></td>
+          <td><input class="qty" type="number" min="1" value="${i.qty}" onchange="setQty(${i.id}, this.value)"></td>
+          <td>${i.price_egp.toFixed(2)}</td>
+          <td>${(i.price_egp * i.qty).toFixed(2)}</td>
+        </tr>`).join('');
+      document.getElementById('saleTotal').textContent =
+        sale.reduce((s,i)=>s+i.price_egp*i.qty,0).toFixed(2);
+    }
+    function setQty(id, v) {
+      const it = sale.find(i => i.id === id);
+      it.qty = Math.max(1, parseInt(v) || 1);
+      renderSale();
+    }
+
+    async function stockSearch() {
+      const q = document.getElementById('stockSearch').value;
+      const drugs = await RxEgyptAPI.searchDrugs(q);
+      document.getElementById('stockResults').innerHTML = drugs.map(d => `
+        <div class="stock-row">
+          <span style="flex:1">${d.name_en} ${d.rx ? '<span class="rx-badge">Rx</span>':''}</span>
+          <input type="number" min="0" placeholder="qty" id="stk-${d.id}">
+          <button onclick="setStock(${d.id})">Set</button>
+          <span id="msg-${d.id}"></span>
+        </div>`).join('') || '<p>No results.</p>';
+    }
+
+    async function setStock(id) {
+      const raw = document.getElementById('stk-' + id).value;
+      const msg = document.getElementById('msg-' + id);
+      const qty = parseInt(raw, 10);
+      if (!Number.isInteger(qty) || qty < 0) {
+        msg.className = 'bad'; msg.textContent = 'enter a valid qty'; return;
+      }
+      try {
+        const inv = await RxEgyptAPI.updateInventory(id, { quantity: qty });
+        msg.className = 'ok'; msg.textContent = `✓ stock = ${inv.quantity}`;
+      } catch (e) {
+        msg.className = 'bad';
+        if (e.status === 403) { msg.textContent = 'pharmacist login required'; openLogin('Pharmacist privileges required — please sign in.'); }
+        else if (e.status === 401) { msg.textContent = 'session expired'; openLogin('Your session expired — please sign in again.'); }
+        else { msg.textContent = e.message || 'update failed'; }
+      }
+    }
+  </script>
+</body>
+</html>

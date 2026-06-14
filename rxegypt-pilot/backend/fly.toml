@@ -1,0 +1,30 @@
+# Fly.io deployment for the RxEgypt backend.
+# Deploy from this directory:  fly launch --copy-config --name rxegypt-pilot
+# then set secrets (NOT in this file):
+#   fly secrets set SECRET_KEY=... DATABASE_URL=... PAYMOB_API_KEY=... \
+#       PHARMACIST_WHATSAPP=+20XXXXXXXXXX CORS_ORIGINS=https://your-frontend
+# A Postgres DB can be attached with:  fly postgres create && fly postgres attach
+app = "rxegypt-pilot"
+primary_region = "fra"  # Frankfurt — closest Fly region to Egypt
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ENVIRONMENT = "production"
+  API_PREFIX = "/api/v1"
+
+[deploy]
+  # Run migrations + (idempotent) seed before each release goes live.
+  release_command = "sh -c 'alembic upgrade head && python seed/seed_drugs.py'"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

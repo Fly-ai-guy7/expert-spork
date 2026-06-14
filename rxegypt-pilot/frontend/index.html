@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Experts Pharmacy Hurghada — RxEgypt</title>
+  <style>
+    :root { --green:#1f7a4d; --green-d:#14573a; --sand:#f6f4ee; --ink:#1c2421; --rx:#b3261e; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background:var(--sand); color:var(--ink); }
+    header { background:var(--green); color:#fff; padding:18px 20px; display:flex; align-items:center; gap:12px; }
+    header .logo { font-size:1.4rem; font-weight:700; }
+    header .sub { opacity:.85; font-size:.85rem; }
+    .wrap { max-width:880px; margin:0 auto; padding:20px; }
+    .search { display:flex; gap:8px; margin:16px 0; }
+    .search input { flex:1; padding:12px; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .search button { padding:12px 18px; background:var(--green); color:#fff; border:0; border-radius:8px; cursor:pointer; }
+    .card { background:#fff; border:1px solid #e4e8e4; border-radius:10px; padding:14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .card h3 { margin:0 0 4px; font-size:1.05rem; }
+    .card .ar { color:#5b665f; font-size:.95rem; }
+    .meta { font-size:.8rem; color:#6b756e; margin-top:4px; }
+    .rx-badge { background:var(--rx); color:#fff; font-size:.7rem; padding:3px 7px; border-radius:5px; font-weight:600; }
+    .otc-badge { background:#e6f2eb; color:var(--green-d); font-size:.7rem; padding:3px 7px; border-radius:5px; font-weight:600; }
+    .add { padding:8px 14px; border:0; border-radius:7px; background:var(--green); color:#fff; cursor:pointer; white-space:nowrap; }
+    .price { font-weight:700; }
+    .cart-bar { position:sticky; bottom:0; background:#fff; border-top:2px solid var(--green); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .cart-bar button { padding:12px 20px; background:var(--green); color:#fff; border:0; border-radius:8px; cursor:pointer; }
+    /* Modal */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+    .overlay.show { display:flex; }
+    .modal { background:#fff; border-radius:12px; max-width:560px; width:100%; padding:24px; max-height:90vh; overflow:auto; }
+    .modal h2 { margin-top:0; color:var(--green-d); }
+    .modal .ar { direction:rtl; text-align:right; color:#3a443e; }
+    .modal label { display:flex; gap:10px; align-items:flex-start; margin:14px 0; font-size:.92rem; }
+    .modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+    .btn { padding:10px 18px; border-radius:8px; border:0; cursor:pointer; }
+    .btn-primary { background:var(--green); color:#fff; }
+    .btn-primary:disabled { background:#9bb6a8; cursor:not-allowed; }
+    .btn-ghost { background:#eef1ee; }
+    .rx-note { background:#fdecea; border:1px solid #f3c1bd; color:#8a1d16; padding:12px; border-radius:8px; font-size:.9rem; }
+    .modal .field { display:block; width:100%; padding:11px; margin:8px 0; border:1px solid #cfd6d1; border-radius:8px; font-size:1rem; }
+    .modal .err { color:var(--rx); font-size:.85rem; min-height:1.1em; margin:4px 0; }
+    .modal .toggle { background:none; border:0; color:var(--green-d); text-decoration:underline; cursor:pointer; padding:0; font-size:.88rem; }
+    .auth-status { margin-left:auto; font-size:.82rem; opacity:.9; }
+    .auth-status button { background:#fff; color:var(--green-d); border:0; border-radius:6px; padding:5px 10px; cursor:pointer; margin-left:8px; }
+    footer { text-align:center; padding:18px; color:#6b756e; font-size:.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="logo">🌿 Experts Pharmacy — Hurghada</div>
+      <div class="sub">صيدلية إكسبرتس — الأحياء، الغردقة | Powered by RxEgypt</div>
+    </div>
+    <div class="auth-status" id="authStatus"></div>
+  </header>
+
+  <div class="wrap">
+    <div class="search">
+      <input id="q" placeholder="Search medicines / ابحث عن دواء" />
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <div class="cart-bar">
+    <div>Cart: <strong id="cartCount">0</strong> · <span class="price">EGP <span id="cartTotal">0.00</span></span></div>
+    <button onclick="checkout()">Checkout</button>
+  </div>
+
+  <!-- Login / register modal (required at checkout) -->
+  <div class="overlay" id="authOverlay">
+    <div class="modal">
+      <h2 id="authTitle">Sign in to checkout</h2>
+      <p style="font-size:.9rem;color:#5b665f">Create an account or sign in to place your order.
+        / سجّل الدخول أو أنشئ حسابًا لإتمام الطلب.</p>
+      <div class="err" id="authErr"></div>
+      <input class="field" id="authEmail" type="email" placeholder="Email / البريد الإلكتروني" autocomplete="email" />
+      <input class="field" id="authPassword" type="password" placeholder="Password (min 8) / كلمة المرور" autocomplete="current-password" />
+      <div id="registerFields" style="display:none">
+        <input class="field" id="authName" type="text" placeholder="Full name (optional) / الاسم" />
+        <input class="field" id="authPhone" type="tel" placeholder="Phone (optional) / الهاتف" />
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="cancelAuth()">Cancel</button>
+        <button class="btn btn-primary" id="authSubmit" onclick="submitAuth()">Sign in</button>
+      </div>
+      <p style="margin:10px 0 0;font-size:.88rem">
+        <span id="authSwitchText">New patient?</span>
+        <button class="toggle" id="authToggle" onclick="toggleAuthMode()">Create an account</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- PDPL consent modal (Law 151/2020) -->
+  <div class="overlay" id="consentOverlay">
+    <div class="modal">
+      <h2>Data Privacy Consent</h2>
+      <p>Experts Pharmacy uses RxEgypt to process your order and health information.
+         Under Egypt's Personal Data Protection Law (151/2020), we need your explicit consent.</p>
+      <p class="ar"><strong>الموافقة على خصوصية البيانات:</strong> تستخدم صيدلية إكسبرتس منصة RxEgypt
+         لمعالجة طلبك ومعلوماتك الصحية. بموجب قانون حماية البيانات الشخصية المصري (١٥١/٢٠٢٠)،
+         نحتاج إلى موافقتك الصريحة.</p>
+      <label><input type="checkbox" id="cConsent" onchange="updateConsentBtn()" />
+        I consent to the processing of my personal and health data for fulfilling my pharmacy order.
+        / أوافق على معالجة بياناتي الشخصية والصحية لتنفيذ طلبي.</label>
+      <div class="actions">
+        <button class="btn btn-primary" id="consentBtn" disabled onclick="grantConsent()">Agree &amp; Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rx verification modal -->
+  <div class="overlay" id="rxOverlay">
+    <div class="modal">
+      <h2>Prescription Required</h2>
+      <div class="rx-note">
+        Your cart contains prescription-only medicine. By Egyptian law, a pharmacist must verify
+        your prescription before this order can be prepared.<br/><br/>
+        <span class="ar">تحتوي سلتك على دواء يُصرف بوصفة طبية. وفقًا للقانون المصري، يجب على الصيدلي
+        التحقق من وصفتك قبل تجهيز الطلب.</span>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="closeRx()">Back</button>
+        <button class="btn btn-primary" onclick="sendWhatsApp()">Confirm via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My orders modal -->
+  <div class="overlay" id="ordersOverlay">
+    <div class="modal">
+      <h2>My orders</h2>
+      <div id="ordersList" style="font-size:.92rem">Loading…</div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="closeOrders()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment modal -->
+  <div class="overlay" id="payOverlay">
+    <div class="modal">
+      <h2>Payment</h2>
+      <p id="payInfo" style="font-size:.95rem"></p>
+      <div class="err" id="payMsg" style="color:var(--green-d)"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="closePay()">Later</button>
+        <button class="btn btn-primary" id="payBtn" onclick="payNow()">Pay now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDPL data-subject rights -->
+  <div class="overlay" id="privacyOverlay">
+    <div class="modal">
+      <h2>Your data &amp; privacy</h2>
+      <p style="font-size:.9rem;color:#5b665f">Under Egypt's PDPL (Law 151/2020) you can access, port, and erase your data.
+        / يمكنك الوصول إلى بياناتك ونقلها ومحوها.</p>
+      <div class="err" id="privacyMsg" style="color:var(--green-d)"></div>
+      <div class="actions" style="flex-direction:column; align-items:stretch; gap:8px">
+        <button class="btn btn-ghost" onclick="downloadMyData()">⬇️ Download my data (JSON)</button>
+        <button class="btn btn-ghost" onclick="withdrawConsent()">✋ Withdraw consent</button>
+        <button class="btn" style="background:#fdecea;color:#8a1d16" onclick="deleteAccount()">🗑️ Delete my account</button>
+        <button class="btn btn-primary" onclick="closePrivacy()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜<br/>
+    RxEgypt Pilot · Experts Pharmacy Hurghada
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="rxegypt-api.js"></script>
+  <script>
+    const cart = [];
+    let lastOrder = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      refreshAuthStatus();
+      doSearch();
+    });
+
+    // --- auth status header ---
+    async function refreshAuthStatus() {
+      const el = document.getElementById('authStatus');
+      if (RxEgyptAPI.mode === 'demo' || !RxEgyptAPI.isAuthenticated()) { el.innerHTML = ''; return; }
+      try {
+        const u = await RxEgyptAPI.me();
+        el.innerHTML = `Signed in as ${u.email} <button onclick="openOrders()">My orders</button> <button onclick="openPrivacy()">Privacy</button> <button onclick="doLogout()">Logout</button>`;
+      } catch { el.innerHTML = ''; }
+    }
+    function doLogout() { RxEgyptAPI.logout(); refreshAuthStatus(); }
+
+    // --- my orders ---
+    const STATUS_LABEL = {
+      pending_rx_verification: '⏳ Awaiting pharmacist Rx check',
+      pending_payment: '💳 Awaiting payment',
+      paid: '✅ Paid — being prepared',
+      fulfilled: '📦 Ready / collected',
+      cancelled: '✖ Cancelled',
+      cart: 'Cart',
+    };
+    async function openOrders() {
+      const list = document.getElementById('ordersList');
+      list.innerHTML = 'Loading…';
+      document.getElementById('ordersOverlay').classList.add('show');
+      try {
+        const orders = await RxEgyptAPI.myOrders();
+        if (!orders.length) { list.innerHTML = '<p>No orders yet.</p>'; return; }
+        list.innerHTML = orders.map(o => `
+          <div style="border:1px solid #e4e8e4;border-radius:8px;padding:10px;margin-bottom:8px">
+            <strong>Order #${o.id}</strong> · EGP ${o.total_egp.toFixed(2)}
+            <div class="meta">${STATUS_LABEL[o.status] || o.status}</div>
+            ${o.status === 'pending_payment'
+              ? `<button class="btn btn-primary" style="margin-top:8px;padding:7px 14px" onclick="payFromList(${o.id}, ${o.total_egp})">Pay now</button>`
+              : ''}
+          </div>`).join('');
+      } catch (e) { list.innerHTML = `<p>Could not load orders: ${e.message || 'error'}</p>`; }
+    }
+    function closeOrders() { document.getElementById('ordersOverlay').classList.remove('show'); }
+    function payFromList(id, total) {
+      lastOrder = { id, total_egp: total, requires_rx_verification: false };
+      closeOrders();
+      openPay(lastOrder);
+    }
+
+    // --- PDPL data-subject rights ---
+    function openPrivacy() {
+      document.getElementById('privacyMsg').textContent = '';
+      document.getElementById('privacyOverlay').classList.add('show');
+    }
+    function closePrivacy() { document.getElementById('privacyOverlay').classList.remove('show'); }
+
+    async function downloadMyData() {
+      try {
+        const data = await RxEgyptAPI.exportMyData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'my-rxegypt-data.json'; a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('privacyMsg').textContent = 'Your data was downloaded.';
+      } catch (e) { document.getElementById('privacyMsg').textContent = 'Export failed: ' + (e.message || 'error'); }
+    }
+
+    async function withdrawConsent() {
+      try {
+        await RxEgyptAPI.withdrawConsent();
+        localStorage.removeItem(await consentKey()); // re-prompt on next checkout
+        document.getElementById('privacyMsg').textContent = 'Consent withdrawn. We will ask again before any new order.';
+      } catch (e) { document.getElementById('privacyMsg').textContent = 'Withdrawal failed: ' + (e.message || 'error'); }
+    }
+
+    async function deleteAccount() {
+      if (!confirm('Delete your account and anonymize your personal data? This cannot be undone.')) return;
+      try {
+        const key = await consentKey();
+        await RxEgyptAPI.deleteMyAccount();
+        localStorage.removeItem(key);
+        closePrivacy();
+        refreshAuthStatus();
+        alert('Your account was deleted and your personal data anonymized.');
+      } catch (e) { document.getElementById('privacyMsg').textContent = 'Deletion failed: ' + (e.message || 'error'); }
+    }
+
+    // --- login / register modal (promise-based) ---
+    let _authResolve = null;
+    let _authMode = 'login'; // 'login' | 'register'
+
+    function ensureAuth() {
+      return new Promise((resolve) => {
+        _authResolve = resolve;
+        setAuthMode('login');
+        document.getElementById('authErr').textContent = '';
+        document.getElementById('authOverlay').classList.add('show');
+      });
+    }
+    function setAuthMode(mode) {
+      _authMode = mode;
+      const reg = mode === 'register';
+      document.getElementById('registerFields').style.display = reg ? 'block' : 'none';
+      document.getElementById('authTitle').textContent = reg ? 'Create your account' : 'Sign in to checkout';
+      document.getElementById('authSubmit').textContent = reg ? 'Create account' : 'Sign in';
+      document.getElementById('authSwitchText').textContent = reg ? 'Already have an account?' : 'New patient?';
+      document.getElementById('authToggle').textContent = reg ? 'Sign in instead' : 'Create an account';
+    }
+    function toggleAuthMode() {
+      document.getElementById('authErr').textContent = '';
+      setAuthMode(_authMode === 'login' ? 'register' : 'login');
+    }
+    function cancelAuth() {
+      document.getElementById('authOverlay').classList.remove('show');
+      if (_authResolve) { _authResolve(false); _authResolve = null; }
+    }
+    async function submitAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const err = document.getElementById('authErr');
+      err.textContent = '';
+      if (!email || !password) { err.textContent = 'Email and password are required.'; return; }
+      if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+      try {
+        if (_authMode === 'register') {
+          await RxEgyptAPI.register({
+            email, password,
+            full_name: document.getElementById('authName').value.trim(),
+            phone: document.getElementById('authPhone').value.trim()
+          });
+          try {
+            await RxEgyptAPI.login(email, password);
+          } catch {
+            err.textContent = 'Account created — please sign in.';
+            setAuthMode('login');
+            return;
+          }
+        } else {
+          await RxEgyptAPI.login(email, password);
+        }
+      } catch (e) {
+        err.textContent = e.message || 'Authentication failed.';
+        return;
+      }
+      document.getElementById('authOverlay').classList.remove('show');
+      await refreshAuthStatus();
+      if (_authResolve) { _authResolve(true); _authResolve = null; }
+    }
+
+    // --- PDPL consent (per-user, post-auth) ---
+    let _consentResolve = null;
+    async function consentKey() {
+      try { const u = await RxEgyptAPI.me(); return `rxegypt_consent:${u.id}:${u.email}`; }
+      catch { return 'rxegypt_consent'; }
+    }
+    async function ensureConsent() {
+      const key = await consentKey();
+      if (localStorage.getItem(key) === 'granted') return true;
+      return new Promise((resolve) => {
+        _consentResolve = resolve;
+        document.getElementById('cConsent').checked = false;
+        updateConsentBtn();
+        document.getElementById('consentOverlay').classList.add('show');
+      });
+    }
+    function updateConsentBtn() {
+      document.getElementById('consentBtn').disabled = !document.getElementById('cConsent').checked;
+    }
+    async function grantConsent() {
+      try {
+        await RxEgyptAPI.recordConsent({ purpose: 'health_data_processing', granted: true, policy_version: '1.0' });
+      } catch (e) {
+        if (e.status === 401) throw e; // bubble up so checkout can re-auth
+        alert('Could not record consent: ' + (e.message || 'error'));
+        return;
+      }
+      localStorage.setItem(await consentKey(), 'granted');
+      document.getElementById('consentOverlay').classList.remove('show');
+      if (_consentResolve) { _consentResolve(true); _consentResolve = null; }
+    }
+
+    async function doSearch() {
+      const q = document.getElementById('q').value;
+      const drugs = await RxEgyptAPI.searchDrugs(q);
+      const el = document.getElementById('results');
+      el.innerHTML = drugs.map(d => `
+        <div class="card">
+          <div>
+            <h3>${d.name_en} ${d.rx ? '<span class="rx-badge">Rx</span>' : '<span class="otc-badge">OTC</span>'}</h3>
+            <div class="ar">${d.name_ar}</div>
+            <div class="meta">${d.generic} · ${d.strength} · ${d.form}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="price">EGP ${d.price_egp.toFixed(2)}</div>
+            ${d.controlled
+              ? '<div class="meta" style="color:var(--rx)">🔒 In-pharmacy only</div>'
+              : `<button class="add" onclick='addToCart(${JSON.stringify(d)})'>Add</button>`}
+          </div>
+        </div>`).join('') || '<p>No results.</p>';
+    }
+
+    function addToCart(d) {
+      const existing = cart.find(i => i.drug_id === d.id);
+      if (existing) existing.quantity++;
+      else cart.push({ drug_id: d.id, quantity: 1, price: d.price_egp, rx: d.rx, name: d.name_en });
+      renderCart();
+    }
+    function renderCart() {
+      document.getElementById('cartCount').textContent = cart.reduce((s,i)=>s+i.quantity,0);
+      document.getElementById('cartTotal').textContent = cart.reduce((s,i)=>s+i.price*i.quantity,0).toFixed(2);
+    }
+
+    async function checkout() {
+      if (!cart.length) return alert('Your cart is empty.');
+      try {
+        await placeOrder();
+      } catch (e) {
+        if (e.status === 401) {
+          // token expired mid-flow — re-auth once and retry.
+          RxEgyptAPI.logout();
+          if (await ensureAuth()) {
+            try { await placeOrder(); } catch (e2) { alert('Checkout failed: ' + (e2.message || 'error')); }
+          }
+        } else {
+          alert('Checkout failed: ' + (e.message || 'error'));
+        }
+      }
+    }
+
+    // auth -> consent (if needed) -> create order -> Rx or payment
+    async function placeOrder() {
+      if (!RxEgyptAPI.isAuthenticated()) {
+        if (!await ensureAuth()) return; // user cancelled
+      }
+      if (!await ensureConsent()) return; // user cancelled consent
+      lastOrder = await RxEgyptAPI.createOrder(cart.map(i => ({ drug_id: i.drug_id, quantity: i.quantity })));
+      await refreshAuthStatus();
+      if (lastOrder.requires_rx_verification) {
+        document.getElementById('rxOverlay').classList.add('show');
+      } else {
+        openPay(lastOrder);
+      }
+    }
+
+    // --- payment ---
+    function openPay(order) {
+      document.getElementById('payInfo').textContent =
+        `Order #${order.id} · Total EGP ${order.total_egp.toFixed(2)}`;
+      document.getElementById('payMsg').textContent = '';
+      document.getElementById('payBtn').disabled = false;
+      document.getElementById('payOverlay').classList.add('show');
+    }
+    function closePay() { document.getElementById('payOverlay').classList.remove('show'); }
+    async function payNow() {
+      const msg = document.getElementById('payMsg');
+      try {
+        const intent = await RxEgyptAPI.payOrder(lastOrder.id);
+        if (intent.mock) {
+          // No live gateway configured — settle via the mock confirm flow.
+          await RxEgyptAPI.mockConfirmPayment(lastOrder.id, true);
+          document.getElementById('payBtn').disabled = true;
+          msg.textContent = `✓ Payment successful (test mode). Order #${lastOrder.id} is paid.`;
+        } else if (intent.checkout_url) {
+          window.open(intent.checkout_url, '_blank');
+          msg.textContent = 'Complete your payment in the new tab. Your order updates once the bank confirms.';
+        } else {
+          msg.textContent = 'Payment could not be started — please try again.';
+        }
+      } catch (e) {
+        msg.textContent = 'Payment failed: ' + (e.message || 'error');
+      }
+    }
+
+    function closeRx() { document.getElementById('rxOverlay').classList.remove('show'); }
+    async function sendWhatsApp() {
+      try {
+        const { whatsapp_url } = await RxEgyptAPI.rxWhatsApp(lastOrder.id);
+        window.open(whatsapp_url, '_blank');
+      } catch (e) {
+        alert('Could not generate WhatsApp link: ' + (e.message || 'error'));
+      }
+      closeRx();
+    }
+  </script>
+</body>
+</html>
