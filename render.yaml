@@ -11,7 +11,7 @@ services:
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: "3.12.4"
+        value: "3.11.9"
       # Set this to your deployed frontend URL after the first Vercel deploy,
       # e.g. https://luxor-guest-house.vercel.app  (*.vercel.app is already
       # allowed by the backend's CORS regex).
