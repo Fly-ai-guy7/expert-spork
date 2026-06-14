@@ -1,0 +1,21 @@
+[
+  { "id": "wb-kings-hatshepsut-memnon", "name": "West Bank: Valley of the Kings, Hatshepsut, Colossi of Memnon", "area": "West Bank", "price": 55, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "wb-habu-nobles-deir-el-medina", "name": "West Bank: Habu Temple, Nobles, Deir El Medina", "area": "West Bank", "price": 50, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "wb-queens-ramesseum-seti", "name": "West Bank: Valley of the Queens, Ramesseum, Seti I Temple", "area": "West Bank", "price": 53, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "eb-luxor-karnak", "name": "East Bank: Luxor Temple, Karnak, without Museum", "area": "East Bank", "price": 55, "currency": "USD", "price_on_request": false, "notes": "Without Museum" },
+  { "id": "karnak-sound-light", "name": "Karnak Sound and Light Show", "area": "East Bank", "price": 50, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "hot-air-balloon", "name": "Hot Air Balloon", "area": "Luxor", "price": 60, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "felucca-nile", "name": "Felucca on the Nile", "area": "Luxor", "price": 20, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "horse-donkey-village", "name": "Horse and Donkey Village Tour", "area": "Luxor", "price": 60, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "desert-safari", "name": "Desert Safari", "area": "Luxor", "price": 30, "currency": "USD", "price_on_request": false, "notes": "One hour" },
+  { "id": "souq-el-talat-market", "name": "Fruit and Vegetable Market, Souq El Talat", "area": "Luxor", "price": 15, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "western-desert-oasis", "name": "Western Desert Oasis", "area": "Western Desert", "price": null, "currency": "USD", "price_on_request": true, "notes": "Price on request" },
+  { "id": "dendera-abydos", "name": "Dendera Temple and Abydos Temple", "area": "Day Trip", "price": 80, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "edfu-kom-ombo", "name": "Edfu Temple and Kom Ombo Temple", "area": "Day Trip", "price": 80, "currency": "USD", "price_on_request": false, "notes": "" },
+  { "id": "aswan-philae-dam-obelisk", "name": "Aswan: Philae Temple, High Dam, Obelisk", "area": "Aswan", "price": 110, "currency": "USD", "price_on_request": false, "notes": "Per person (one person)" },
+  { "id": "aswan-abu-simbel-cruise", "name": "Aswan: Abu Simbel and Nile Cruise", "area": "Aswan", "price": null, "currency": "USD", "price_on_request": true, "notes": "Price on request" },
+  { "id": "aswan-jabel-el-selsla", "name": "Aswan: Day for Jabel El Selsla", "area": "Aswan", "price": null, "currency": "USD", "price_on_request": true, "notes": "Price on request" },
+  { "id": "hurghada-snorkelling-pyramids-museum", "name": "Hurghada: Snorkelling, Pyramids, Egyptian Museum", "area": "Hurghada", "price": null, "currency": "USD", "price_on_request": true, "notes": "Price on request" },
+  { "id": "cairo-hurghada-beach", "name": "Cairo: Hurghada, Beach", "area": "Cairo", "price": null, "currency": "USD", "price_on_request": true, "notes": "Price on request" },
+  { "id": "cairo-pyramids-sphinx-museum", "name": "Cairo: Pyramids, Sphinx, Museum", "area": "Cairo", "price": null, "currency": "USD", "price_on_request": true, "notes": "Price on request" }
+]

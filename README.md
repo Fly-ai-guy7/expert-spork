@@ -1,134 +1,144 @@
-# EQUALISE™ EGYPT
+# Luxor Guest House — Booking Prototype
 
-**AI-Powered Legal Simulation & Case Intelligence System for Egyptian Law**
+A deployable MVP for **Luxor Guest House**, a Nile-side guest house on the West
+Bank of Luxor, Egypt. Guests can browse rooms and tours, chat with a concierge,
+and send a booking enquiry. Staff get a lightweight operations dashboard.
 
-> ⚠ **AI Simulation Only — Not Legal Advice — All outputs require review by a qualified Egyptian lawyer.**
->
-> محاكاة بالذكاء الاصطناعي فقط — ليست استشارة قانونية — جميع النتائج تتطلب مراجعة من محامٍ مصري مؤهل.
+- **Frontend:** React + Vite
+- **Backend:** FastAPI (Python)
+- **Data:** JSON "ledger" files (rooms, tours, policies, FAQ, contacts) + a JSON
+  booking store
+- **Deployment:** Vercel (frontend) + Render (backend)
 
-A courtroom simulator for **trainee lawyers**. Trainees practice against AI opposing counsel on
-fact patterns they author or generate, walk away with a coaching report identifying missed
-statutes and weak arguments, and reduce the load on legal research teams through automated fact
-extraction, statute lookup, and opposing-counsel argumentation.
+> Property: Luxor Guest House · West Bank, Albairat, Alramla, West Bank, 85111
+> Luxor, Egypt · WhatsApp **+20 100 184 2081** · Booking.com **9.0** (470 reviews)
+> · Breakfast included · No prepayment · No credit card needed.
 
-## Architecture
+---
 
-```
-case input  →  Evidence Migration LLM  →  Cross-LLM Debate (Prosecution vs Defense)
-                                                ↓
-                                          Scoring Layer
-                                                ↓
-                                    Judicial Reasoning + Override
-                                                ↓
-                                  Ruling → Outcome → Coaching Report
-```
-
-Six agents, each grounded in the Egyptian statute corpus shipped in `corpus/`:
-
-| Agent | LLM | Role |
-|---|---|---|
-| Evidence Migration | Claude Sonnet | Fact extraction, disputed/undisputed tagging |
-| Prosecution | Claude Opus / DeepSeek (alternating) | Plaintiff arguments |
-| Defense | DeepSeek / Claude Opus (alternating) | Defendant arguments |
-| Judicial Reasoning | Claude Opus | Ruling + override authority |
-| Scoring | Claude Sonnet | Argument quality on 4 dimensions |
-| HIL / Trainee | none | DB-gated checkpoint |
-
-Cross-LLM swap per round means Claude argues Prosecution in round 1, Defense in round 2, etc., to
-expose model bias.
-
-## Stack
-
-- **Backend**: FastAPI · SQLAlchemy 2.0 · Postgres 16 · Anthropic SDK · OpenAI SDK (DeepSeek) · WeasyPrint (bilingual PDF) · Alembic
-- **Frontend**: Vite · React 18 · TypeScript · TanStack Query · react-i18next · Tailwind
-- **Infra**: docker-compose for local dev; K8s manifests deferred
-
-## Quickstart
-
-```sh
-# 1. Setup
-cp .env.example .env
-# fill in ANTHROPIC_API_KEY and DEEPSEEK_API_KEY
-
-# 2. Bring up the stack
-make dev
-# (db + backend with auto-migrate + corpus seed + frontend on :5173)
-
-# 3. Open the app
-open http://localhost:5173
-```
-
-The Training Dashboard at `/` is the entry point: pick area-of-law, difficulty, and role
-(Prosecution / Defense). It generates a synthetic case via Claude Opus and drops you into the
-courtroom against AI opposing counsel.
-
-## API tour
-
-```sh
-# AI-generate a practice case
-curl -X POST http://localhost:8000/api/cases/generate \
-  -H 'Content-Type: application/json' \
-  -d '{"area_of_law":"IP","difficulty":2,"language":"en"}'
-
-# Start training session — trainee plays Defense
-curl -X POST http://localhost:8000/api/cases/<CASE_ID>/run-training \
-  -H 'Content-Type: application/json' \
-  -d '{"trainee_role":"DEFENSE","user_id":"trainee","difficulty":2}'
-
-# Poll status — when TRAINEE_TURN appears, submit:
-curl -X POST http://localhost:8000/api/hil/<CP_ID>/submit-trainee \
-  -H 'Content-Type: application/json' \
-  -d '{"content_en":"...","citations":["82/2002:115"]}'
-
-# Bilingual PDF ruling + coaching report
-curl http://localhost:8000/api/cases/<CASE_ID>/report.pdf -o ruling.pdf
-curl http://localhost:8000/api/training/<SESSION_ID>/coaching | jq
-```
-
-## Layout
+## Repository structure
 
 ```
-expert-spork/
-├── backend/                 # FastAPI app, agents, services, models, prompts
-├── frontend/                # Vite + React + TS, bilingual UI, RTL-aware
-├── corpus/                  # 8 Egyptian statutes, 5–10 articles each
-├── infra/                   # postgres init.sql; k8s placeholder
-├── docs/                    # architecture, agents, prompt caching notes
-├── docker-compose.yml
-└── Makefile                 # make dev | make seed | make test
+.
+├── README.md
+├── DEPLOYMENT_RUNBOOK.md
+├── render.yaml                 # Render blueprint for the backend
+├── frontend/                   # React + Vite app (deploy to Vercel)
+│   ├── package.json
+│   ├── index.html
+│   ├── vite.config.js
+│   ├── .env.example
+│   └── src/
+│       ├── App.jsx
+│       ├── main.jsx
+│       └── styles.css
+├── backend/                    # FastAPI app (deploy to Render)
+│   ├── requirements.txt
+│   ├── .env.example
+│   └── app/
+│       ├── main.py
+│       └── ledger/             # Source-of-truth JSON data
+│           ├── rooms.json
+│           ├── tours.json
+│           ├── policies.json
+│           ├── faq.json
+│           ├── contacts.json
+│           └── assumptions.json
+└── database/
+    └── bookings.json           # Booking enquiries are appended here
 ```
 
-See `docs/` for deeper documentation:
+## API endpoints
 
-- `docs/architecture.md` — maps the diagram to code modules
-- `docs/agents.md` — per-agent role, LLM choice, I/O contract
-- `docs/prompt-caching.md` — how the statute corpus is cached
-- `docs/training-mode.md` — trainee workflow
-- `docs/i18n.md` — Arabic/RTL notes
+| Method | Path               | Purpose                                   |
+| ------ | ------------------ | ----------------------------------------- |
+| GET    | `/`                | Service info + endpoint list              |
+| GET    | `/api/rooms`       | All rooms                                 |
+| GET    | `/api/tours`       | All tours                                 |
+| GET    | `/api/policies`    | Booking / stay policies                   |
+| GET    | `/api/faq`         | Frequently asked questions                |
+| GET    | `/api/contacts`    | Contact + rating info                     |
+| GET    | `/api/bookings`    | List booking enquiries                    |
+| POST   | `/api/bookings`    | Create a booking enquiry (saved to JSON)  |
+| GET    | `/api/dashboard`   | KPIs + recent enquiries + rooms/tours     |
+| POST   | `/api/concierge`   | Concierge answer from local ledger data   |
 
-## Make targets
+Interactive API docs are available at `/docs` when the backend is running.
 
-- `make dev` — bring up the full stack with hot reload
-- `make seed` — re-run the statute corpus loader (idempotent)
-- `make test` — backend pytest + frontend vitest
-- `make migrate m="add foo"` — generate alembic revision
-- `make upgrade` — apply migrations
-- `make down` / `make clean` — tear down
+---
 
-## Prompt caching
+## Run locally
 
-Every agent receives the Egyptian statute corpus as a cacheable system block. With ~6 agent calls
-per case sharing the block, Anthropic's prompt caching cuts repeat-call cost ~90% and latency
-~50%. DeepSeek calls inline a trimmed subset of articles relevant to the case. See
-`docs/prompt-caching.md`.
+### 1. Backend (FastAPI)
 
-## Not in this scaffold
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-K8s manifests, auth/login, full statute text (we ship 5–10 representative articles per law),
-the three feedback loops as real retraining, Court of Cassation precedent DB, auto-translation,
-streaming responses, OTel/Sentry, rate limiting, mobile UI. These are explicit non-goals for v0
-— see `docs/architecture.md` for the deferred list.
+The API is now at <http://localhost:8000> (docs at `/docs`).
 
-## License
+### 2. Frontend (React + Vite)
 
-MIT. See `LICENSE`.
+In a second terminal:
+
+```bash
+cd frontend
+cp .env.example .env             # VITE_API_URL defaults to http://localhost:8000
+npm install
+npm run dev
+```
+
+Open the URL Vite prints (default <http://localhost:5173>). Toggle between the
+guest **Home** page and the staff **Dashboard** from the top navigation.
+
+### Build the frontend for production
+
+```bash
+cd frontend
+npm run build        # outputs to frontend/dist
+npm run preview      # optional local preview of the build
+```
+
+---
+
+## Configuration
+
+### Frontend (`frontend/.env`)
+
+| Variable       | Description                              | Example                               |
+| -------------- | ---------------------------------------- | ------------------------------------- |
+| `VITE_API_URL` | Base URL of the backend (no trailing /)  | `https://luxor-guest-house-api.onrender.com` |
+
+### Backend (`backend/.env`)
+
+| Variable          | Description                                                        |
+| ----------------- | ----------------------------------------------------------------- |
+| `ALLOWED_ORIGINS` | Comma-separated extra CORS origins (your frontend URL).           |
+| `BOOKINGS_FILE`   | Optional path override for the booking store JSON file.           |
+
+CORS already allows `localhost:5173/3000` and any `*.vercel.app` domain out of
+the box; use `ALLOWED_ORIGINS` to add a custom production domain.
+
+---
+
+## Concierge
+
+The concierge (`POST /api/concierge`) is deterministic and answers purely from
+the local ledger files — rooms, tours, policies, FAQ and contacts. It performs
+keyword matching and composes a reply with the relevant data and a WhatsApp
+link. No external LLM or third-party service is called.
+
+## Notes & assumptions
+
+Key assumptions (placeholder email, reference pricing, inferred policies,
+ephemeral storage on the free Render plan, etc.) are documented in
+[`backend/app/ledger/assumptions.json`](backend/app/ledger/assumptions.json).
+
+## Deployment
+
+See [`DEPLOYMENT_RUNBOOK.md`](DEPLOYMENT_RUNBOOK.md) for step-by-step Vercel +
+Render instructions.

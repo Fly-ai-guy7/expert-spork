@@ -1,0 +1,32 @@
+# Render blueprint for the Luxor Guest House FastAPI backend.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: luxor-guest-house-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Set this to your deployed frontend URL after the first Vercel deploy,
+      # e.g. https://luxor-guest-house.vercel.app  (*.vercel.app is already
+      # allowed by the backend's CORS regex).
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+    # NOTE: Render's filesystem is ephemeral on the free plan, so booking
+    # enquiries written to database/bookings.json do not survive a redeploy
+    # or restart. For durable storage, add a persistent disk and point the
+    # backend at it via the BOOKINGS_FILE env var, for example:
+    #
+    # disk:
+    #   name: luxor-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # and add an env var:
+    #   - key: BOOKINGS_FILE
+    #     value: /var/data/bookings.json

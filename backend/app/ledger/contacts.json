@@ -1,0 +1,22 @@
+{
+  "property_name": "Luxor Guest House",
+  "primary_contact": "Ahmed",
+  "address": "West Bank, Albairat, Alramla, West Bank, 85111 Luxor, Egypt",
+  "city": "Luxor",
+  "country": "Egypt",
+  "postal_code": "85111",
+  "whatsapp_display": "+20 100 184 2081",
+  "whatsapp_e164": "+201001842081",
+  "whatsapp_link": "https://wa.me/201001842081",
+  "email": "info@luxorguesthouse.local",
+  "ratings": {
+    "source": "Booking.com",
+    "score": 9.0,
+    "reviews": 470
+  },
+  "trust_signals": [
+    "Breakfast included",
+    "No prepayment needed",
+    "No credit card needed"
+  ]
+}
