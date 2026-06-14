@@ -1,47 +1,26 @@
-# Python
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python / backend
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
 .venv/
 venv/
-env/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-htmlcov/
-.coverage
-.coverage.*
+backend/.venv/
 
-# Node
-node_modules/
-dist/
-.vite/
-*.log
-npm-debug.log*
-
-# IDE
-.vscode/
-.idea/
-*.swp
-.DS_Store
-
-# Env
+# Env files (keep .env.example committed)
 .env
-.env.local
-.env.*.local
+*.env
+!.env.example
 
-# DB
-*.sqlite
-*.db
-postgres-data/
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
 
-# Build artifacts
-*.pdf
-!docs/**/*.pdf
-
-# Frontend build
-frontend/dist/
-frontend/.turbo/
+# Local booking writes (kept as an empty array in git; runtime writes ignored)
+database/bookings.json.tmp
