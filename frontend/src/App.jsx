@@ -439,39 +439,36 @@ export default function App() {
       .catch((e) => setError(e.message));
   }, []);
 
+  const rooms = data?.rooms || [];
+  const contacts = data?.contacts;
+
   return (
     <div className="app">
       <Header view={view} setView={setView} />
       {view === "dashboard" ? (
         <main style={{ paddingTop: 80 }}><Dashboard /></main>
-      ) : error ? (
-        <main className="container" style={{ paddingTop: 120 }}>
-          <p className="alert err">Couldn't reach the API at {API_URL} ({error}).</p>
-        </main>
-      ) : !data ? (
-        <main className="container" style={{ paddingTop: 120 }}><p>Loading…</p></main>
       ) : (
         <main>
-          <Hero contacts={data.contacts} />
-          <WhyStay trust={data.contacts?.trust_signals} />
+          <Hero contacts={contacts} />
+          <WhyStay trust={contacts?.trust_signals} />
           <section className="section body">
             <div className="container body-grid">
               <div className="col">
                 <Experiences />
-                <FeaturedRoom room={data.rooms[0]} />
+                <FeaturedRoom room={rooms[0]} />
               </div>
               <div className="col">
-                <MiniRoom room={data.rooms[1]} />
+                <MiniRoom room={rooms[1]} />
                 <Reviews />
                 <ExploreMap />
-                <DirectBooking rooms={data.rooms} />
+                <DirectBooking rooms={rooms} />
               </div>
             </div>
           </section>
           <Concierge />
         </main>
       )}
-      <Footer contacts={data?.contacts} />
+      <Footer contacts={contacts} />
     </div>
   );
 }
