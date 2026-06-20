@@ -6,6 +6,7 @@ import type {
   CaseReportPayload,
   CaseStatusPayload,
   CaseSummary,
+  CounselLogEntry,
   CounselResponse,
   TrainingSessionRecord,
 } from "./types";
@@ -109,6 +110,15 @@ export function useCoachingReport(sessionId: string | undefined) {
     queryKey: ["coaching", sessionId],
     queryFn: async () =>
       (await api.get<TrainingSessionRecord>(`/api/training/${sessionId}/coaching`)).data,
+    enabled: !!sessionId,
+  });
+}
+
+export function useCounselLog(sessionId: string | undefined) {
+  return useQuery({
+    queryKey: ["counsel-log", sessionId],
+    queryFn: async () =>
+      (await api.get<CounselLogEntry[]>(`/api/training/${sessionId}/counsel-log`)).data,
     enabled: !!sessionId,
   });
 }

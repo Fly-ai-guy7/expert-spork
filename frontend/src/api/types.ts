@@ -137,3 +137,14 @@ export interface CounselResponse {
   advice: CounselAdvice;
   llm_used: string;
 }
+
+export interface CounselLogEntry {
+  id: string;
+  created_at: string;
+  trainee_role: string;
+  draft_en: string | null;
+  draft_ar: string | null;
+  citations: string[];
+  advice: CounselAdvice;
+  llm_used: string | null;
+}

@@ -1,12 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { useCoachingReport } from "@/api/hooks";
+import { useCoachingReport, useCounselLog } from "@/api/hooks";
+import type { CounselLogEntry } from "@/api/types";
 
 export function CoachingReportPage() {
   const { sessionId } = useParams();
   const { t, i18n } = useTranslation();
   const { data, isLoading } = useCoachingReport(sessionId);
+  const { data: counselLog } = useCounselLog(sessionId);
   if (isLoading || !data) return <p>{t("actions.loading")}</p>;
   const report = data.coaching_report as Record<string, unknown> as {
     grade?: string;
@@ -98,6 +100,54 @@ export function CoachingReportPage() {
         <ListBlock title={t("coaching.evidence_gaps")} items={report.evidence_gaps_to_address || []} />
         <ListBlock title={t("coaching.weak_patterns")} items={report.weak_patterns || []} />
       </div>
+
+      {(counselLog?.length || 0) > 0 && (
+        <CounselLogSection entries={counselLog || []} lang={i18n.language} />
+      )}
+    </div>
+  );
+}
+
+function CounselLogSection({ entries, lang }: { entries: CounselLogEntry[]; lang: string }) {
+  const { t } = useTranslation();
+  const isAr = lang === "ar";
+  return (
+    <section className="bg-white border rounded-lg p-6">
+      <h2 className="text-sm font-semibold mb-3">{t("coaching.counsel_log_title")}</h2>
+      <ul className="space-y-4 text-sm">
+        {entries.map((e) => {
+          const draft = (isAr ? e.draft_ar : e.draft_en) || e.draft_en || e.draft_ar;
+          const strategy =
+            (isAr ? e.advice.strategy_ar : e.advice.strategy_en) ||
+            e.advice.strategy_en ||
+            e.advice.strategy_ar;
+          return (
+            <li key={e.id} className="border-l-4 border-amber-400 pl-3">
+              <div className="text-xs text-slate-500 mb-1">
+                {new Date(e.created_at).toLocaleString()} · {e.trainee_role}
+              </div>
+              {draft && (
+                <details className="text-xs mb-1">
+                  <summary className="cursor-pointer">{t("coaching.counsel_draft")}</summary>
+                  <p className="font-mono whitespace-pre-wrap mt-1">{draft}</p>
+                </details>
+              )}
+              {strategy && <p className="mb-1">{strategy}</p>}
+              <MiniList label={t("counsel.suggested_citations")} items={e.advice.suggested_citations} />
+              <MiniList label={t("counsel.missing")} items={e.advice.missing_arguments} />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function MiniList({ label, items }: { label: string; items: string[] }) {
+  if (!items?.length) return null;
+  return (
+    <div className="text-xs mt-1">
+      <span className="font-medium">{label}:</span> {items.join(", ")}
     </div>
   );
 }
