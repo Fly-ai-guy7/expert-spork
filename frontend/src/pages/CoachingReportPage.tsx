@@ -15,6 +15,11 @@ export function CoachingReportPage() {
     missed_citations?: string[];
     evidence_gaps_to_address?: string[];
     weak_patterns?: string[];
+    council_alignment?: "WON" | "LOST";
+    council_for_trainee?: number;
+    council_against_trainee?: number;
+    council_supporters?: string[];
+    council_dissenters?: string[];
   };
 
   return (
@@ -30,6 +35,42 @@ export function CoachingReportPage() {
           </div>
         </div>
       </div>
+
+      {report.council_alignment && (
+        <section
+          className={
+            "border rounded-lg p-4 " +
+            (report.council_alignment === "WON"
+              ? "border-emerald-300 bg-emerald-50"
+              : "border-rose-300 bg-rose-50")
+          }
+        >
+          <h2 className="text-sm font-semibold mb-1">{t("coaching.council_title")}</h2>
+          <p className="text-sm">
+            {t(
+              report.council_alignment === "WON"
+                ? "coaching.council_won"
+                : "coaching.council_lost",
+              {
+                for: report.council_for_trainee ?? 0,
+                against: report.council_against_trainee ?? 0,
+              },
+            )}
+          </p>
+          {(report.council_supporters?.length || 0) > 0 && (
+            <p className="text-xs mt-1">
+              <span className="font-medium">{t("coaching.council_supporters")}:</span>{" "}
+              {(report.council_supporters || []).join(", ")}
+            </p>
+          )}
+          {(report.council_dissenters?.length || 0) > 0 && (
+            <p className="text-xs mt-1">
+              <span className="font-medium">{t("coaching.council_dissenters")}:</span>{" "}
+              {(report.council_dissenters || []).join(", ")}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="bg-white border rounded-lg p-6">
         <h2 className="text-sm font-semibold mb-3">{t("coaching.per_round")}</h2>

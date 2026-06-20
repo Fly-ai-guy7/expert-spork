@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Argument, Ruling, Score, TrainingSession
+from app.models import Argument, CouncilVerdict, Ruling, Score, TrainingSession
 from app.models.argument import AgentRole
 
 
@@ -54,6 +54,13 @@ def generate_coaching_report(db: Session, training_session_id: uuid.UUID) -> dic
     ruling = db.execute(select(Ruling).where(Ruling.case_id == ts.case_id)).scalar_one_or_none()
     critical_gaps = (ruling.critical_evidence_gaps or []) if ruling else []
 
+    verdicts: list[dict] = []
+    if ruling:
+        cvs = db.execute(
+            select(CouncilVerdict).where(CouncilVerdict.ruling_id == ruling.id)
+        ).scalars().all()
+        verdicts = [{"member_llm": v.member_llm, "verdict": v.verdict} for v in cvs]
+
     total = sum(overall_scores) / len(overall_scores) if overall_scores else 0.0
     if total >= 85:
         grade = "A"
@@ -73,6 +80,7 @@ def generate_coaching_report(db: Session, training_session_id: uuid.UUID) -> dic
         "missed_citations": missed_citations[:5],
         "evidence_gaps_to_address": critical_gaps[:5],
         "weak_patterns": _weak_patterns(per_round),
+        **_council_alignment(verdicts, ts.trainee_role.value),
     }
 
     ts.coaching_report = report
@@ -80,6 +88,26 @@ def generate_coaching_report(db: Session, training_session_id: uuid.UUID) -> dic
     ts.completed_at = datetime.now(timezone.utc)
     db.commit()
     return report
+
+
+def _council_alignment(verdicts: list[dict], trainee_role: str) -> dict:
+    """Compare each council member's verdict to the trainee's side.
+
+    PROSECUTION argues for the plaintiff; DEFENSE for the defendant. A WIN means
+    the panel majority sided with the trainee's role.
+    """
+    if not verdicts:
+        return {}
+    trainee_side = "FOR_PLAINTIFF" if trainee_role == "PROSECUTION" else "FOR_DEFENDANT"
+    supporters = [v["member_llm"] for v in verdicts if v["verdict"] == trainee_side]
+    dissenters = [v["member_llm"] for v in verdicts if v["verdict"] != trainee_side]
+    return {
+        "council_alignment": "WON" if len(supporters) > len(dissenters) else "LOST",
+        "council_for_trainee": len(supporters),
+        "council_against_trainee": len(dissenters),
+        "council_supporters": supporters,
+        "council_dissenters": dissenters,
+    }
 
 
 def _weak_patterns(per_round: list[dict]) -> list[str]:

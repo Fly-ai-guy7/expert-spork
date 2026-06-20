@@ -82,6 +82,11 @@
     "missed_citations": "استشهادات قانونية مفقودة",
     "evidence_gaps": "ثغرات الأدلة المطلوب معالجتها",
     "weak_patterns": "أنماط الضعف للعمل عليها",
+    "council_title": "رأي الهيئة القضائية في موقفك",
+    "council_won": "الهيئة أيّدت موقفك بنتيجة {{for}}–{{against}}.",
+    "council_lost": "الهيئة رفضت موقفك بنتيجة {{against}}–{{for}}.",
+    "council_supporters": "الأعضاء الذين أيّدوا موقفك",
+    "council_dissenters": "الأعضاء الذين حكموا ضد موقفك",
     "try_similar": "جرّب قضية مماثلة"
   },
   "actions": {
