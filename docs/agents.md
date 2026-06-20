@@ -77,7 +77,9 @@ argues the case itself.
 
 Exposed at `POST /api/hil/{cp_id}/counsel` (only valid at a `TRAINEE_TURN` checkpoint),
 backed by `services/counsel_service.py`. The response is advisory only and does not mutate
-the simulation, so a trainee can call it repeatedly before submitting.
+the simulation, so a trainee can call it repeatedly before submitting. Each call is
+persisted to `counsel_logs` and is reviewable at `GET /api/training/{session_id}/counsel-log`;
+the coaching report includes `counsel_calls_count` as a usage signal.
 
 ### 7. HIL / Trainee — no LLM
 

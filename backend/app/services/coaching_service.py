@@ -4,7 +4,9 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Argument, CouncilVerdict, Ruling, Score, TrainingSession
+from sqlalchemy import func
+
+from app.models import Argument, CounselLog, CouncilVerdict, Ruling, Score, TrainingSession
 from app.models.argument import AgentRole
 
 
@@ -73,6 +75,12 @@ def generate_coaching_report(db: Session, training_session_id: uuid.UUID) -> dic
     else:
         grade = "F"
 
+    counsel_calls = db.execute(
+        select(func.count()).select_from(CounselLog).where(
+            CounselLog.training_session_id == ts.id
+        )
+    ).scalar_one()
+
     report = {
         "grade": grade,
         "total_score": total,
@@ -80,6 +88,7 @@ def generate_coaching_report(db: Session, training_session_id: uuid.UUID) -> dic
         "missed_citations": missed_citations[:5],
         "evidence_gaps_to_address": critical_gaps[:5],
         "weak_patterns": _weak_patterns(per_round),
+        "counsel_calls_count": int(counsel_calls or 0),
         **_council_alignment(verdicts, ts.trainee_role.value),
     }
 

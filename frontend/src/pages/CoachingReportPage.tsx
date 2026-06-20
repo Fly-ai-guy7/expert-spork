@@ -15,6 +15,7 @@ export function CoachingReportPage() {
     missed_citations?: string[];
     evidence_gaps_to_address?: string[];
     weak_patterns?: string[];
+    counsel_calls_count?: number;
     council_alignment?: "WON" | "LOST";
     council_for_trainee?: number;
     council_against_trainee?: number;
@@ -28,12 +29,18 @@ export function CoachingReportPage() {
 
       <div className="bg-white border rounded-lg p-6 flex items-center gap-6">
         <div className="text-5xl font-bold text-brand">{report.grade || "—"}</div>
-        <div>
+        <div className="flex-1">
           <div className="text-sm text-slate-500">{t("coaching.total")}</div>
           <div className="text-2xl font-semibold">
             {report.total_score != null ? Math.round(report.total_score) : 0}/100
           </div>
         </div>
+        {report.counsel_calls_count != null && (
+          <div className="text-right">
+            <div className="text-sm text-slate-500">{t("coaching.counsel_calls")}</div>
+            <div className="text-2xl font-semibold">{report.counsel_calls_count}</div>
+          </div>
+        )}
       </div>
 
       {report.council_alignment && (

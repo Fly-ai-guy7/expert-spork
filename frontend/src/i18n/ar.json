@@ -82,6 +82,7 @@
     "missed_citations": "استشهادات قانونية مفقودة",
     "evidence_gaps": "ثغرات الأدلة المطلوب معالجتها",
     "weak_patterns": "أنماط الضعف للعمل عليها",
+    "counsel_calls": "استشارات المستشار",
     "council_title": "رأي الهيئة القضائية في موقفك",
     "council_won": "الهيئة أيّدت موقفك بنتيجة {{for}}–{{against}}.",
     "council_lost": "الهيئة رفضت موقفك بنتيجة {{against}}–{{for}}.",

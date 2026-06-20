@@ -67,6 +67,7 @@ export interface CoachingReport {
   missed_citations: string[];
   evidence_gaps_to_address: string[];
   weak_patterns: string[];
+  counsel_calls_count?: number;
   council_alignment?: "WON" | "LOST";
   council_for_trainee?: number;
   council_against_trainee?: number;

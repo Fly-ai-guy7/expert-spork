@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal, get_db
-from app.models import Case, CaseStatus, TraineeRole, TrainingSession
+from app.models import Case, CaseStatus, CounselLog, TraineeRole, TrainingSession
 from app.schemas.case import StartTrainingIn
 from app.services import orchestrator
 
@@ -61,6 +61,33 @@ def get_coaching(session_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         "started_at": ts.started_at,
         "completed_at": ts.completed_at,
     }
+
+
+@router.get("/training/{session_id}/counsel-log")
+def get_counsel_log(session_id: uuid.UUID, db: Session = Depends(get_db)) -> list[dict]:
+    ts = db.execute(
+        select(TrainingSession).where(TrainingSession.id == session_id)
+    ).scalar_one_or_none()
+    if not ts:
+        raise HTTPException(404, "Training session not found")
+    logs = db.execute(
+        select(CounselLog)
+        .where(CounselLog.training_session_id == session_id)
+        .order_by(CounselLog.created_at)
+    ).scalars().all()
+    return [
+        {
+            "id": str(log.id),
+            "created_at": log.created_at,
+            "trainee_role": log.trainee_role,
+            "draft_en": log.draft_en,
+            "draft_ar": log.draft_ar,
+            "citations": log.citations or [],
+            "advice": log.advice,
+            "llm_used": log.llm_used,
+        }
+        for log in logs
+    ]
 
 
 @router.get("/training/sessions")

@@ -86,7 +86,13 @@ async def counsel(
         raise HTTPException(409, "Counsel is only available at a TRAINEE_TURN checkpoint")
     side = (cp.modified_payload or {}).get("side", "DEFENSE")
     return await counsel_service.generate_counsel(
-        db, cp.case_id, side, payload.content_en, payload.content_ar, payload.citations
+        db,
+        cp.case_id,
+        side,
+        payload.content_en,
+        payload.content_ar,
+        payload.citations,
+        checkpoint_id=cp.id,
     )
 
 

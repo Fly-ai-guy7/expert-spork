@@ -34,3 +34,6 @@ class TrainingSession(Base, TimestampMixin):
     coaching_report: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     case: Mapped["Case"] = relationship(back_populates="training_sessions")  # noqa: F821
+    counsel_logs: Mapped[list["CounselLog"]] = relationship(  # noqa: F821
+        back_populates="training_session", cascade="all, delete-orphan"
+    )
