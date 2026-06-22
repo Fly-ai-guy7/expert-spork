@@ -1,14 +1,15 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal, get_db
+from app.i18n import Lang
 from app.models import Case, CaseStatus, CounselLog, TraineeRole, TrainingSession
 from app.schemas.case import StartTrainingIn
-from app.services import instructor_service, orchestrator
+from app.services import instructor_service, orchestrator, pdf_service
 
 router = APIRouter(prefix="/api", tags=["training"])
 
@@ -60,6 +61,48 @@ def get_coaching(session_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         "coaching_report": ts.coaching_report or {},
         "started_at": ts.started_at,
         "completed_at": ts.completed_at,
+    }
+
+
+@router.get("/training/{session_id}/coaching.pdf")
+def coaching_pdf(session_id: uuid.UUID, db: Session = Depends(get_db)) -> Response:
+    ts = db.execute(
+        select(TrainingSession).where(TrainingSession.id == session_id)
+    ).scalar_one_or_none()
+    if not ts:
+        raise HTTPException(404, "Training session not found")
+    case = db.execute(select(Case).where(Case.id == ts.case_id)).scalar_one()
+    logs = db.execute(
+        select(CounselLog)
+        .where(CounselLog.training_session_id == session_id)
+        .order_by(CounselLog.created_at)
+    ).scalars().all()
+    payload = _coaching_pdf_payload(ts, logs)
+    lang = Lang(case.language_primary)
+    pdf_bytes = pdf_service.render_coaching_pdf(payload, lang)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="coaching-{session_id}.pdf"'},
+    )
+
+
+def _coaching_pdf_payload(ts: TrainingSession, logs: list[CounselLog]) -> dict:
+    """Flatten the coaching_report blob and inject the counsel log."""
+    report = ts.coaching_report or {}
+    return {
+        **report,
+        "counsel_log": [
+            {
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+                "trainee_role": log.trainee_role,
+                "draft_en": log.draft_en,
+                "draft_ar": log.draft_ar,
+                "citations": log.citations or [],
+                "advice": log.advice or {},
+            }
+            for log in logs
+        ],
     }
 
 

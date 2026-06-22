@@ -7,9 +7,30 @@
   <h1>Coaching Report</h1>
   <div class="meta">EQUALISE Egypt — Training Session</div>
   <h2 style="border:none;">Grade: {{ grade or "—" }} · {{ "%.0f"|format(total_score or 0) }}/100</h2>
+  {% if counsel_calls_count is not none %}
+  <div class="meta">Advisory Counsel calls: {{ counsel_calls_count }}</div>
+  {% endif %}
 </div>
 
 <div class="disclaimer">{{ disclaimer_en }}</div>
+
+{% if council_alignment %}
+<h2>Judicial Council Alignment</h2>
+<p>
+  {% if council_alignment == "WON" %}
+  The panel sided <strong>WITH</strong> your case
+  {% else %}
+  The panel sided <strong>AGAINST</strong> your case
+  {% endif %}
+  ({{ council_for_trainee or 0 }}–{{ council_against_trainee or 0 }}).
+</p>
+{% if council_supporters %}
+<div class="kv"><span class="k">Members who agreed with you:</span> {{ council_supporters|join(", ") }}</div>
+{% endif %}
+{% if council_dissenters %}
+<div class="kv"><span class="k">Members who ruled against you:</span> {{ council_dissenters|join(", ") }}</div>
+{% endif %}
+{% endif %}
 
 <h2>Per-Round Performance</h2>
 {% for r in per_round %}
@@ -38,6 +59,23 @@
 <ul class="gaps">
   {% for w in weak_patterns %}<li>{{ w }}</li>{% else %}<li><em>None — consistent performance across dimensions.</em></li>{% endfor %}
 </ul>
+
+{% if counsel_log %}
+<h2>Advisory Counsel Calls — Retrospective</h2>
+{% for entry in counsel_log %}
+<div class="argument-block">
+  <div class="meta">{{ entry.created_at }} · {{ entry.trainee_role }}</div>
+  {% if entry.draft_en %}<p><em>Draft at the time:</em> {{ entry.draft_en }}</p>{% endif %}
+  {% if entry.advice.strategy_en %}<p>{{ entry.advice.strategy_en }}</p>{% endif %}
+  {% if entry.advice.suggested_citations %}
+  <div class="kv"><span class="k">Suggested citations:</span> {{ entry.advice.suggested_citations|join(", ") }}</div>
+  {% endif %}
+  {% if entry.advice.missing_arguments %}
+  <div class="kv"><span class="k">Arguments not yet made:</span> {{ entry.advice.missing_arguments|join("; ") }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
 
 <div class="disclaimer">{{ disclaimer_en }}</div>
 

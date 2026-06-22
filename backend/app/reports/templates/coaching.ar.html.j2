@@ -7,9 +7,30 @@
   <h1>تقرير التدريب</h1>
   <div class="meta">إيكواليز مصر — جلسة تدريب</div>
   <h2 style="border:none;">التقدير: {{ grade or "—" }} · {{ "%.0f"|format(total_score or 0) }}/100</h2>
+  {% if counsel_calls_count is not none %}
+  <div class="meta">عدد استشارات المستشار: {{ counsel_calls_count }}</div>
+  {% endif %}
 </div>
 
 <div class="disclaimer">{{ disclaimer_ar }}</div>
+
+{% if council_alignment %}
+<h2>موقف الهيئة القضائية من قضيتك</h2>
+<p>
+  {% if council_alignment == "WON" %}
+  أيّدت الهيئة <strong>موقفك</strong>
+  {% else %}
+  حكمت الهيئة <strong>ضد موقفك</strong>
+  {% endif %}
+  ({{ council_for_trainee or 0 }}–{{ council_against_trainee or 0 }}).
+</p>
+{% if council_supporters %}
+<div class="kv"><span class="k">الأعضاء الذين أيّدوك:</span> {{ council_supporters|join(", ") }}</div>
+{% endif %}
+{% if council_dissenters %}
+<div class="kv"><span class="k">الأعضاء الذين حكموا ضدك:</span> {{ council_dissenters|join(", ") }}</div>
+{% endif %}
+{% endif %}
 
 <h2>الأداء لكل جولة</h2>
 {% for r in per_round %}
@@ -38,6 +59,23 @@
 <ul class="gaps">
   {% for w in weak_patterns %}<li>{{ w }}</li>{% else %}<li><em>لا توجد — أداء متسق عبر الأبعاد.</em></li>{% endfor %}
 </ul>
+
+{% if counsel_log %}
+<h2>سجل استشارات المستشار</h2>
+{% for entry in counsel_log %}
+<div class="argument-block">
+  <div class="meta">{{ entry.created_at }} · {{ entry.trainee_role }}</div>
+  {% if entry.draft_ar %}<p><em>المسودة وقت الاستشارة:</em> {{ entry.draft_ar }}</p>{% endif %}
+  {% if entry.advice.strategy_ar %}<p>{{ entry.advice.strategy_ar }}</p>{% endif %}
+  {% if entry.advice.suggested_citations %}
+  <div class="kv"><span class="k">استشهادات مقترحة:</span> {{ entry.advice.suggested_citations|join(", ") }}</div>
+  {% endif %}
+  {% if entry.advice.missing_arguments %}
+  <div class="kv"><span class="k">حجج لم تطرحها:</span> {{ entry.advice.missing_arguments|join("؛ ") }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
 
 <div class="disclaimer">{{ disclaimer_ar }}</div>
 

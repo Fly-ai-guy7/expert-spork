@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import { api } from "@/api/client";
 import { useCoachingReport, useCounselLog } from "@/api/hooks";
 import type { CounselLogEntry } from "@/api/types";
 
@@ -27,7 +28,15 @@ export function CoachingReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-brand">{t("coaching.title")}</h1>
+      <header className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold text-brand">{t("coaching.title")}</h1>
+        <a
+          href={`${api.defaults.baseURL}/api/training/${sessionId}/coaching.pdf`}
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white"
+        >
+          {t("coaching.download_pdf")}
+        </a>
+      </header>
 
       <div className="bg-white border rounded-lg p-6 flex items-center gap-6">
         <div className="text-5xl font-bold text-brand">{report.grade || "—"}</div>
