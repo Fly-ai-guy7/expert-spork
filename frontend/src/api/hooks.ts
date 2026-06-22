@@ -8,6 +8,7 @@ import type {
   CaseSummary,
   CounselLogEntry,
   CounselResponse,
+  InstructorOverview,
   TrainingSessionRecord,
 } from "./types";
 
@@ -120,6 +121,18 @@ export function useCounselLog(sessionId: string | undefined) {
     queryFn: async () =>
       (await api.get<CounselLogEntry[]>(`/api/training/${sessionId}/counsel-log`)).data,
     enabled: !!sessionId,
+  });
+}
+
+export function useInstructorOverview(userId?: string) {
+  return useQuery({
+    queryKey: ["instructor-overview", userId],
+    queryFn: async () =>
+      (
+        await api.get<InstructorOverview>(`/api/training/instructor/overview`, {
+          params: userId ? { user_id: userId } : {},
+        })
+      ).data,
   });
 }
 

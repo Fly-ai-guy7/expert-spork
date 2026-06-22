@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db import SessionLocal, get_db
 from app.models import Case, CaseStatus, CounselLog, TraineeRole, TrainingSession
 from app.schemas.case import StartTrainingIn
-from app.services import orchestrator
+from app.services import instructor_service, orchestrator
 
 router = APIRouter(prefix="/api", tags=["training"])
 
@@ -88,6 +88,28 @@ def get_counsel_log(session_id: uuid.UUID, db: Session = Depends(get_db)) -> lis
         }
         for log in logs
     ]
+
+
+@router.get("/training/instructor/overview")
+def instructor_overview(user_id: str | None = None, db: Session = Depends(get_db)) -> dict:
+    stmt = select(TrainingSession).order_by(TrainingSession.created_at.desc())
+    if user_id:
+        stmt = stmt.where(TrainingSession.user_id == user_id)
+    sessions = db.execute(stmt).scalars().all()
+    rows = [
+        {
+            "id": str(s.id),
+            "user_id": s.user_id,
+            "case_id": str(s.case_id),
+            "trainee_role": s.trainee_role.value,
+            "difficulty": s.difficulty,
+            "total_score": s.total_score,
+            "completed_at": s.completed_at,
+            "coaching_report": s.coaching_report or {},
+        }
+        for s in sessions
+    ]
+    return instructor_service.compute_overview(rows)
 
 
 @router.get("/training/sessions")

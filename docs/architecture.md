@@ -43,6 +43,8 @@ and resume cleanly.
 | Judicial Council (multi-LLM panel) | `agents/judicial_council.py` (members are `agents/judicial.py`) |
 | Council member verdicts | `models/council.py` (`council_verdicts`), `services/orchestrator.py` step 3 |
 | Advisory Counsel (trainee mentor) | `agents/advisory_counsel.py`, `services/counsel_service.py`, `POST /api/hil/{cp_id}/counsel` |
+| Counsel call log | `models/counsel.py` (`counsel_logs`), `GET /api/training/{session_id}/counsel-log` |
+| Instructor dashboard (aggregate) | `services/instructor_service.py`, `GET /api/training/instructor/overview` |
 | Scoring Layer | `agents/scoring.py` |
 | HIL / Trainee Seat | `routers/hil.py`, `services/orchestrator.py` (TRAINEE_TURN handling) |
 | Cross-LLM Debate | `services/orchestrator.py` (PROSECUTION_LLM_BY_ROUND / DEFENSE_LLM_BY_ROUND) |

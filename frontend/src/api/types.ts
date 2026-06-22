@@ -138,6 +138,37 @@ export interface CounselResponse {
   llm_used: string;
 }
 
+export interface InstructorPerUser {
+  user_id: string;
+  sessions: number;
+  avg_score: number;
+  latest_grade: string | null;
+  latest_completed_at: string | null;
+}
+
+export interface InstructorAttentionRow {
+  session_id: string;
+  user_id: string;
+  trainee_role: TraineeRole;
+  grade: string | null;
+  total_score: number | null;
+  council_alignment: "WON" | "LOST" | null;
+  counsel_calls_count: number;
+  completed_at: string | null;
+}
+
+export interface InstructorOverview {
+  total_sessions: number;
+  completed_sessions: number;
+  avg_score: number;
+  grade_distribution: Record<string, number>;
+  per_user: InstructorPerUser[];
+  top_missed_citations: { citation: string; count: number }[];
+  top_weak_patterns: { pattern: string; count: number }[];
+  council_lost_rate: number | null;
+  needs_attention: InstructorAttentionRow[];
+}
+
 export interface CounselLogEntry {
   id: string;
   created_at: string;
