@@ -9,6 +9,12 @@ Pilot client: **Experts Pharmacy**, Al Ahyaa, Red Sea Governorate, Egypt.
 > [`legal/RXEG-LEGAL-001.md`](legal/RXEG-LEGAL-001.md). Do not ship without the
 > blocking controls listed there.
 
+## Current priority
+
+**P0 / Q-imminent recovery sprint.**
+
+This project was recovered from the historical RxEgypt scaffold commit and is being moved back into the active build queue. The immediate sprint target is to take the existing 30-drug seed container to a pharmacist-verifiable 250-record operating catalogue, then connect it cleanly to the patient app, pharmacy POS, search, barcode lookup, inventory, Rx gating and consent flows.
+
 ## Stack
 
 - **Backend:** Python 3.11 · FastAPI · SQLAlchemy 2 · PostgreSQL 15 · JWT
@@ -34,7 +40,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # then edit values
 
-# Seed the drug DB (creates tables + 30 sample Egyptian drugs)
+# Seed the drug DB
 python seed/seed_drugs.py
 
 uvicorn main:app --reload --port 8000
@@ -66,6 +72,18 @@ window.RXEGYPT_API_URL = 'http://localhost:8000/api/v1';
   diagnosis / severity / Rx suggestions
 - **Pharmacy POS** — barcode sale entry + stock updates
 - **Inventory** — low-stock report, pharmacist-only writes
+
+## P0 data expansion guardrails
+
+The existing seed file contains 30 sample Egyptian drug records. The Q-imminent target is 250 records, but the expanded catalogue must be treated as **pharmacy-verification data**, not medical advice.
+
+Minimum acceptance rules before live pilot:
+
+1. Every record must retain `name_en`, `name_ar`, `generic`, `form`, `strength`, `category`, `manufacturer`, `barcode`, `price_egp`, and `rx`.
+2. Every Rx-sensitive or uncertain drug must default to `rx: true` until verified by the pharmacist.
+3. Any generated barcode used for testing must be replaced with verified EAN/GS1 or local pharmacy barcode data before production dispensing.
+4. Prices are reference/catalogue values only until validated against Experts Pharmacy inventory.
+5. Controlled medicines must remain pharmacist/admin-only and must not be exposed as self-serve patient ordering.
 
 ## Deploy (Fly.io)
 
