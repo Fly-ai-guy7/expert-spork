@@ -61,7 +61,10 @@ open http://localhost:5173
 
 The Training Dashboard at `/` is the entry point: pick area-of-law, difficulty, and role
 (Prosecution / Defense). It generates a synthetic case via Claude Opus and drops you into the
-courtroom against AI opposing counsel.
+courtroom against AI opposing counsel. The Instructor Dashboard at `/instructor` aggregates
+across all training sessions — average score, grade distribution, council-lost rate, top
+missed citations, plus a "needs attention" triage list (D/F grades, lost council, heavy
+Advisory Counsel use) that deep-links to each trainee's coaching report.
 
 ## API tour
 
@@ -89,6 +92,13 @@ curl -X POST http://localhost:8000/api/hil/<CP_ID>/submit-trainee \
 # Bilingual PDF ruling + coaching report
 curl http://localhost:8000/api/cases/<CASE_ID>/report.pdf -o ruling.pdf
 curl http://localhost:8000/api/training/<SESSION_ID>/coaching | jq
+curl http://localhost:8000/api/training/<SESSION_ID>/coaching.pdf -o coaching.pdf
+
+# Review the Advisory Counsel calls the trainee made during this session
+curl http://localhost:8000/api/training/<SESSION_ID>/counsel-log | jq
+
+# Instructor dashboard — aggregate metrics + "needs attention" triage
+curl http://localhost:8000/api/training/instructor/overview | jq
 ```
 
 ## Layout
