@@ -16,6 +16,12 @@
   --muted: #6b756e;
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0, 0, 0, .08);
+
+  /* AISE design-token contract (see /DESIGN_SYSTEM.md): shared semantic accent
+     alias so both products speak the same vocabulary. RxEgypt's accent is the
+     pharmacy green; Luxor maps --accent to its brand gold. */
+  --accent: var(--green);
+  --accent-d: var(--green-d);
 }
 
 * { box-sizing: border-box; }

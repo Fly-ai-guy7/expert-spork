@@ -19,6 +19,12 @@
   --shadow: 0 8px 30px rgba(43, 38, 32, 0.08);
   --serif: "Playfair Display", Georgia, serif;
   --sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  /* AISE design-token contract (see DESIGN_SYSTEM.md): both products share the
+     semantic token names below; each maps --accent to its own brand. Luxor's
+     accent is gold; RxEgypt maps --accent to its pharmacy green. */
+  --accent: var(--gold);
+  --accent-d: var(--gold-d);
 }
 
 * { box-sizing: border-box; }
