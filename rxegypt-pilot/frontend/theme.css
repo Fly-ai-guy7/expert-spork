@@ -1,0 +1,65 @@
+/* RxEgypt — shared theme (canonical design tokens + global app nav).
+ *
+ * Linked before each page's own <style> block, so existing page-specific rules
+ * still cascade on top. New work should prefer these tokens/classes over
+ * re-declaring them per page.
+ *
+ * 🌿 ✦ ASTRA INTELLIGENCE SERVICES ✦ 🌿 | ⚜ MISR ⚜
+ */
+:root {
+  --green: #1f7a4d;
+  --green-d: #14573a;
+  --rx: #b3261e;
+  --sand: #f6f4ee;
+  --ink: #1c2421;
+  --line: #cfd6d1;
+  --muted: #6b756e;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .08);
+}
+
+/* --- Global product nav (injected by nav.js on every page) --- */
+.appnav {
+  background: var(--green-d);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  flex-wrap: wrap;
+  font-family: system-ui, "Segoe UI", Tahoma, sans-serif;
+}
+.appnav .appnav-brand {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+.appnav .appnav-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.appnav .appnav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: .85rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  opacity: .82;
+  white-space: nowrap;
+}
+.appnav .appnav-links a:hover { opacity: 1; background: rgba(255, 255, 255, .12); }
+.appnav .appnav-links a.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, .18);
+  font-weight: 600;
+}
+[dir="rtl"] .appnav { flex-direction: row-reverse; }
+
+/* --- Shared base components (fallbacks; pages may override) --- */
+.rx-badge { background: var(--rx); color: #fff; font-size: .7rem; padding: 2px 7px; border-radius: 5px; font-weight: 600; }
+.otc-badge { background: #e6f2eb; color: var(--green-d); font-size: .7rem; padding: 2px 7px; border-radius: 5px; font-weight: 600; }
+.btn-primary { background: var(--green); color: #fff; border: 0; border-radius: var(--radius); padding: 10px 18px; cursor: pointer; }

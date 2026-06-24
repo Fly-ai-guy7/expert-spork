@@ -22,6 +22,7 @@ Pilot client: **Experts Pharmacy**, Al Ahyaa, Red Sea Governorate, Egypt.
 rxegypt-pilot/
 ├── backend/          FastAPI app, models, routes, drug seed DB
 ├── frontend/         Patient app, pharmacy POS, Dawai patient app, API client
+│                     (shared theme.css tokens + nav.js suite navigation)
 ├── legal/            Compliance framework + grant strategy
 └── docs/             API specification
 ```

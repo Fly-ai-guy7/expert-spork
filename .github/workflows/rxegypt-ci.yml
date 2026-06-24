@@ -60,6 +60,7 @@ jobs:
         run: |
           node --check rxegypt-api.js
           node --check config.js
+          node --check nav.js
       - name: Client unit tests (demo mode)
         working-directory: rxegypt-pilot/frontend
         run: node test/api.test.js
