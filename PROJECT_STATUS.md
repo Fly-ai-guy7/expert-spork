@@ -16,7 +16,9 @@ _Last updated: 2026-06-24_
 | Backend (FastAPI) | `cd backend && uvicorn app.main:app --reload --port 8000` | ✅ imports, 9 routes live |
 | Frontend (Vite dev) | `cd frontend && npm install && npm run dev` | ✅ |
 | Frontend (prod build) | `cd frontend && npm run build` | ✅ build green |
-| Backend tests | `cd backend && pytest` | ✅ 10 passed |
+| Backend tests | `cd backend && pytest` | ✅ 11 passed |
+| Container (API) | `docker build backend/` (Cloud Run-ready, `/healthz`) | ✅ Dockerfile added |
+| Container (web) | `docker build frontend/` (nginx :8080) | ✅ Dockerfile added |
 
 ## Deployment targets
 

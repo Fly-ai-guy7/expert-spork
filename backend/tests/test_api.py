@@ -48,6 +48,12 @@ def test_root_returns_service_status_and_endpoints(client):
     assert isinstance(body["endpoints"], list) and body["endpoints"]
 
 
+def test_healthz(client):
+    resp = client.get("/healthz")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok"}
+
+
 def test_rooms_non_empty(client):
     resp = client.get("/api/rooms")
     assert resp.status_code == 200
