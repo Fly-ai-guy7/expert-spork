@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs></defs><rect width="800" height="600" fill="#efe6cf"/>
+ <rect y="380" width="800" height="220" fill="#d8c9a6"/><rect x="500" y="120" width="220" height="180" fill="#bfe0dd" stroke="#fff" stroke-width="8"/><line x1="610" y1="120" x2="610" y2="300" stroke="#fff" stroke-width="6"/>
+ <rect x="90" y="300" width="320" height="120" rx="10" fill="#fff"/><rect x="90" y="260" width="320" height="60" rx="10" fill="#c79a3a"/><rect x="70" y="410" width="360" height="30" rx="8" fill="#a87f26"/>
+ <rect x="120" y="280" width="120" height="44" rx="8" fill="#f1e7d2"/><rect x="0" y="554" width="800" height="46" fill="rgba(20,16,12,0.42)"/>
+<text x="20" y="584" font-family="Georgia,serif" font-size="22" fill="#fff">Luxury Nile View Suite</text></svg>

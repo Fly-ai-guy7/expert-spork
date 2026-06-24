@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs></defs><rect width="800" height="600" fill="#eef0e9"/>
+ <rect y="380" width="800" height="220" fill="#dfe6d6"/><path d="M380 60 C 300 200, 460 320, 360 540" stroke="#1f6f6f" stroke-width="34" fill="none" opacity="0.55" stroke-linecap="round"/>
+ <g transform="translate(330,250)"><path d="M0 0 a30 30 0 1 1 60 0 q0 34 -30 64 q-30 -30 -30 -64Z" fill="#c79a3a"/><circle cx="30" cy="26" r="12" fill="#fff"/></g><rect x="0" y="554" width="800" height="46" fill="rgba(20,16,12,0.42)"/>
+<text x="20" y="584" font-family="Georgia,serif" font-size="22" fill="#fff">Find Us · West Bank</text></svg>

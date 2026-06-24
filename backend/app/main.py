@@ -115,6 +115,13 @@ class ConciergeIn(BaseModel):
 # --------------------------------------------------------------------------- #
 # Basic + data endpoints
 # --------------------------------------------------------------------------- #
+@app.get("/healthz")
+def healthz() -> dict:
+    """Lightweight liveness probe for container platforms (Cloud Run / Fly /
+    Render). Does not touch disk so it stays fast and dependency-free."""
+    return {"status": "ok"}
+
+
 @app.get("/")
 def root() -> dict:
     contacts = load_ledger("contacts")

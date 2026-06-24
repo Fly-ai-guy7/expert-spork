@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs></defs><rect width="800" height="600" fill="#ecd29a"/>
+ <rect y="380" width="800" height="220" fill="#c99a5b"/><polygon points="120,380 680,380 760,300 40,300" fill="#d9b074"/><rect x="120" y="300" width="560" height="14" fill="#cBa76a"/>
+ <g fill="#f1e7d2"><rect x="150" y="312" width="22" height="68"/><rect x="210" y="312" width="22" height="68"/><rect x="270" y="312" width="22" height="68"/><rect x="330" y="312" width="22" height="68"/><rect x="390" y="312" width="22" height="68"/><rect x="450" y="312" width="22" height="68"/><rect x="510" y="312" width="22" height="68"/><rect x="570" y="312" width="22" height="68"/><rect x="630" y="312" width="22" height="68"/></g>
+ <rect x="120" y="245" width="560" height="40" fill="#d9b074"/><rect x="0" y="554" width="800" height="46" fill="rgba(20,16,12,0.42)"/>
+<text x="20" y="584" font-family="Georgia,serif" font-size="22" fill="#fff">Temple of Hatshepsut</text></svg>
