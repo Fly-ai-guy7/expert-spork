@@ -52,7 +52,7 @@ service manually.
 | Key               | Value                                                            |
 | ----------------- | --------------------------------------------------------------- |
 | `ALLOWED_ORIGINS` | Your Vercel frontend URL once known, e.g. `https://luxor-guest-house.vercel.app` (comma-separate multiple). |
-| `PYTHON_VERSION`  | `3.12.4` (already set by the blueprint).                        |
+| `PYTHON_VERSION`  | `3.11.9` (already set by the blueprint `render.yaml`).          |
 
 > `*.vercel.app` domains are already permitted by the backend CORS regex, so
 > `ALLOWED_ORIGINS` is mainly needed for a **custom** production domain.

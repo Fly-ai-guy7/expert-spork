@@ -10,6 +10,10 @@ and send a booking enquiry. Staff get a lightweight operations dashboard.
   booking store
 - **Deployment:** Vercel (frontend) + Render (backend)
 
+**Project docs:** [`PROJECT_STATUS.md`](PROJECT_STATUS.md) ·
+[`TESTING.md`](TESTING.md) · [`SECURITY_NOTES.md`](SECURITY_NOTES.md) ·
+[`NEXT_ACTIONS.md`](NEXT_ACTIONS.md) · [`DEPLOYMENT_RUNBOOK.md`](DEPLOYMENT_RUNBOOK.md)
+
 > Property: Luxor Guest House · West Bank, Albairat, Alramla, West Bank, 85111
 > Luxor, Egypt · WhatsApp **+20 100 184 2081** · Booking.com **9.0** (470 reviews)
 > · Breakfast included · No prepayment · No credit card needed.
