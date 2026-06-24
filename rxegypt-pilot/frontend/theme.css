@@ -18,6 +18,8 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, .08);
 }
 
+* { box-sizing: border-box; }
+
 /* --- Global product nav (injected by nav.js on every page) --- */
 .appnav {
   background: var(--green-d);
