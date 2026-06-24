@@ -31,4 +31,5 @@ celery_app.conf.update(
 # Ensure task modules are imported so they register with the app.
 celery_app.autodiscover_tasks(["app.workers"])
 
+import app.workers.signals  # noqa: E402,F401 — registers shutdown signal handlers
 import app.workers.tasks  # noqa: E402,F401 — registers tasks
