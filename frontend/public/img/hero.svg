@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0c987"/><stop offset="0.55" stop-color="#c79a3a"/><stop offset="1" stop-color="#1f6f6f"/></linearGradient>
+ <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8a86"/><stop offset="1" stop-color="#16504f"/></linearGradient></defs><rect width="1600" height="900" fill="url(#sky)"/>
+ <circle cx="1140" cy="300" r="120" fill="#f4d58d" opacity="0.92"/>
+ <path d="M0 560 L240 470 L470 540 L760 430 L1040 540 L1330 470 L1600 545 L1600 640 L0 640 Z" fill="#f1e7d2" opacity="0.55"/>
+ <path d="M0 600 L300 520 L640 600 L980 510 L1320 600 L1600 540 L1600 660 L0 660 Z" fill="#e7c98f" opacity="0.7"/>
+ <rect y="640" width="1600" height="260" fill="url(#water)"/>
+ <g opacity="0.18" fill="#fff"><rect x="120" y="700" width="1360" height="3"/><rect x="220" y="760" width="1160" height="3"/><rect x="340" y="820" width="940" height="3"/></g>
+ <g transform="translate(720,560)"><polygon points="0,0 0,-120 130,-10" fill="#fff" opacity="0.95"/><polygon points="0,0 0,-120 -8,-120 -8,0" fill="#fff"/><rect x="-70" y="0" width="150" height="20" rx="10" fill="#3a2e1c"/></g>
+ <g fill="#3a2e1c"><rect x="120" y="470" width="10" height="120"/><path d="M125 470 q-60 -22 -96 0 q56 -14 96 18 q40 -32 96 -18 q-36 -22 -96 0Z"/></g>
+ <g fill="#3a2e1c"><rect x="1460" y="500" width="9" height="100"/><path d="M1464 500 q-52 -18 -82 0 q48 -12 82 16 q34 -28 82 -16 q-30 -18 -82 0Z"/></g><rect x="0" y="854" width="1600" height="46" fill="rgba(20,16,12,0.42)"/>
+<text x="20" y="884" font-family="Georgia,serif" font-size="22" fill="#fff">Luxor · West Bank of the Nile</text></svg>

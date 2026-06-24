@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs></defs><rect width="800" height="600" fill="#ecd29a"/>
+ <rect y="380" width="800" height="220" fill="#cBa76a"/><g fill="#d9b074" stroke="#a87f26" stroke-width="3">
+ <rect x="120" y="300" width="120" height="80"/><rect x="300" y="270" width="150" height="110"/><rect x="500" y="310" width="120" height="70"/></g>
+ <g fill="#3a2e1c"><rect x="160" y="330" width="24" height="50"/><rect x="360" y="310" width="30" height="70"/></g>
+ <g fill="#3f7d4f"><rect x="660" y="250" width="8" height="130"/><circle cx="664" cy="245" r="34"/></g><rect x="0" y="554" width="800" height="46" fill="rgba(20,16,12,0.42)"/>
+<text x="20" y="584" font-family="Georgia,serif" font-size="22" fill="#fff">Local Village Walks</text></svg>

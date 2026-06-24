@@ -61,8 +61,9 @@ a { color: inherit; }
 
 /* Hero */
 .hero { position: relative; color: #fff; min-height: 620px; display: flex; align-items: center; padding: 120px 0 60px;
-  /* PLACEHOLDER photo (themed, hotlinked). Swap url() for a licensed image later. */
-  background-image: url('https://loremflickr.com/1600/900/luxor,nile,egypt?lock=21'),
+  /* Bundled, license-clean themed placeholder. To use a real photo, drop it in
+     public/img/ and swap the url() below (see public/img/IMAGE_CREDITS.md). */
+  background-image: url('/img/hero.svg'),
     linear-gradient(120deg, #e9c079 0%, #c98a4e 38%, #2f6e6e 100%);
   background-size: cover; background-position: center; }
 .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(20,16,12,0.45), rgba(20,16,12,0.05) 60%); }
@@ -104,15 +105,16 @@ a { color: inherit; }
   background-size: cover; background-position: center; }
 .photo span { position: relative; z-index: 2; font-weight: 700; font-size: 14px; padding: 12px; text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
 .photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.4)); }
-/* PLACEHOLDER photos: themed, hotlinked (LoremFlickr), brand gradient as fallback.
-   Replace each url() with a licensed image before production. */
-.ph-valley { background-image: url('https://loremflickr.com/800/600/valley,of,the,kings,egypt?lock=11'), linear-gradient(135deg, #c99a5b, #7a4a2b); }
-.ph-hatshepsut { background-image: url('https://loremflickr.com/800/600/hatshepsut,temple,luxor?lock=12'), linear-gradient(135deg, #d9b074, #8a5a36); }
-.ph-balloon { background-image: url('https://loremflickr.com/600/400/hot,air,balloon,luxor?lock=13'), linear-gradient(135deg, #e0a95c, #9c5230); }
-.ph-boat { background-image: url('https://loremflickr.com/600/400/nile,felucca,sailboat?lock=14'), linear-gradient(135deg, #5fa0a0, #1f5e5e); }
-.ph-village { background-image: url('https://loremflickr.com/600/400/egypt,village,nile?lock=15'), linear-gradient(135deg, #b79a6a, #6e5a38); }
-.ph-suite { background-image: url('https://loremflickr.com/800/600/hotel,room,suite?lock=16'), linear-gradient(135deg, #7fa8a8, #274f4f); }
-.ph-map { background-image: url('https://loremflickr.com/600/400/luxor,map,nile?lock=17'), linear-gradient(135deg, #e7dcbe, #c9c39a); }
+/* Bundled, license-clean themed placeholders (authored in-repo), brand gradient
+   as fallback. To use real photos, drop them in public/img/ with the same base
+   name and update the url() extension — see public/img/IMAGE_CREDITS.md. */
+.ph-valley { background-image: url('/img/valley.svg'), linear-gradient(135deg, #c99a5b, #7a4a2b); }
+.ph-hatshepsut { background-image: url('/img/hatshepsut.svg'), linear-gradient(135deg, #d9b074, #8a5a36); }
+.ph-balloon { background-image: url('/img/balloon.svg'), linear-gradient(135deg, #e0a95c, #9c5230); }
+.ph-boat { background-image: url('/img/boat.svg'), linear-gradient(135deg, #5fa0a0, #1f5e5e); }
+.ph-village { background-image: url('/img/village.svg'), linear-gradient(135deg, #b79a6a, #6e5a38); }
+.ph-suite { background-image: url('/img/suite.svg'), linear-gradient(135deg, #7fa8a8, #274f4f); }
+.ph-map { background-image: url('/img/map.svg'), linear-gradient(135deg, #e7dcbe, #c9c39a); }
 
 .exp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .exp-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
