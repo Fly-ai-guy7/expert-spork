@@ -32,6 +32,11 @@
     "col_sessions": "Sessions",
     "col_avg": "Avg",
     "col_latest": "Latest",
+    "col_completed": "Completed",
+    "col_score": "Score",
+    "stat_latest": "Latest grade",
+    "trajectory": "Grade trajectory (oldest → newest)",
+    "sessions_table": "All sessions",
     "open": "open"
   },
   "training": {

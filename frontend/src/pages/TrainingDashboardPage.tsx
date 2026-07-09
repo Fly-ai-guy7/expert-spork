@@ -94,7 +94,7 @@ export function TrainingDashboardPage() {
           <ul className="bg-white rounded-lg border divide-y">
             {sessions.data.map((s) => (
               <li
-                key={s.training_session_id}
+                key={s.id}
                 className="flex items-center justify-between px-4 py-3 text-sm"
               >
                 <div>

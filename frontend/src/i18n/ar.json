@@ -32,6 +32,11 @@
     "col_sessions": "الجلسات",
     "col_avg": "المتوسط",
     "col_latest": "الأحدث",
+    "col_completed": "تاريخ الإتمام",
+    "col_score": "النتيجة",
+    "stat_latest": "أحدث تقدير",
+    "trajectory": "مسار التقديرات (الأقدم ← الأحدث)",
+    "sessions_table": "كل الجلسات",
     "open": "فتح"
   },
   "training": {

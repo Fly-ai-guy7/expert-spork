@@ -165,10 +165,14 @@ def list_training_sessions(user_id: str | None = None, db: Session = Depends(get
         {
             "id": str(s.id),
             "case_id": str(s.case_id),
+            "user_id": s.user_id,
             "trainee_role": s.trainee_role.value,
             "difficulty": s.difficulty,
             "total_score": s.total_score,
             "completed_at": s.completed_at,
+            "grade": (s.coaching_report or {}).get("grade"),
+            "council_alignment": (s.coaching_report or {}).get("council_alignment"),
+            "counsel_calls_count": (s.coaching_report or {}).get("counsel_calls_count", 0),
         }
         for s in sessions
     ]

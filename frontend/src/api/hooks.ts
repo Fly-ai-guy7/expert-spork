@@ -10,6 +10,7 @@ import type {
   CounselResponse,
   InstructorOverview,
   TrainingSessionRecord,
+  TrainingSessionSummary,
 } from "./types";
 
 export function useCases() {
@@ -141,7 +142,7 @@ export function useTrainingSessions(userId?: string) {
     queryKey: ["training-sessions", userId],
     queryFn: async () =>
       (
-        await api.get<TrainingSessionRecord[]>(`/api/training/sessions`, {
+        await api.get<TrainingSessionSummary[]>(`/api/training/sessions`, {
           params: userId ? { user_id: userId } : {},
         })
       ).data,

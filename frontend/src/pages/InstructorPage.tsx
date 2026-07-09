@@ -4,6 +4,14 @@ import { useTranslation } from "react-i18next";
 
 import { useInstructorOverview } from "@/api/hooks";
 
+function UserLink({ userId }: { userId: string }) {
+  return (
+    <Link to={`/instructor/${encodeURIComponent(userId)}`} className="font-mono text-brand underline">
+      {userId}
+    </Link>
+  );
+}
+
 export function InstructorPage() {
   const { t } = useTranslation();
   const [userFilter, setUserFilter] = useState("");
@@ -77,7 +85,7 @@ export function InstructorPage() {
             <tbody>
               {data.needs_attention.map((r) => (
                 <tr key={r.session_id} className="border-t">
-                  <td className="py-1 font-mono">{r.user_id}</td>
+                  <td className="py-1"><UserLink userId={r.user_id} /></td>
                   <td>{r.trainee_role}</td>
                   <td className="font-semibold">{r.grade || "—"}</td>
                   <td>{r.council_alignment || "—"}</td>
@@ -115,7 +123,7 @@ export function InstructorPage() {
               <tbody>
                 {data.per_user.map((u) => (
                   <tr key={u.user_id} className="border-t">
-                    <td className="py-1 font-mono">{u.user_id}</td>
+                    <td className="py-1"><UserLink userId={u.user_id} /></td>
                     <td>{u.sessions}</td>
                     <td>{Math.round(u.avg_score)}</td>
                     <td>{u.latest_grade || "—"}</td>

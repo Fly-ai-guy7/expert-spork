@@ -75,6 +75,19 @@ export interface CoachingReport {
   council_dissenters?: string[];
 }
 
+export interface TrainingSessionSummary {
+  id: string;
+  case_id: string;
+  user_id: string;
+  trainee_role: TraineeRole;
+  difficulty: number;
+  total_score: number | null;
+  completed_at: string | null;
+  grade: string | null;
+  council_alignment: "WON" | "LOST" | null;
+  counsel_calls_count: number;
+}
+
 export interface TrainingSessionRecord {
   training_session_id: string;
   case_id: string;

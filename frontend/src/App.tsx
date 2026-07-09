@@ -6,6 +6,7 @@ import { CaseDetailPage } from "./pages/CaseDetailPage";
 import { CaseListPage } from "./pages/CaseListPage";
 import { CoachingReportPage } from "./pages/CoachingReportPage";
 import { InstructorPage } from "./pages/InstructorPage";
+import { InstructorUserPage } from "./pages/InstructorUserPage";
 import { NewCasePage } from "./pages/NewCasePage";
 import { StatutesPage } from "./pages/StatutesPage";
 import { TrainingDashboardPage } from "./pages/TrainingDashboardPage";
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/cases/:id" element={<CaseDetailPage />} />
           <Route path="/training/:sessionId" element={<CoachingReportPage />} />
           <Route path="/instructor" element={<InstructorPage />} />
+          <Route path="/instructor/:userId" element={<InstructorUserPage />} />
           <Route path="/statutes" element={<StatutesPage />} />
         </Routes>
       </main>
