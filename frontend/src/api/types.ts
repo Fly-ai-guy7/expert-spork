@@ -49,6 +49,7 @@ export interface CaseStatusPayload {
   arguments: ArgumentRecord[];
   pending_checkpoint_id: string | null;
   pending_checkpoint_stage: string | null;
+  training_session_id: string | null;
 }
 
 export interface CoachingReport {

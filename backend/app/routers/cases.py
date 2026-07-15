@@ -96,6 +96,12 @@ def case_status(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         .where(HilCheckpoint.case_id == case_id, HilCheckpoint.status == HilStatus.PENDING)
         .order_by(HilCheckpoint.created_at.desc())
     ).scalars().first()
+    # Latest training session for this case (if any) — powers the "View Coaching Report" link.
+    training_session = (
+        sorted(case.training_sessions, key=lambda t: t.created_at, reverse=True)[0]
+        if case.training_sessions
+        else None
+    )
     return {
         "case_id": str(case.id),
         "status": case.status.value,
@@ -115,6 +121,7 @@ def case_status(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         ],
         "pending_checkpoint_id": str(pending.id) if pending else None,
         "pending_checkpoint_stage": pending.stage.value if pending else None,
+        "training_session_id": str(training_session.id) if training_session else None,
     }
 
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { useCase, useCaseReport, useCaseStatus, useRunCase } from "@/api/hooks";
@@ -101,13 +101,21 @@ export function CaseDetailPage() {
       {report?.ruling && <CouncilRulingSection ruling={report.ruling} />}
 
       {status?.status === "COMPLETE" && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <a
             href={`${api.defaults.baseURL}/api/cases/${id}/report.pdf`}
             className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white"
           >
             {t("case.download_pdf")}
           </a>
+          {status.training_session_id && (
+            <Link
+              to={`/training/${status.training_session_id}`}
+              className="rounded-md border border-brand px-4 py-2 text-sm font-medium text-brand hover:bg-brand/5"
+            >
+              {t("case.view_coaching")}
+            </Link>
+          )}
         </div>
       )}
 
