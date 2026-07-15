@@ -11,7 +11,21 @@
 3. **Skills over MCP servers** where either would work (MCP servers cost tens of thousands of context tokens at session start; skills load on demand).
 4. **No unreviewed third-party execution.** Community assets are copied in after reading, with source commit and licence recorded in the registries — never installed by remote script.
 5. **The implementing agent never solely approves its own work** (independent-validator / review command is mandatory before completion claims).
-6. The authority hierarchy (Bruce → Emma → Claude Code → GitHub → Notion → Hive → red-team → Gemini) is fixed and restated in the root CLAUDE.md.
+6. The governance model below is fixed and is restated verbatim in the root CLAUDE.md.
+
+## 1a. Governance model (canonical — confirmed by product owner, 2026-07-15)
+
+| Role | Holder |
+|---|---|
+| **Final authority** | Bruce McNamara |
+| **Orchestration and governance** | Emma |
+| **Execution** | Claude Code and explicitly delegated implementation agents |
+| **Independent validation** | Independent validator, review workflow and approved red-team processes |
+| **System of record — code** | GitHub: source code, configuration, pull requests, technical history |
+| **System of record — knowledge** | Notion: approved operational documentation and business knowledge |
+| **Optional specialist tools** | Hive, Gemini and other explicitly approved models or services |
+
+Consequences for the operating layer: execution agents act only within explicit delegation; the implementing agent never self-approves (validation is a separate role, not a courtesy); the `.claude/` layer, being configuration, lives in GitHub under PR review; operational/business documentation syncs to Notion only once approved; specialist tools are opt-in per task, never ambient.
 
 ## 2. Placement decision: repository, not home directory
 
