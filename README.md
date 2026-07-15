@@ -79,7 +79,12 @@ curl -X POST http://localhost:8000/api/cases/<CASE_ID>/run-training \
   -H 'Content-Type: application/json' \
   -d '{"trainee_role":"DEFENSE","user_id":"trainee","difficulty":2}'
 
-# Poll status — when TRAINEE_TURN appears, optionally ask Advisory Counsel for help:
+# Pre-turn: ask Advisory Counsel for a strategy before HIL kicks in
+curl -X POST http://localhost:8000/api/cases/<CASE_ID>/counsel \
+  -H 'Content-Type: application/json' \
+  -d '{"trainee_role":"DEFENSE"}'
+
+# During the debate — at TRAINEE_TURN, optionally ask counsel again:
 curl -X POST http://localhost:8000/api/hil/<CP_ID>/counsel \
   -H 'Content-Type: application/json' \
   -d '{"content_en":"my draft so far...","citations":["82/2002:115"]}'

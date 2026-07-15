@@ -41,8 +41,10 @@ function computeStage(status: CaseStatusPayload | undefined): number {
   if (!status) return 0;
   if (status.status === "COMPLETE") return STAGE_KEYS.length;
   if (status.arguments.length === 0) return 0;
-  const hasJudicial = status.arguments.some((a) => a.agent === "JUDICIAL");
-  if (hasJudicial) return 5;
+  // Debate rounds finished but case not yet COMPLETE → judicial council is deliberating.
+  // The council writes to the Ruling table, not to Arguments, so we can't detect it via
+  // argument.agent === "JUDICIAL".
+  if (status.rounds_total > 0 && status.rounds_complete >= status.rounds_total) return 5;
   const hasDefense = status.arguments.some((a) => a.agent === "DEFENSE");
   if (hasDefense) return 3;
   const hasProsecution = status.arguments.some((a) => a.agent === "PROSECUTION");

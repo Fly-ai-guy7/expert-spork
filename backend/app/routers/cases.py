@@ -21,7 +21,8 @@ from app.models import (
     Ruling,
 )
 from app.schemas.case import CaseIn, CaseListItem, CaseOut, GenerateCaseIn, RunIn
-from app.services import case_generator, orchestrator, pdf_service
+from app.schemas.simulation import CounselRequestIn
+from app.services import case_generator, counsel_service, orchestrator, pdf_service
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
@@ -115,6 +116,38 @@ def case_status(case_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         "pending_checkpoint_id": str(pending.id) if pending else None,
         "pending_checkpoint_stage": pending.stage.value if pending else None,
     }
+
+
+@router.post("/{case_id}/counsel")
+async def case_counsel(
+    case_id: uuid.UUID,
+    payload: CounselRequestIn,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Pre-turn advisory counsel — usable before the trainee hits a HIL checkpoint.
+
+    Resolves the trainee's role from an active training session on the case, or
+    from the request body if none is active (e.g. pure prep mode).
+    """
+    _load_case(db, case_id)  # 404 if missing
+    role = payload.trainee_role
+    if role is None:
+        from app.models import TrainingSession
+
+        ts = db.execute(
+            select(TrainingSession)
+            .where(TrainingSession.case_id == case_id, TrainingSession.completed_at.is_(None))
+            .order_by(TrainingSession.created_at.desc())
+        ).scalars().first()
+        role = ts.trainee_role.value if ts else None
+    if role is None:
+        raise HTTPException(
+            400,
+            "trainee_role is required when no active training session exists for this case",
+        )
+    return await counsel_service.generate_counsel(
+        db, case_id, role, payload.content_en, payload.content_ar, payload.citations
+    )
 
 
 @router.get("/{case_id}/report")

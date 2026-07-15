@@ -27,3 +27,4 @@ class CounselRequestIn(BaseModel):
     content_en: str | None = None
     content_ar: str | None = None
     citations: list[str] = []
+    trainee_role: str | None = None  # required when called outside a TRAINEE_TURN checkpoint

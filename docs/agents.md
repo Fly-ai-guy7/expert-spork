@@ -75,11 +75,18 @@ strategic guidance, suggested statute citations, strengths to press, risks the o
 will attack, and arguments not yet made. It coaches — it never writes the argument or
 argues the case itself.
 
-Exposed at `POST /api/hil/{cp_id}/counsel` (only valid at a `TRAINEE_TURN` checkpoint),
-backed by `services/counsel_service.py`. The response is advisory only and does not mutate
-the simulation, so a trainee can call it repeatedly before submitting. Each call is
-persisted to `counsel_logs` and is reviewable at `GET /api/training/{session_id}/counsel-log`;
-the coaching report includes `counsel_calls_count` as a usage signal.
+Two entry points, both backed by `services/counsel_service.py`:
+
+- `POST /api/hil/{cp_id}/counsel` — during the debate, at a `TRAINEE_TURN` checkpoint.
+  Role is derived from the checkpoint side.
+- `POST /api/cases/{case_id}/counsel` — pre-turn prep, before any HIL. Role is derived
+  from the active training session on that case, or supplied via `trainee_role` in the
+  request body for pure prep mode.
+
+The response is advisory only and does not mutate the simulation, so a trainee can call
+either endpoint repeatedly. Each call is persisted to `counsel_logs` and is reviewable
+at `GET /api/training/{session_id}/counsel-log`; the coaching report includes
+`counsel_calls_count` as a usage signal.
 
 ### 7. HIL / Trainee — no LLM
 
