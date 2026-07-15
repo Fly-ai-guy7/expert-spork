@@ -84,6 +84,9 @@
   "counsel": {
     "title": "Advisory Counsel",
     "get_advice": "Get counsel",
+    "prep_button": "Prep with counsel",
+    "prep_title": "Pre-turn counsel",
+    "prep_placeholder": "Optional — sketch your opening approach for context…",
     "suggested_citations": "Suggested citations",
     "strengths": "Strengths to press",
     "risks": "Risks the opponent will attack",

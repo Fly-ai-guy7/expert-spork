@@ -99,6 +99,24 @@ export function useCounsel() {
   });
 }
 
+export function useCaseCounsel() {
+  return useMutation({
+    mutationFn: async (args: {
+      case_id: string;
+      content_en?: string;
+      citations?: string[];
+      trainee_role?: "PROSECUTION" | "DEFENSE";
+    }) =>
+      (
+        await api.post<CounselResponse>(`/api/cases/${args.case_id}/counsel`, {
+          content_en: args.content_en,
+          citations: args.citations,
+          trainee_role: args.trainee_role,
+        })
+      ).data,
+  });
+}
+
 export function useCaseReport(id: string | undefined) {
   return useQuery({
     queryKey: ["case-report", id],

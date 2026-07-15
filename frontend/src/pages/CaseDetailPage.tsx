@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -6,6 +7,7 @@ import { api } from "@/api/client";
 import type { RulingPayload } from "@/api/types";
 import { PipelineTimeline } from "@/components/PipelineTimeline";
 import { DebateRoundCard } from "@/components/DebateRoundCard";
+import { PrepCounselDialog } from "@/components/PrepCounselDialog";
 import { TraineeSeatDialog } from "@/components/TraineeSeatDialog";
 
 export function CaseDetailPage() {
@@ -15,6 +17,7 @@ export function CaseDetailPage() {
   const { data: status, refetch } = useCaseStatus(id);
   const { data: report } = useCaseReport(id);
   const runCase = useRunCase();
+  const [prepOpen, setPrepOpen] = useState(false);
 
   if (!caseData || !id) return <p>{t("actions.loading")}</p>;
 
@@ -47,6 +50,22 @@ export function CaseDetailPage() {
             {t("case.run")}
           </button>
         </div>
+      )}
+
+      {caseData.status !== "COMPLETE" && !traineeTurn && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50"
+            onClick={() => setPrepOpen(true)}
+          >
+            {t("counsel.prep_button")}
+          </button>
+        </div>
+      )}
+
+      {prepOpen && (
+        <PrepCounselDialog caseId={id} onClose={() => setPrepOpen(false)} />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
