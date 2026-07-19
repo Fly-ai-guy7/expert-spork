@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-07-15",
+  "observedListeners": [],
+  "observationNote": "audited environment is a remote container; no application services were running. Entries below are documented defaults from repository evidence plus unverified Mac-side claims.",
+  "documentedPorts": [
+    { "port": 8000, "projectId": "luxor-guest-house", "service": "FastAPI backend", "source": "README.md run instructions", "verified": "repo-documented", "conflict": true, "conflictsWith": ["rxegypt-pilot"] },
+    { "port": 8000, "projectId": "rxegypt-pilot", "service": "FastAPI backend", "source": "rxegypt-pilot/README.md + docker-compose.yml", "verified": "repo-documented", "conflict": true, "conflictsWith": ["luxor-guest-house"] },
+    { "port": 5173, "projectId": "luxor-guest-house", "service": "Vite dev server", "source": "Vite default; CORS allowlist in backend/app/main.py", "verified": "repo-documented", "conflict": false },
+    { "port": 4173, "projectId": "luxor-guest-house", "service": "Vite preview", "source": "Vite default (npm run preview)", "verified": "repo-documented", "conflict": false, "note": "same default as Atlas Voyage's claimed port on the Mac" },
+    { "port": 3000, "projectId": "rxegypt-pilot", "service": "static frontend (python http.server / container)", "source": "rxegypt-pilot/README.md; CORS default", "verified": "repo-documented", "conflict": false, "note": "candidate identity for the Mac's unidentified :3000 service" },
+    { "port": 8080, "projectId": "luxor-guest-house", "service": "frontend production container (nginx)", "source": "PROJECT_STATUS.md", "verified": "repo-documented", "conflict": false, "note": "latent collision with Dashy :8080 if run locally on the Mac" }
+  ],
+  "macSideClaimsUnverified": [
+    { "port": 8080, "claim": "Dashy — Bruce OS dashboard" },
+    { "port": 4173, "claim": "Atlas Voyage white-label travel workflow" },
+    { "port": 3000, "claim": "unidentified web application" },
+    { "port": 8000, "claim": "historic multi-backend collision", "note": "consistent with both audited backends defaulting to 8000" }
+  ],
+  "proposedAssignments": [
+    { "port": 8001, "projectId": "luxor-guest-house", "service": "backend API (proposed dev port)" },
+    { "port": 8002, "projectId": "rxegypt-pilot", "service": "backend API (proposed dev port)" },
+    { "port": 3002, "projectId": "rxegypt-pilot", "service": "frontend (proposed dev port)" },
+    { "port": 8080, "projectId": "dashy", "service": "RESERVED — do not assign to application containers on the Mac" },
+    { "port": 8081, "projectId": "luxor-guest-house", "service": "nginx container local remap (proposed)" }
+  ]
+}
