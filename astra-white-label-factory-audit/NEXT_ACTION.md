@@ -11,3 +11,6 @@ The exact commands and comparison checklists are pre-written in
 `LOCALHOST_SERVICES.md` (port audit) and `DUPLICATION_REPORT.md` (lineage
 checks). Expected effort: about half a day. Output: a complete registry, and
 final answers on Atlas Voyage and Marina Ember as pilot donors.
+
+**This is now fully packaged:** `MAC_DISCOVERY_RUNBOOK.md` contains the
+complete paste-ready prompt and setup steps for the Mac session.

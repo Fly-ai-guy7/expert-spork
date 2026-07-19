@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astra.example/schemas/client-config/1.0.0",
+  "title": "Astra White-Label Client Configuration",
+  "description": "One client.json per client instance in clients/<clientId>/. Formalises CLIENT_CONFIG_SCHEMA_PROPOSAL.md. Secrets are forbidden: integrations reference environment-variable NAMES only; values live in host secret stores.",
+  "type": "object",
+  "required": ["schemaVersion", "identity", "branding", "languages", "features", "content", "integrations", "deployment"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+
+    "identity": {
+      "type": "object",
+      "required": ["clientId", "productFamily", "template", "displayName", "country", "currency", "timezone", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "clientId": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Permanent kebab-case id, unique in registry/clients.json" },
+        "productFamily": { "type": "string", "enum": ["travel", "hotel-hospitality", "restaurant", "health-pharmacy", "compliance-safety", "legal-case-management", "residential-compound", "command-centre"] },
+        "template": {
+          "type": "object",
+          "required": ["id", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string" },
+            "version": { "type": "string" }
+          }
+        },
+        "displayName": { "type": "string", "minLength": 1 },
+        "legalName": { "type": "string" },
+        "market": { "type": "string" },
+        "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "timezone": { "type": "string", "description": "IANA zone, e.g. Africa/Cairo" },
+        "status": { "type": "string", "enum": ["draft", "pilot", "live", "suspended", "retired"] }
+      }
+    },
+
+    "branding": {
+      "type": "object",
+      "required": ["logo", "tokens", "typography"],
+      "additionalProperties": false,
+      "properties": {
+        "logo": { "$ref": "#/$defs/assetPath" },
+        "favicon": { "$ref": "#/$defs/assetPath" },
+        "tokens": {
+          "type": "object",
+          "description": "Values for the AISE design-token contract (DESIGN_SYSTEM.md)",
+          "required": ["accent", "accentDark", "ink", "muted", "line", "surface", "radius"],
+          "additionalProperties": false,
+          "properties": {
+            "accent": { "$ref": "#/$defs/color" },
+            "accentDark": { "$ref": "#/$defs/color" },
+            "ink": { "$ref": "#/$defs/color" },
+            "muted": { "$ref": "#/$defs/color" },
+            "line": { "$ref": "#/$defs/color" },
+            "surface": { "$ref": "#/$defs/color" },
+            "background": { "$ref": "#/$defs/color" },
+            "text": { "$ref": "#/$defs/color" },
+            "radius": { "type": "string", "pattern": "^\\d+(px|rem)$" },
+            "spacingDensity": { "type": "string", "enum": ["compact", "comfortable", "spacious"] }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "required": ["heading", "body"],
+          "additionalProperties": false,
+          "properties": {
+            "heading": { "type": "string" },
+            "body": { "type": "string" }
+          }
+        },
+        "visualTheme": { "type": "string" },
+        "photographyStyle": { "type": "string" },
+        "brandVoice": { "type": "string" }
+      }
+    },
+
+    "languages": {
+      "type": "object",
+      "required": ["default", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/$defs/langCode" },
+        "enabled": { "type": "array", "items": { "$ref": "#/$defs/langCode" }, "minItems": 1, "uniqueItems": true },
+        "rtl": { "type": "array", "items": { "$ref": "#/$defs/langCode" }, "uniqueItems": true },
+        "formats": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "date": { "type": "string" },
+            "number": { "type": "string" },
+            "currencyDisplay": { "type": "string", "enum": ["symbol", "code", "name"] }
+          }
+        }
+      }
+    },
+
+    "features": {
+      "type": "object",
+      "description": "Feature flags. Keys beyond the known set are allowed (template-scoped) but must be booleans; validate-config additionally checks each enabled flag is supported by the named template version.",
+      "properties": {
+        "booking": { "type": "boolean" },
+        "reservations": { "type": "boolean" },
+        "enquiries": { "type": "boolean" },
+        "whatsapp": { "type": "boolean" },
+        "login": { "type": "boolean" },
+        "clientDashboard": { "type": "boolean" },
+        "adminDashboard": { "type": "boolean" },
+        "reviews": { "type": "boolean" },
+        "offers": { "type": "boolean" },
+        "events": { "type": "boolean" },
+        "maps": { "type": "boolean" },
+        "payments": { "type": "boolean" },
+        "analytics": { "type": "boolean" },
+        "notifications": { "type": "boolean" },
+        "search": { "type": "boolean" },
+        "aiConcierge": { "type": "boolean" }
+      },
+      "additionalProperties": { "type": "boolean" }
+    },
+
+    "content": {
+      "type": "object",
+      "required": ["source", "collections"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string", "enum": ["files", "cms", "database"] },
+        "collections": {
+          "type": "object",
+          "description": "Collection name -> relative path (files) or collection id (cms/database). Template defines which collections it consumes.",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+
+    "integrations": {
+      "type": "object",
+      "description": "Adapter selections. No secret values — envKeys lists environment-variable NAMES the deploy must provide.",
+      "additionalProperties": { "$ref": "#/$defs/integration" },
+      "properties": {
+        "whatsapp": { "$ref": "#/$defs/integration" },
+        "email": { "$ref": "#/$defs/integration" },
+        "crm": { "$ref": "#/$defs/integration" },
+        "analytics": { "$ref": "#/$defs/integration" },
+        "maps": { "$ref": "#/$defs/integration" },
+        "payments": { "$ref": "#/$defs/integration" },
+        "bookingEngine": { "$ref": "#/$defs/integration" },
+        "database": { "$ref": "#/$defs/integration" },
+        "cms": { "$ref": "#/$defs/integration" },
+        "storage": { "$ref": "#/$defs/integration" }
+      }
+    },
+
+    "deployment": {
+      "type": "object",
+      "required": ["provider", "environments", "healthEndpoint"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "examples": ["render+vercel", "fly", "docker", "cloud-run"] },
+        "domain": { "type": "string" },
+        "environments": { "type": "array", "items": { "type": "string", "enum": ["preview", "staging", "production"] }, "minItems": 1, "uniqueItems": true },
+        "region": { "type": "string" },
+        "buildCommand": { "type": "string" },
+        "healthEndpoint": { "type": "string", "pattern": "^/" },
+        "rollbackMethod": { "type": "string" },
+        "ports": {
+          "type": "object",
+          "description": "Must agree with registry/ports.json",
+          "additionalProperties": { "type": "integer", "minimum": 1024, "maximum": 65535 }
+        }
+      }
+    },
+
+    "seo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "titleTemplate": { "type": "string" },
+        "description": { "type": "string" },
+        "structuredDataProfile": { "type": "string", "examples": ["LodgingBusiness", "Restaurant", "Pharmacy"] }
+      }
+    }
+  },
+
+  "$defs": {
+    "color": { "type": "string", "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$" },
+    "langCode": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+    "assetPath": { "type": "string", "pattern": "^brand/assets/", "description": "Relative path inside the client directory; keeps assets client-scoped" },
+    "integration": {
+      "type": "object",
+      "required": ["adapter"],
+      "additionalProperties": false,
+      "properties": {
+        "adapter": { "type": "string", "description": "'none' disables the integration" },
+        "number": { "type": "string", "pattern": "^\\+[1-9]\\d{6,14}$", "description": "E.164, e.g. WhatsApp line" },
+        "envKeys": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }, "uniqueItems": true, "description": "Environment-variable NAMES only — never values" },
+        "options": {
+          "type": "object",
+          "description": "Adapter-specific non-secret options. validate-config runs a secret-pattern scan over all string values here.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

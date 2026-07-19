@@ -66,6 +66,8 @@ level, outside the three application trees (`backend/`, `frontend/`,
 | `MIGRATION_SEQUENCE.md` | Recommended order of work |
 | `RISKS_AND_UNKNOWNS.md` | What could go wrong, what is unverified |
 | `CURRENT_PRIORITY.md` / `NEXT_ACTION.md` / `PROJECT_STATUS.md` | Live status |
+| `MAC_DISCOVERY_RUNBOOK.md` | Ready-to-paste brief for the Mac-side Step 0 discovery session |
+| `client-config.schema.json` | Machine-readable JSON Schema (Draft 2020-12) for the client model — validated, example instance passes |
 
 ## Executive summary
 
