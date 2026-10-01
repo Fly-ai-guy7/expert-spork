@@ -35,17 +35,19 @@
   </header>
 
   <div class="cab" id="cab">
-    <div class="fsbar"><span id="fsLeft">SPINS LEFT 0</span><span class="mult">WILD ×2 ×3 ×5</span><span id="fsWin">0</span></div>
+    <div class="fsbar"><span id="fsLeft">SPINS LEFT 0</span><span class="mult" id="multChip">WILD ×2 ×3 ×5</span><span id="fsWin">0</span></div>
     <div class="reels" id="reels"><div class="anticip" id="anticip"></div></div>
     <div class="msg" id="msg" aria-live="polite">Press SPIN or hit Space</div>
+    <div class="flash" id="flash"></div>
     <canvas id="fx"></canvas>
-    <div class="overlay" id="overlay"><div class="big" id="ovTitle"></div><div class="num" id="ovNum"></div><div class="small" id="ovSub"></div><div class="tap">TAP TO CONTINUE</div></div>
+    <div class="overlay" id="overlay"><div class="big" id="ovTitle"></div><div class="num" id="ovNum"></div><div class="small" id="ovSub"></div><div class="obtns" id="ovBtns"></div><div class="tap" id="ovTap" data-i18n="TAP TO CONTINUE">TAP TO CONTINUE</div></div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
   </div>
 
   <div class="hud">
-    <div class="box"><b>BALANCE</b><span id="bal">0</span></div>
-    <div class="box"><b>BET</b><span id="betv">0</span></div>
-    <div class="box"><b>WIN</b><span id="win">0</span></div>
+    <div class="box"><b data-i18n="BALANCE">BALANCE</b><span id="bal">0</span><small id="net"></small></div>
+    <div class="box"><b data-i18n="BET">BET</b><span id="betv">0</span><small id="stake"></small></div>
+    <div class="box"><b data-i18n="WIN">WIN</b><span id="win">0</span></div>
   </div>
 
   <div class="ctrl">
@@ -55,18 +57,21 @@
   </div>
 
   <div class="row2">
+    <button id="ante" class="ante">⚡ Thunder Bet +25%</button>
     <button id="auto">Auto ▸ off</button>
-    <button id="max">Max bet</button>
+    <button id="max" data-i18n="Max bet">Max bet</button>
     <button id="buy" class="buy">Buy feature</button>
-    <button id="stats">Stats</button>
+    <button id="stats" data-i18n="Stats">Stats</button>
   </div>
+  <div class="keys">Space spin · ↑↓ bet · M max · Q Thunder Bet · B buy · A auto · T turbo · S stats · I paytable</div>
 
   <div class="foot">Demo with virtual credits — no real money, no cash-out. Original game with classic buffalo-style mechanics; not affiliated with any commercial title.</div>
 </div>
 
 <dialog id="payDlg"><h2>Paytable &amp; Rules</h2>
   <p>1,024 ways: match 3+ symbols on consecutive reels from the left, any row. 🌅 Wild shows on reels 2–4 and substitutes for everything except the coin. The 🪙 scatter pays anywhere and starts free spins. In free spins wilds carry <b>×2 / ×3 / ×5</b> multipliers that multiply together across the reels in a win. Free spins retrigger. Values are credits per way at your current bet.</p>
-  <table id="payTbl"></table><p id="payNote" style="opacity:.75;font-size:13px"></p>
+  <table id="payTbl"></table>
+  <h3 class="h3">Features</h3><ul class="feat" id="payFeat"></ul><p id="payNote" style="opacity:.75;font-size:13px"></p>
   <div class="dlgbtns"><button onclick="this.closest('dialog').close()">Close</button></div></dialog>
 
 <dialog id="setDlg"><h2>Settings</h2>
@@ -75,12 +80,22 @@
   <div class="set"><span>Turbo spins</span><button class="tgl" id="tTurbo">off</button></div>
   <div class="set"><span>Autoplay stops on feature</span><button class="tgl" id="tStopF">on</button></div>
   <div class="set"><span>Autoplay stops on big win (≥ 20×)</span><button class="tgl" id="tStopB">on</button></div>
-  <div class="set"><span>Reset balance to 10,000</span><button id="bReset">Reset</button></div>
+  <div class="set"><span>Gamble after wins (manual play)</span><button class="tgl" id="tGamble">on</button></div>
+  <div class="set"><span>Language / اللغة</span><button class="tgl" id="tLang">English</button></div>
+  <div class="set"><span>Autoplay stops if balance falls by</span><button class="tgl" id="bLoss">off</button></div>
+  <div class="set"><span>Autoplay stops if balance rises by</span><button class="tgl" id="bWin">off</button></div>
+  <h3 class="h3">Practice tools <small>(next spin only, not counted in stats)</small></h3>
+  <div class="prac"><button id="pFree">Free spins</button><button id="pBig">Big win</button><button id="pStrike">Thunderstrike</button><button id="pJack">Major jackpot</button></div>
+  <div class="set"><span>Reset balance to 1,000,000</span><button id="bReset">Reset</button></div>
   <div class="dlgbtns"><button onclick="this.closest('dialog').close()">Close</button></div></dialog>
 
 <dialog id="statDlg"><h2>Session stats</h2>
   <div class="stats" id="statGrid"></div>
-  <b style="font-size:12px;letter-spacing:2px;opacity:.7">LAST ROUNDS</b><div class="hist" id="hist"></div>
+  <b class="cap">BALANCE OVER TIME</b>
+  <div class="sparkwrap"><canvas id="spark" aria-label="Balance after each round"></canvas></div><div class="sptip" id="spTip"></div>
+  <b class="cap">BIGGEST WINS</b><ol class="top" id="topWins"></ol>
+  <b class="cap">ACHIEVEMENTS <span id="achCount"></span></b><div class="achs" id="achGrid"></div>
+  <b class="cap">LAST ROUNDS</b><div class="hist" id="hist"></div>
   <div class="dlgbtns"><button id="bClearStats">Clear stats</button><button onclick="this.closest('dialog').close()">Close</button></div></dialog>
 
 <dialog id="buyDlg"><h2>Buy Free Spins</h2>

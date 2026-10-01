@@ -11,7 +11,7 @@
   const WILD = 'WILD', COIN = 'COIN';
 
   // Pay per matching "way", in multiples of (totalBet / BET_DIV), keyed by reel count.
-  const BET_DIV = 26;
+  const BET_DIV = 30.7;
   const PAY = {
     BUF: { 3: 10, 4: 40, 5: 150 },
     EAG: { 3: 6, 4: 24, 5: 80 },
@@ -28,7 +28,22 @@
   const COIN_PAY = { 3: 2, 4: 10, 5: 100 };
   const FREE_SPINS = { 3: 8, 4: 15, 5: 20 };
   const MAX_WIN = 5000; // x total bet; a round is capped here
-  const BUY_COST = 62;  // x total bet for Buy Feature (8 free spins). Measured value ≈ 58x -> ~93.5% RTP
+  const BUY_COST = 52;  // x total bet for Buy Feature (8 free spins). Measured value ≈ 49.7x incl. scatter -> ~95.5% RTP
+
+  // ---- v3 features -------------------------------------------------------
+  // Thunderstrike: base game only. With probability p, lightning turns 1-3 cells on reels 2-4 into wilds.
+  const STRIKE = { p: 0.06, max: 3 };
+  // Lightning Jackpot: random award on a paid spin (x total bet). Part of the RTP budget.
+  const JACKPOT = { p: 1 / 2500, tiers: [
+    { id: 'MINI', x: 20, w: 70 }, { id: 'MINOR', x: 50, w: 22 }, { id: 'MAJOR', x: 250, w: 7 }, { id: 'GRAND', x: 1000, w: 1 } ] };
+  // Thunder Bet (ante): costs 1.25x, scatter weight is raised on base spins.
+  const ANTE = { cost: 1.25, coin: 2.42 };
+  // Free-spin "herds": player picks before the feature. Tuned to similar average return, very different shape.
+  const MODES = {
+    classic:  { label: 'Stampede', mul: 1,   wild: 6, mults: [{ v: 2, w: 55 }, { v: 3, w: 35 }, { v: 5, w: 10 }] },
+    marathon: { label: 'Long Trail', mul: 1.5, wild: 5.5, mults: [{ v: 2, w: 70 }, { v: 3, w: 25 }, { v: 5, w: 5 }] },
+    blitz:    { label: 'Thunderclap', mul: 0.5, wild: 4.85, mults: [{ v: 3, w: 60 }, { v: 5, w: 30 }, { v: 10, w: 10 }] }
+  };
 
   // Cell weights per reel (wild only on reels 2-4, i.e. index 1..3).
   const W_BASE = [
@@ -39,8 +54,9 @@
     { BUF: 5, EAG: 7, COU: 8, WOL: 9, ELK: 10, A: 14, K: 14, Q: 15, J: 15, WILD: 0, COIN: 2 }
   ];
   // Free spins: more wilds, wilds carry 2x / 3x multipliers that multiply together.
-  const W_FREE = W_BASE.map((w, i) => Object.assign({}, w, { WILD: i >= 1 && i <= 3 ? 6 : 0 }));
-  const WILD_MULT_TABLE = [{ v: 2, w: 55 }, { v: 3, w: 35 }, { v: 5, w: 10 }];
+  const freeWeights = (mode) => W_BASE.map((w, i) => Object.assign({}, w, { WILD: i >= 1 && i <= 3 ? mode.wild : 0 }));
+  const modeWeights = (m) => m._w || (m._w = freeWeights(m)); // cached per mode (tuning scripts reset m._w)
+  const W_ANTE = W_BASE.map((w) => Object.assign({}, w, { COIN: ANTE.coin }));
 
   function makeRng(seed) {
     if (seed == null) return Math.random;
@@ -62,28 +78,53 @@
     return Object.keys(table)[0];
   }
 
-  function pickMult(rng) {
+  function pickMult(rng, table) {
     let total = 0;
-    for (const m of WILD_MULT_TABLE) total += m.w;
+    for (const m of table) total += m.w;
     let r = rng() * total;
-    for (const m of WILD_MULT_TABLE) { r -= m.w; if (r < 0) return m.v; }
-    return 2;
+    for (const m of table) { r -= m.w; if (r < 0) return m.v; }
+    return table[0].v;
   }
 
-  /** Generate a grid[reel][row] of {s: symbol, m: wildMultiplier}. */
-  function spinGrid(free, rng) {
-    const weights = free ? W_FREE : W_BASE;
+  /**
+   * Generate grid[reel][row] of {s, m}. opts: { ante, mode }.
+   * Base game may carry grid.strike = [{c, r, from}] (Thunderstrike wilds already applied to the grid).
+   */
+  function spinGrid(free, rng, opts) {
+    opts = opts || {};
+    const mode = MODES[opts.mode] || MODES.classic;
+    const weights = free ? modeWeights(mode) : (opts.ante ? W_ANTE : W_BASE);
     const grid = [];
     for (let c = 0; c < REELS; c++) {
       const col = [];
       for (let r = 0; r < ROWS; r++) {
         const s = pickWeighted(weights[c], rng);
-        col.push({ s, m: s === WILD && free ? pickMult(rng) : 1 });
+        col.push({ s, m: s === WILD && free ? pickMult(rng, mode.mults) : 1 });
       }
       grid.push(col);
     }
+    if (!free && rng() < STRIKE.p) {
+      const n = 1 + Math.floor(rng() * STRIKE.max), strike = [];
+      for (let i = 0; i < n; i++) {
+        const c = 1 + Math.floor(rng() * 3), r = Math.floor(rng() * ROWS);
+        if (grid[c][r].s === WILD || strike.some((x) => x.c === c && x.r === r)) continue;
+        strike.push({ c, r, from: grid[c][r].s }); grid[c][r] = { s: WILD, m: 1 };
+      }
+      if (strike.length) grid.strike = strike;
+    }
     return grid;
   }
+
+  /** Lightning Jackpot roll for a paid spin. Returns null or {id, x}. */
+  function rollJackpot(rng) {
+    if (rng() >= JACKPOT.p) return null;
+    let total = 0; JACKPOT.tiers.forEach((t) => { total += t.w; });
+    let r = rng() * total;
+    for (const t of JACKPOT.tiers) { r -= t.w; if (r < 0) return { id: t.id, x: t.x }; }
+    return { id: JACKPOT.tiers[0].id, x: JACKPOT.tiers[0].x };
+  }
+
+  const featureSpins = (n, mode) => Math.max(1, Math.round(FREE_SPINS[Math.min(n, 5)] * (MODES[mode] || MODES.classic).mul));
 
   /**
    * Evaluate a grid. Returns { total (x totalBet), wins: [...], coins, coinPay, fs }.
@@ -127,36 +168,36 @@
     return { total, wins, coins, coinCells, coinPay, fs };
   }
 
-  /** Run a free-spins feature from `spins` start (used by Buy Feature and by playRound). Returns x-bet total. */
-  function playFeature(rng, spins, capRemaining) {
+  /** Run a free-spins feature from `spins` start. Returns x-bet total. */
+  function playFeature(rng, spins, capRemaining, mode) {
     let total = 0, played = 0;
     while (spins > 0 && played < 500 && total < capRemaining) {
       spins--; played++;
-      const e = evaluate(spinGrid(true, rng));
-      total += e.total; spins += e.fs;
+      const e = evaluate(spinGrid(true, rng, { mode }));
+      total += e.total; spins += Math.round(e.fs * (MODES[mode] || MODES.classic).mul) || 0;
     }
     return Math.min(total, capRemaining);
   }
 
-  /** Play a whole paid spin including any free-spin feature. Returns the x-bet result tree. */
-  function playRound(rng) {
-    const base = evaluate(spinGrid(false, rng));
-    let total = base.total, spins = base.fs, played = 0;
-    const free = [];
+  /** Play a whole paid spin including jackpot and free-spin feature. opts: { ante, mode }. Results in x of base bet. */
+  function playRound(rng, opts) {
+    opts = opts || {};
+    const g = spinGrid(false, rng, opts), base = evaluate(g);
+    const jp = rollJackpot(rng);
+    let total = base.total + (jp ? jp.x : 0), played = 0, spins = base.fs ? featureSpins(base.coins, opts.mode) : 0;
+    const startTotal = total;
     while (spins > 0 && played < 500 && total < MAX_WIN) {
       spins--; played++;
-      const g = spinGrid(true, rng);
-      const e = evaluate(g);
-      total += e.total;
-      spins += e.fs;
-      free.push(e.total);
+      const e = evaluate(spinGrid(true, rng, { mode: opts.mode }));
+      total += e.total; spins += e.fs ? featureSpins(e.coins, opts.mode) : 0;
     }
     if (total > MAX_WIN) total = MAX_WIN;
-    return { total, baseTotal: base.total, triggered: base.fs > 0, freeSpinsPlayed: played, freeTotal: total - base.total };
+    return { total, baseTotal: base.total, jackpot: jp, struck: !!g.strike, triggered: base.fs > 0, freeSpinsPlayed: played, freeTotal: total - startTotal };
   }
 
   const api = {
     REELS, ROWS, MAX_WIN, BUY_COST, SYM, WILD, COIN, PAY, BET_DIV, COIN_PAY, FREE_SPINS,
+    STRIKE, JACKPOT, ANTE, MODES, featureSpins, rollJackpot,
     makeRng, spinGrid, evaluate, playRound, playFeature
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
