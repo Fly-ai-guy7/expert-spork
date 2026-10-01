@@ -3,9 +3,7 @@
 Original 5×4, 1,024-ways slot with the mechanics of the classic Vegas buffalo games. **Play-money demo only.**
 
 ## Play
-Live (after merge to `main`): https://fly-ai-guy7.github.io/expert-spork/
-
-Or open `index.html` in any modern browser (no build, no dependencies), or `npm start` and visit http://localhost:8080.
+Private by design — not hosted publicly. Open `index.html` in any modern browser (no build, no dependencies), or `npm start` and visit http://localhost:8080.
 Space = spin / quick-stop. Works on phone and desktop.
 
 ## Features
