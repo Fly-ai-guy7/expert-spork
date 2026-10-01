@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Thunder Herd Slots</title>
+<style>
+:root{
+  --bg1:#1b0d05;--bg2:#4a1f0a;--gold:#ffc83d;--gold2:#ff9a1f;--panel:#2a1308;--ink:#fff4dc;--red:#e0442b;--green:#37c26b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:radial-gradient(ellipse at 50% 0%,#8a3b12 0%,var(--bg2) 35%,var(--bg1) 100%);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+.wrap{max-width:760px;margin:0 auto;padding:12px 12px 24px;display:flex;flex-direction:column;gap:10px;min-height:100%}
+header{text-align:center}
+h1{margin:4px 0 0;font-size:clamp(26px,6vw,40px);letter-spacing:3px;text-transform:uppercase;background:linear-gradient(#fff2b0,var(--gold) 45%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #5a2200)}
+.sub{font-size:12px;opacity:.7;letter-spacing:2px}
+.cab{background:linear-gradient(#5b2a10,#2a1308);border:3px solid var(--gold2);border-radius:18px;padding:10px;box-shadow:0 0 0 3px #5a2200,0 12px 40px #000a,inset 0 0 30px #0008;position:relative}
+.cab.free{border-color:#6ee7ff;box-shadow:0 0 0 3px #0b4a63,0 0 40px #38bdf866,inset 0 0 30px #0008}
+.fsbar{display:none;justify-content:space-between;font-weight:800;color:#bff3ff;padding:2px 6px 8px;letter-spacing:1px}
+.cab.free .fsbar{display:flex}
+.reels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:#140803;padding:6px;border-radius:12px;position:relative}
+.reel{display:grid;grid-template-rows:repeat(4,1fr);gap:6px;overflow:hidden}
+.cell{aspect-ratio:1/1;border-radius:10px;background:linear-gradient(#f6e3b4,#d9b878);display:flex;align-items:center;justify-content:center;position:relative;font-size:clamp(28px,8.4vw,58px);line-height:1;box-shadow:inset 0 -4px 0 #0002;user-select:none;transition:transform .15s}
+.reel.spin .cell{filter:blur(1.5px);animation:shake .09s infinite}
+@keyframes shake{50%{transform:translateY(5px)}}
+.cell.card{font-family:Georgia,serif;font-weight:900;color:#7a1d10;font-size:clamp(26px,7.6vw,52px)}
+.cell.card.K,.cell.card.Q{color:#1b4d8a}.cell.card.J{color:#1d6b3a}
+.cell.wild{background:linear-gradient(#ff8a1f,#c4310f);color:#fff}
+.cell.wild small{position:absolute;bottom:2px;right:5px;font-size:clamp(11px,3vw,18px);font-weight:900;color:#fff;text-shadow:0 1px 2px #000}
+.cell.coin{background:radial-gradient(circle at 35% 30%,#fff5b8,#ffc83d 55%,#b8741a)}
+.cell.win{animation:pop .5s ease-in-out infinite alternate;box-shadow:0 0 0 3px var(--gold),0 0 18px var(--gold);z-index:2}
+.cell.dim{opacity:.35}
+@keyframes pop{to{transform:scale(1.07)}}
+.cell.land{animation:land .25s ease-out}
+@keyframes land{from{transform:translateY(-14%)}to{transform:none}}
+.anticip{position:absolute;inset:0;pointer-events:none;border-radius:12px;box-shadow:0 0 0 3px #fff,0 0 30px 6px var(--gold);opacity:0}
+.anticip.on{animation:blink .35s infinite alternate}
+@keyframes blink{to{opacity:1}}
+.banner{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) scale(.6);text-align:center;font-size:clamp(26px,8vw,52px);font-weight:900;text-transform:uppercase;color:var(--gold);text-shadow:0 3px 0 #5a2200,0 0 30px #000;background:#000b;padding:16px 8px;opacity:0;pointer-events:none;transition:all .3s;z-index:5}
+.banner.show{opacity:1;transform:translateY(-50%) scale(1)}
+.banner small{display:block;font-size:.4em;color:#fff;letter-spacing:2px}
+.msg{min-height:28px;text-align:center;font-weight:700;color:var(--gold);padding-top:8px;font-size:15px}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.box{background:var(--panel);border:1px solid #6a3515;border-radius:12px;padding:6px 8px;text-align:center}
+.box b{display:block;font-size:11px;letter-spacing:2px;opacity:.65;font-weight:600}
+.box span{font-size:clamp(17px,4.6vw,24px);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.ctrl{display:flex;gap:8px;align-items:stretch}
+button{font:inherit;color:var(--ink);background:#4a2410;border:2px solid #8a4a1a;border-radius:12px;padding:10px 12px;font-weight:700;cursor:pointer}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.on{background:#7a3c10;border-color:var(--gold)}
+.bet{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.bet .box{flex:1}
+.spin{flex:1.4;font-size:22px;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(#ffd552,#e98a10);color:#3a1500;border-color:#fff1b0;box-shadow:0 5px 0 #8a4a05}
+.spin:active{box-shadow:0 1px 0 #8a4a05;transform:translateY(4px)}
+.row2{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.row2 button{font-size:13px;padding:8px 12px}
+dialog{background:#2a1308;color:var(--ink);border:2px solid var(--gold2);border-radius:16px;max-width:620px;width:92vw;max-height:86vh;overflow:auto}
+dialog::backdrop{background:#000a}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:5px 8px;border-bottom:1px solid #6a351555;text-align:center}
+th{color:var(--gold);font-size:12px;letter-spacing:1px}
+td:first-child{font-size:24px;text-align:left}
+.foot{font-size:11px;opacity:.55;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Thunder Herd</h1>
+    <div class="sub">1024 WAYS · WILD MULTIPLIERS · FREE SPINS · PLAY MONEY ONLY</div>
+  </header>
+
+  <div class="cab" id="cab">
+    <div class="fsbar"><span id="fsLeft">FREE SPINS: 0</span><span id="fsWin">FEATURE WIN: 0</span></div>
+    <div class="reels" id="reels"><div class="anticip" id="anticip"></div><div class="banner" id="banner"></div></div>
+    <div class="msg" id="msg">Press SPIN (or Space)</div>
+  </div>
+
+  <div class="hud">
+    <div class="box"><b>BALANCE</b><span id="bal">0</span></div>
+    <div class="box"><b>BET</b><span id="betv">0</span></div>
+    <div class="box"><b>WIN</b><span id="win">0</span></div>
+  </div>
+
+  <div class="ctrl">
+    <button id="betDn" aria-label="Lower bet">−</button>
+    <button class="spin" id="spin">Spin</button>
+    <button id="betUp" aria-label="Raise bet">+</button>
+  </div>
+
+  <div class="row2">
+    <button id="auto">Auto: off</button>
+    <button id="turbo">Turbo: off</button>
+    <button id="snd" class="on">Sound: on</button>
+    <button id="pay">Paytable</button>
+    <button id="reset">Reset balance</button>
+  </div>
+
+  <div class="foot">Demo with virtual credits — no real money, no cash-out. Original game inspired by classic buffalo-themed ways slots; not affiliated with any commercial title.</div>
+</div>
+
+<dialog id="payDlg">
+  <h2 style="margin-top:0;color:var(--gold)">Paytable &amp; Rules</h2>
+  <p style="font-size:14px;line-height:1.5">1,024 ways: match 3+ symbols on consecutive reels from the left, any row. 🌅 Wild appears on reels 2–4 only and substitutes for everything except 🪙. Scatter 🪙 pays anywhere and triggers free spins. In free spins wilds carry <b>×2 / ×3 / ×5</b> multipliers and these multiply together across reels in a win. Values below are credits at your current bet.</p>
+  <table id="payTbl"></table>
+  <p style="font-size:13px;opacity:.8" id="payNote"></p>
+  <form method="dialog"><button>Close</button></form>
+</dialog>
+
+<script src="engine.js"></script>
+<script>
+(function(){
+'use strict';
+const E = window.Engine, $ = id => document.getElementById(id);
+const GLYPH = {BUF:'🦬',EAG:'🦅',COU:'🐆',WOL:'🐺',ELK:'🦌',WILD:'🌅',COIN:'🪙'};
+const BETS = [40,80,200,400,1000,2000,4000];
+const START_BAL = 10000;
+
+const st = { bal:+(safeGet('th_bal')||START_BAL), betIdx:+(safeGet('th_bet')||1), busy:false, auto:false, turbo:false, sound:true, free:false, fsLeft:0, fsWin:0 };
+if(!(st.bal>0)) st.bal = START_BAL;
+if(!BETS[st.betIdx]) st.betIdx = 1;
+
+function safeGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function safeSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+const sleep = ms => new Promise(r=>setTimeout(r,st.turbo?Math.min(ms,ms/3):ms));
+const fmt = n => Math.round(n).toLocaleString('en-GB');
+
+/* ---------- build reels ---------- */
+const reelsEl = $('reels'), cols = [];
+for(let c=0;c<E.REELS;c++){
+  const col=document.createElement('div');col.className='reel';
+  const cells=[];
+  for(let r=0;r<E.ROWS;r++){const d=document.createElement('div');d.className='cell';col.appendChild(d);cells.push(d)}
+  reelsEl.appendChild(col);cols.push({el:col,cells});
+}
+function paint(el,cell){
+  const s=cell.s;
+  el.className='cell'+(s==='WILD'?' wild':s==='COIN'?' coin':GLYPH[s]?'':' card '+s);
+  el.innerHTML = s==='WILD' ? GLYPH.WILD+(cell.m>1?'<small>×'+cell.m+'</small>':'') : (GLYPH[s]||s);
+}
+function randCell(){const s=E.SYM[Math.floor(Math.random()*E.SYM.length)];return {s,m:s==='WILD'&&st.free?2:1}}
+function paintGrid(g){g.forEach((col,c)=>col.forEach((cell,r)=>paint(cols[c].cells[r],cell)))}
+paintGrid(Array.from({length:5},()=>Array.from({length:4},randCell)));
+
+/* ---------- sound ---------- */
+let ac=null;
+function beep(f,d,type,vol,delay){
+  if(!st.sound)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const t=ac.currentTime+(delay||0),o=ac.createOscillator(),g=ac.createGain();
+    o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(vol||.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d);
+  }catch(e){}
+}
+const sfx={
+  stop:()=>beep(180,.09,'square',.05),
+  win:n=>{for(let i=0;i<Math.min(4+n,8);i++)beep(520+i*90,.14,'triangle',.06,i*.07)},
+  coin:()=>{beep(880,.12,'sine',.08);beep(1320,.2,'sine',.08,.1)},
+  big:()=>{[523,659,784,1047,1319].forEach((f,i)=>beep(f,.3,'triangle',.08,i*.1))}
+};
+
+/* ---------- UI helpers ---------- */
+const bet = () => BETS[st.betIdx];
+function render(){
+  $('bal').textContent=fmt(st.bal);$('betv').textContent=fmt(bet());
+  $('cab').classList.toggle('free',st.free);
+  $('fsLeft').textContent='FREE SPINS LEFT: '+st.fsLeft;$('fsWin').textContent='FEATURE WIN: '+fmt(st.fsWin);
+  $('betDn').disabled=$('betUp').disabled=st.busy;
+  $('spin').disabled=st.busy&&!st.auto;
+  $('spin').textContent = st.busy ? (st.auto?'Stop':'…') : 'Spin';
+  safeSet('th_bal',st.bal);safeSet('th_bet',st.betIdx);
+}
+function msg(t){$('msg').textContent=t}
+async function banner(html,ms){const b=$('banner');b.innerHTML=html;b.classList.add('show');await sleep(ms);b.classList.remove('show')}
+
+/* ---------- spin animation ---------- */
+async function animateSpin(grid){
+  cols.forEach(c=>c.el.classList.add('spin'));
+  const tick=setInterval(()=>cols.forEach(col=>{if(col.el.classList.contains('spin'))col.cells.forEach(el=>paint(el,randCell()))}),70);
+  let coinsSoFar=0;
+  for(let c=0;c<E.REELS;c++){
+    // anticipation: 2+ coins already landed and a scatter could still complete the feature
+    const anticipate=c>=E.REELS-2&&coinsSoFar>=2;
+    if(anticipate){$('anticip').style.cssText='left:'+(c*20)+'%;right:'+((4-c)*20)+'%';$('anticip').classList.add('on')}
+    await sleep((c===0?550:260)+(anticipate?900:0));
+    $('anticip').classList.remove('on');
+    cols[c].el.classList.remove('spin');
+    grid[c].forEach((cell,r)=>{paint(cols[c].cells[r],cell);cols[c].cells[r].classList.add('land')});
+    const n=grid[c].filter(x=>x.s==='COIN').length;
+    coinsSoFar+=n;sfx.stop();if(n)sfx.coin();
+  }
+  clearInterval(tick);
+  await sleep(120);
+  cols.forEach(c=>c.cells.forEach(el=>el.classList.remove('land')));
+}
+
+async function showWins(res, grid){
+  if(!res.wins.length && !res.coinPay) return;
+  const all=new Set();
+  res.wins.forEach(w=>w.cells.forEach(([c,r])=>all.add(c+','+r)));
+  res.coinCells.forEach(([c,r])=>all.add(c+','+r));
+  cols.forEach((col,c)=>col.cells.forEach((el,r)=>el.classList.add(all.has(c+','+r)?'win':'dim')));
+  sfx.win(res.wins.length);
+  await sleep(res.wins.length>1?900:1300);
+  cols.forEach(col=>col.cells.forEach(el=>el.classList.remove('win','dim')));
+}
+
+/* ---------- one spin (paid or free) ---------- */
+async function doSpin(free){
+  const grid=E.spinGrid(free,Math.random);
+  await animateSpin(grid);
+  const res=E.evaluate(grid);
+  const credits=res.total*bet();
+  return {grid,res,credits};
+}
+
+async function playRound(){
+  if(st.busy&&!st.auto)return;
+  if(st.busy)return;
+  if(st.bal<bet()){msg('Not enough credits — lower your bet or reset balance.');st.auto=false;$('auto').textContent='Auto: off';$('auto').classList.remove('on');return}
+  st.busy=true;st.bal-=bet();st.free=false;st.fsLeft=0;st.fsWin=0;
+  $('win').textContent='0';render();msg('Good luck…');
+
+  let roundCredits=0;const cap=E.MAX_WIN*bet();
+  let r=await doSpin(false);
+  roundCredits+=r.credits;
+  $('win').textContent=fmt(Math.min(roundCredits,cap));
+  if(r.credits>0)msg(describe(r.res,r.credits));
+  await showWins(r.res,r.grid);
+
+  if(r.res.fs>0){
+    st.free=true;st.fsLeft=r.res.fs;st.fsWin=0;
+    sfx.big();render();
+    await banner(r.res.fs+' FREE SPINS<small>WILDS ×2 ×3 ×5 — MULTIPLIERS STACK</small>',2200);
+    while(st.fsLeft>0&&roundCredits<cap){
+      st.fsLeft--;render();
+      const f=await doSpin(true);
+      roundCredits+=f.credits;st.fsWin+=f.credits;
+      if(f.res.fs>0){st.fsLeft+=f.res.fs;await banner('+'+f.res.fs+' SPINS',1100)}
+      $('win').textContent=fmt(Math.min(roundCredits,cap));
+      if(f.credits>0){
+        const mx=Math.max(1,...f.res.wins.map(w=>w.mult));
+        msg(describe(f.res,f.credits)+(mx>1?'  (wild ×'+mx+')':''));
+      }else msg('No win');
+      render();
+      await showWins(f.res,f.grid);
+    }
+    st.free=false;
+  }
+
+  roundCredits=Math.min(Math.round(roundCredits),cap);
+  st.bal+=roundCredits;
+  $('win').textContent=fmt(roundCredits);
+  const x=roundCredits/bet();
+  if(r.res.fs>0){msg('Feature paid '+fmt(roundCredits)+' credits ('+x.toFixed(1)+'× bet)')}
+  else if(roundCredits===0)msg('No win — spin again');
+  if(x>=20){sfx.big();await banner((x>=100?'MEGA WIN':'BIG WIN')+'<small>'+fmt(roundCredits)+' CREDITS · '+x.toFixed(0)+'× BET</small>',2200)}
+  st.fsLeft=0;st.busy=false;render();
+  if(st.bal<=0){msg('Out of credits — press Reset balance.');st.auto=false}
+  if(st.auto&&st.bal>=bet()){await sleep(500);if(st.auto)playRound()}
+  else{st.auto=false;$('auto').textContent='Auto: off';$('auto').classList.remove('on');render()}
+}
+
+function describe(res,credits){
+  const parts=res.wins.slice().sort((a,b)=>b.pay-a.pay).slice(0,2).map(w=>`${GLYPH[w.sym]||w.sym}×${w.reels} (${w.ways} ways)`);
+  if(res.coinPay)parts.push(`🪙×${res.coins}`);
+  return 'WIN '+fmt(credits)+'  ·  '+parts.join('  ');
+}
+
+/* ---------- controls ---------- */
+$('spin').onclick=()=>{ if(st.busy&&st.auto){st.auto=false;$('auto').textContent='Auto: off';$('auto').classList.remove('on');render();return} playRound() };
+$('betUp').onclick=()=>{st.betIdx=Math.min(BETS.length-1,st.betIdx+1);render()};
+$('betDn').onclick=()=>{st.betIdx=Math.max(0,st.betIdx-1);render()};
+$('auto').onclick=()=>{st.auto=!st.auto;$('auto').textContent='Auto: '+(st.auto?'on':'off');$('auto').classList.toggle('on',st.auto);if(st.auto&&!st.busy)playRound()};
+$('turbo').onclick=()=>{st.turbo=!st.turbo;$('turbo').textContent='Turbo: '+(st.turbo?'on':'off');$('turbo').classList.toggle('on',st.turbo)};
+$('snd').onclick=()=>{st.sound=!st.sound;$('snd').textContent='Sound: '+(st.sound?'on':'off');$('snd').classList.toggle('on',st.sound)};
+$('reset').onclick=()=>{if(st.busy)return;st.bal=START_BAL;render();msg('Balance reset to '+fmt(START_BAL))};
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!$('payDlg').open){e.preventDefault();$('spin').click()}});
+
+$('pay').onclick=()=>{
+  const b=bet();let h='<tr><th>SYMBOL</th><th>3</th><th>4</th><th>5</th></tr>';
+  Object.keys(E.PAY).forEach(s=>{const p=E.PAY[s];h+=`<tr><td>${GLYPH[s]||'<b style="font-family:Georgia">'+s+'</b>'}</td>${[3,4,5].map(n=>'<td>'+fmt(p[n]*b/E.BET_DIV)+'</td>').join('')}</tr>`});
+  h+=`<tr><td>${GLYPH.COIN}</td>${[3,4,5].map(n=>'<td>'+fmt(E.COIN_PAY[n]*b)+'<br><small>'+E.FREE_SPINS[n]+' spins</small></td>').join('')}</tr>`;
+  $('payTbl').innerHTML=h;
+  $('payNote').textContent=`Per way, at bet ${fmt(b)}. Multiply by number of ways (and wild multipliers). Max win per round capped at ${E.MAX_WIN}× bet. Theoretical RTP ≈ 94.6% (simulated, 30M rounds — see sim.js).`;
+  $('payDlg').showModal();
+};
+
+render();
+})();
+</script>
+</body>
+</html>
