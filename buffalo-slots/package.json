@@ -1,0 +1,12 @@
+{
+  "name": "thunder-herd-slots",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Buffalo-style 1024-ways slot emulator (play money only)",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node test.js",
+    "sim": "node sim.js 10000000",
+    "sim:feature": "node featsim.js 3000000"
+  }
+}

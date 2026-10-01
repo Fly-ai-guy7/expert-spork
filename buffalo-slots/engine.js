@@ -28,6 +28,7 @@
   const COIN_PAY = { 3: 2, 4: 10, 5: 100 };
   const FREE_SPINS = { 3: 8, 4: 15, 5: 20 };
   const MAX_WIN = 5000; // x total bet; a round is capped here
+  const BUY_COST = 62;  // x total bet for Buy Feature (8 free spins). Measured value ≈ 58x -> ~93.5% RTP
 
   // Cell weights per reel (wild only on reels 2-4, i.e. index 1..3).
   const W_BASE = [
@@ -126,6 +127,17 @@
     return { total, wins, coins, coinCells, coinPay, fs };
   }
 
+  /** Run a free-spins feature from `spins` start (used by Buy Feature and by playRound). Returns x-bet total. */
+  function playFeature(rng, spins, capRemaining) {
+    let total = 0, played = 0;
+    while (spins > 0 && played < 500 && total < capRemaining) {
+      spins--; played++;
+      const e = evaluate(spinGrid(true, rng));
+      total += e.total; spins += e.fs;
+    }
+    return Math.min(total, capRemaining);
+  }
+
   /** Play a whole paid spin including any free-spin feature. Returns the x-bet result tree. */
   function playRound(rng) {
     const base = evaluate(spinGrid(false, rng));
@@ -144,8 +156,8 @@
   }
 
   const api = {
-    REELS, ROWS, MAX_WIN, SYM, WILD, COIN, PAY, BET_DIV, COIN_PAY, FREE_SPINS,
-    makeRng, spinGrid, evaluate, playRound
+    REELS, ROWS, MAX_WIN, BUY_COST, SYM, WILD, COIN, PAY, BET_DIV, COIN_PAY, FREE_SPINS,
+    makeRng, spinGrid, evaluate, playRound, playFeature
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Engine = api;
