@@ -1,0 +1,49 @@
+name: Deploy Thunder Herd to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['buffalo-slots/**', '.github/workflows/pages-thunder-herd.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-thunder-herd
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Engine unit tests
+        run: node buffalo-slots/test.js
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage static files (game only, no sims/tests)
+        run: |
+          mkdir _site
+          cp buffalo-slots/index.html buffalo-slots/style.css buffalo-slots/app.js \
+             buffalo-slots/engine.js buffalo-slots/symbols.js _site/
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
