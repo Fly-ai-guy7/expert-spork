@@ -21,7 +21,7 @@ Space = spin / quick-stop. Works on phone and desktop.
 - 16 achievements, balance-over-time chart, top-5 wins, session net and timer, 30-minute reality check
 - English / Arabic (عربي) UI toggle, keyboard shortcuts (Space, ↑↓, M, Q, B, A, T, S, I)
 - **Practice tools** in Settings: force free spins, a big win, Thunderstrike or a Major jackpot for the next spin (not counted in stats)
-- Starts with 1,000,000 credits; bets from 40 to 250,000
+- Starts with 1,000,000 credits; bets from 40 to 250,000. **Auto reset:** if the balance drops below the minimum bet it refills to 100,000,000 (same as the Reset button)
 
 ## Maths
 | | |

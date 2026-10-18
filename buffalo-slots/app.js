@@ -4,6 +4,7 @@ const E = window.Engine, SY = window.SYMBOLS, NAMES = window.SYMBOL_NAMES;
 const $ = (id) => document.getElementById(id);
 const BETS = [40, 80, 200, 400, 1000, 2000, 5000, 10000, 25000, 50000, 100000, 250000];
 const START_BAL = 1000000;
+const RESET_BAL = 100000000;   // manual Reset button and automatic refill when the balance can't cover the minimum bet
 const TIER = { big: 20, mega: 50, epic: 200 };          // x bet
 const fmt = (n) => Math.round(n).toLocaleString('en-GB');
 
@@ -31,6 +32,12 @@ if (!(st.bal > 0)) st.bal = START_BAL;
 if (!BETS[st.betIdx]) st.betIdx = 1;
 if (!E.MODES[st.mode]) st.mode = 'classic';
 const bet = () => BETS[st.betIdx];
+// Auto reset: if the balance can't cover even the smallest bet, refill to 100,000,000
+function autoReset() {
+  if (st.bal >= BETS[0] || st.busy) return false;
+  st.bal = RESET_BAL; st.startBal = RESET_BAL; st.autoBase = RESET_BAL;
+  toast('Balance auto-reset to ' + fmt(RESET_BAL), 'ach'); return true;
+}
 const stakeOf = () => Math.round(bet() * (st.ante ? E.ANTE.cost : 1));
 const AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
 const LOSS_STEPS = [0, 10, 25, 50], WIN_STEPS = [0, 25, 50, 100];
@@ -433,6 +440,7 @@ async function runFeature(startSpins, mode, roundSoFar, cap) {
 async function playRound(buy) {
   if (st.busy) return;
   const cost = buy ? E.BUY_COST * bet() : stakeOf();
+  if (autoReset()) render();
   if (st.bal < cost) { msg('Not enough credits — lower your bet or reset in settings.'); st.autoLeft = 0; render(); return; }
   st.busy = true; st.quick = false; st.bal -= cost; st.fsLeft = 0; st.fsWin = 0; st.featMode = st.mode;
   if (!st.autoBase || st.autoLeft === 0) st.autoBase = st.bal + cost;
@@ -491,6 +499,7 @@ async function playRound(buy) {
   $('win').textContent = fmt(round);
   st.practice = false; st.busy = false; st.fsLeft = 0; render();
 
+  autoReset(); render();
   // autoplay bookkeeping + loss / win limits
   if (st.autoLeft > 0) {
     if (st.autoLeft !== Infinity) st.autoLeft--;
@@ -597,7 +606,7 @@ $('tLang').onclick = () => { st.lang = st.lang === 'ar' ? 'en' : 'ar'; store.set
 const cycle = (id, key, steps, label) => { const b = $(id); const paint = () => { b.textContent = st[key] ? label(st[key]) : 'off'; }; b.onclick = () => { st[key] = steps[(steps.indexOf(st[key]) + 1) % steps.length]; store.set(key, st[key]); paint(); }; paint(); };
 cycle('bLoss', 'lossPct', LOSS_STEPS, (v) => '−' + v + '%'); cycle('bWin', 'winPct', WIN_STEPS, (v) => '+' + v + '%');
 $('btnSet').onclick = () => $('setDlg').showModal();
-$('bReset').onclick = () => { if (st.busy) return; st.bal = START_BAL; st.startBal = START_BAL; st.life.hist = []; render(); msg('Balance reset to ' + fmt(START_BAL)); $('setDlg').close(); };
+$('bReset').onclick = () => { if (st.busy) return; st.bal = RESET_BAL; st.startBal = RESET_BAL; st.life.hist = []; render(); msg('Balance reset to ' + fmt(RESET_BAL)); $('setDlg').close(); };
 
 /* practice tools: queue a forced outcome for the next spin (not recorded in stats) */
 function practiceRun(setup) {
@@ -631,5 +640,5 @@ $('bClearStats').onclick = () => { st.stats = { spins: 0, wagered: 0, won: 0, bi
 setInterval(() => { if (!document.hidden) $('net').textContent = sessionText(); }, 20000);
 setInterval(() => { toast('Reality check: ' + sessionText() + ' this session'); }, 30 * 60000);
 
-applyLang(); fxResize(); render();
+autoReset(); applyLang(); fxResize(); render();
 })();
